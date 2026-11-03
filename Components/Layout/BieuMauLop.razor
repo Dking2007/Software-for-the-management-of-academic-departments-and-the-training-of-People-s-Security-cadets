@@ -1,0 +1,60 @@
+@using Nhom2_BTL.Models
+@inject DialogService HoiThoai
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@* Biểu mẫu lưu đúng các trường hệ, khóa, chuyên ngành và sĩ số của lớp. *@
+<RadzenTemplateForm TItem="LopDaoTao" Data="@banSao" Submit="Luu">
+    <RadzenStack Gap="1rem">
+        <div class="form-grid">
+            <RadzenFormField Text="Mã lớp" Variant="Variant.Outlined"><RadzenTextBox Name="MaLop" @bind-Value="banSao.MaLop" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
+            <RadzenFormField Text="Hệ đào tạo" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="HeDaoTao" Data="@cacHeDaoTao" @bind-Value="banSao.HeDaoTao" Change="DoiHeDaoTao" Style="width:100%" /></RadzenFormField>
+            <RadzenFormField Text="Khóa" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="KhoaHoc" Data="@CacKhoaHoc" @bind-Value="banSao.KhoaHoc" Style="width:100%" /></RadzenFormField>
+            <RadzenFormField Text="Chuyên ngành" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="ChuyenNganh" Data="@CacChuyenNganh" @bind-Value="banSao.ChuyenNganh" Style="width:100%" /></RadzenFormField>
+            <RadzenText TextStyle="TextStyle.Caption">Sĩ số được tính từ danh sách học viên của lớp.</RadzenText>
+        </div>
+        <RadzenRequiredValidator Component="MaLop" Text="Vui lòng nhập mã lớp." />
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem">
+            <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" />
+            <RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu lớp" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+        </RadzenStack>
+    </RadzenStack>
+@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public LopDaoTao DuLieuBanDau { get; set; } = new();
+    [Parameter] public bool DangSua { get; set; }
+    private LopDaoTao banSao = new();
+    private readonly string[] cacHeDaoTao = ["Chính quy", "Văn bằng 2"];
+    private readonly string[] khoaChinhQuy = ["D58", "D57", "D56", "D55", "D54", "D53"];
+    private readonly string[] khoaVanBangHai = ["K6", "K5", "K4", "K3"];
+    private readonly string[] chuyenNganhChinhQuy = ["Trinh sát an ninh", "Điều tra hình sự", "Quản lý xuất nhập cảnh", "ANM & PCTPCNC", "Công nghệ thông tin"];
+    private readonly string[] chuyenNganhVanBangHai = ["Điều tra", "ANM & PCTPCNC"];
+    private IEnumerable<string> CacKhoaHoc => banSao.HeDaoTao == "Chính quy" ? khoaChinhQuy : khoaVanBangHai;
+    private IEnumerable<string> CacChuyenNganh => banSao.HeDaoTao == "Chính quy" ? chuyenNganhChinhQuy : chuyenNganhVanBangHai;
+
+    protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
+    private void DoiHeDaoTao(object giaTri)
+    {
+        banSao.HeDaoTao = Convert.ToString(giaTri) ?? "Chính quy";
+        banSao.KhoaHoc = banSao.HeDaoTao == "Chính quy" ? khoaChinhQuy[0] : khoaVanBangHai[0];
+        banSao.ChuyenNganh = banSao.HeDaoTao == "Chính quy" ? chuyenNganhChinhQuy[0] : chuyenNganhVanBangHai[0];
+    }
+    // Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.
+    private bool dangLuu;
+    private string? loi;
+    private async Task Luu(LopDaoTao _)
+    {
+        if (dangLuu) return;
+        dangLuu = true; loi = null;
+        try
+        {
+            var ketQua = await DuLieu.LuuLopAsync(banSao, DangSua ? DuLieuBanDau.MaLop : null);
+            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            else loi = ketQua.ThongBao;
+        }
+        finally { dangLuu = false; }
+    }
+    private void Huy() => HoiThoai.Close(null);
+}
+

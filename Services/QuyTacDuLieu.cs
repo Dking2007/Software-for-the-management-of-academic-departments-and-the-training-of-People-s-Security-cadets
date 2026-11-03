@@ -1,0 +1,61 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+
+namespace Nhom2_BTL.Services;
+
+/// <summary>Quy tắc dùng chung cho dữ liệu khởi tạo, kiểm tra nghiệp vụ và giao diện.</summary>
+public static class QuyTacDuLieu
+{
+    // Khớp tên ở cuối họ tên: "Anh" không khớp "Thanh" hoặc "Anh Thư".
+    // Giữ phân biệt dấu tiếng Việt, bỏ khác biệt hoa/thường và khoảng trắng thừa.
+    public static bool TenKhopTuKhoa(string hoTen, string tuKhoa)
+    {
+        static string ChuanHoa(string giaTri) => string.Join(" ",
+            giaTri.Normalize(System.Text.NormalizationForm.FormC)
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+        var cumTu = ChuanHoa(tuKhoa);
+        return cumTu.Length == 0 || (" " + ChuanHoa(hoTen))
+            .EndsWith(" " + cumTu, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Danh mục 34 tỉnh/thành theo Quyết định 19/2025/QĐ-TTg, nguồn ghi trong tài liệu bàn giao.
+    public static readonly string[] TinhThanh = ["Hà Nội", "Cao Bằng", "Tuyên Quang", "Điện Biên", "Lai Châu", "Sơn La", "Lào Cai", "Thái Nguyên", "Lạng Sơn", "Quảng Ninh", "Bắc Ninh", "Phú Thọ", "Hải Phòng", "Hưng Yên", "Ninh Bình", "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Quảng Trị", "Huế", "Đà Nẵng", "Quảng Ngãi", "Gia Lai", "Khánh Hòa", "Đắk Lắk", "Lâm Đồng", "Đồng Nai", "Thành phố Hồ Chí Minh", "Tây Ninh", "Đồng Tháp", "Vĩnh Long", "An Giang", "Cần Thơ", "Cà Mau"];
+    public static readonly IReadOnlyDictionary<string, int> ChiTieuChucVu = new Dictionary<string, int>
+    { ["B trưởng"] = 1, ["B phó"] = 2, ["A trưởng"] = 4, ["A phó"] = 4, ["BTĐ"] = 1, ["PBT"] = 1, ["UVĐ"] = 3 };
+    public static readonly StringComparer SoSanhTiengViet = StringComparer.Create(CultureInfo.GetCultureInfo("vi-VN"), true);
+
+    // Sắp xếp theo tên chính, sau đó họ và tên đệm; dùng khóa so sánh tiếng Việt ở bảng.
+    public static string KhoaSapXep(string hoTen)
+    {
+        var phan = hoTen.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var ten = phan.Length == 0 ? "" : phan[^1] + " " + string.Join(" ", phan[..^1]);
+        return Convert.ToHexString(CultureInfo.GetCultureInfo("vi-VN").CompareInfo.GetSortKey(ten, CompareOptions.IgnoreCase).KeyData);
+    }
+
+    public static string ChuyenNganhChinhQuy(int so) => so switch
+    { <= 3 => "Trinh sát an ninh", <= 7 => "Điều tra hình sự", 8 => "Quản lý xuất nhập cảnh", <= 12 => "ANM & PCTPCNC", _ => "Công nghệ thông tin" };
+
+    // Hệ Văn bằng 2 giữ mã B<số>K<khóa>; số lớp không bị giới hạn cứng bằng bốn.
+    public static bool LopHopLe(string ma, string he, string khoa, string chuyenNganh)
+    {
+        if (he == "Chính quy")
+        {
+            var m = Regex.Match(ma, @"^B([1-9]|1[0-5])(D5[3-8])$");
+            return m.Success && m.Groups[2].Value == khoa && ChuyenNganhChinhQuy(int.Parse(m.Groups[1].Value)) == chuyenNganh;
+        }
+        var vb = Regex.Match(ma, @"^B([1-9][0-9]*)(K[3-6])$");
+        return he == "Văn bằng 2" && vb.Success && vb.Groups[2].Value == khoa && chuyenNganh is "Điều tra" or "ANM & PCTPCNC";
+    }
+
+    // Hoán vị ổn định giúp đổi đều họ, đệm và tên, không phụ thuộc ngẫu nhiên mỗi lần chạy.
+    public static string TaoHoTen(int so, string gioiTinh)
+    {
+        string[] ho = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý", "Đinh", "Đoàn", "Trịnh", "Mai"];
+        string[] dem = gioiTinh == "Nữ" ? ["Thị", "Ngọc", "Thu", "Khánh", "Minh", "Bảo", "Thanh", "Phương", "Thùy", "Hồng", "Diệu", "Kim"] : ["Văn", "Đức", "Quốc", "Minh", "Hoàng", "Anh", "Tuấn", "Gia", "Hữu", "Thanh", "Đình", "Nhật"];
+        string[] ten = gioiTinh == "Nữ" ? ["Linh", "Hà", "Anh", "Châu", "Ngọc", "Trang", "Hương", "Lan", "Mai", "Vy", "Yến", "Huyền", "Thảo", "Phương", "Trâm", "Ngân", "Quỳnh", "Nhung", "Hoa", "Chi", "Oanh", "Hiền", "Dung", "Tâm"] : ["Huy", "Bảo", "Quân", "Phúc", "Tuấn", "Khang", "Dũng", "Sơn", "Nam", "Long", "Minh", "Khôi", "Đạt", "Hiếu", "Kiên", "Lâm", "Phong", "Hùng", "Vinh", "Hải", "Thành", "Trung", "Cường", "Bình"];
+        var n = (so * 137) % (ho.Length * dem.Length * ten.Length);
+        return $"{ho[n % ho.Length]} {dem[n / ho.Length % dem.Length]} {ten[n / (ho.Length * dem.Length)]}";
+    }
+}
+

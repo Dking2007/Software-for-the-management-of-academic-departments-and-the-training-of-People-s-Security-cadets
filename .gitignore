@@ -1,0 +1,26 @@
+
+App_Data/
+.tmp/
+
+# Build outputs and local IDE settings
+**/bin/
+**/obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local credentials and databases
+.env
+.env.*
+!.env.example
+secrets.json
+*.db
+*.db-shm
+*.db-wal
+*.pfx
+*.p12
+*.key
+

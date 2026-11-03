@@ -1,0 +1,41 @@
+@implements IDisposable
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@if (canBo is null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Info">Hồ sơ không còn tồn tại. Vui lòng đóng và tải lại danh sách.</RadzenAlert>
+}
+else
+{
+    <dl class="chi-tiet-can-bo">
+        @foreach (var truong in CacTruong.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
+        {
+            <div><dt>@truong.Key</dt><dd>@(string.IsNullOrWhiteSpace(truong.Value) ? "—" : truong.Value)</dd></div>
+        }
+    </dl>
+}
+
+@code {
+    [Parameter] public string MaCanBo { get; set; } = "";
+    private Nhom2_BTL.Models.CanBoGiangVien? canBo;
+
+    // Cùng mã, cùng nguồn hồ sơ với bảng cán bộ; không dựng hồ sơ lãnh đạo riêng.
+    protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    protected override void OnParametersSet() => TaiHoSo();
+    private void TaiHoSo() => canBo = DuLieu.LayDanhSachCanBo().FirstOrDefault(x => x.MaTraCuuNoiBo == MaCanBo);
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiHoSo(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+
+    private Dictionary<string, string?> CacTruong => new()
+    {
+        ["Mã cán bộ"] = canBo!.MaCanBo, ["Họ tên"] = canBo.HoTen,
+        ["Giới tính"] = canBo.GioiTinh, ["Ngày sinh"] = canBo.NgaySinh.ToString("dd/MM/yyyy"),
+        ["Chức vụ"] = canBo.ChucVu, ["Cấp bậc hàm"] = canBo.CapBacHam,
+        ["Học hàm"] = canBo.HocHam, ["Học vị"] = canBo.HocVi,
+        ["Chuyên môn"] = canBo.ChuyenMon, ["Quê quán"] = canBo.QueQuan,
+        ["Số CCCD"] = canBo.SoCCCD, ["Số điện thoại"] = canBo.SoDienThoai,
+        ["Email"] = canBo.Email, ["Khoa"] = canBo.TenKhoa, ["Tổ"] = canBo.TenTo
+    };
+}
+
+

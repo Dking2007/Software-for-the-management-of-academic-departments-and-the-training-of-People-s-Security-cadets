@@ -1,0 +1,57 @@
+@using Nhom2_BTL.Models
+@inject DialogService HoiThoai
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@* Biểu mẫu khoa dùng validator và điều khiển Radzen; bản nháp tách khỏi dữ liệu trong service. *@
+<RadzenTemplateForm TItem="Khoa" Data="@banSao" Submit="Luu">
+    <RadzenStack Gap="1rem">
+        <RadzenFormField Text="Mã khoa" Variant="Variant.Outlined">
+            <RadzenTextBox Name="MaKhoa" @bind-Value="banSao.MaKhoa" Disabled="@DangSua" Style="width:100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="MaKhoa" Text="Vui lòng nhập mã khoa." />
+        <RadzenFormField Text="Tên khoa" Variant="Variant.Outlined">
+            <RadzenTextBox Name="TenKhoa" @bind-Value="banSao.TenKhoa" Style="width:100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="TenKhoa" Text="Vui lòng nhập tên khoa." />
+        <RadzenFormField Text="Mô tả" Variant="Variant.Outlined">
+            <RadzenTextBox Name="MoTa" @bind-Value="banSao.MoTa" Style="width:100%" />
+        </RadzenFormField>
+        @if (DangSua)
+        {
+            <RadzenCheckBox TValue="bool" @bind-Value="banSao.DangHoatDong" Name="DangHoatDong" />
+            <RadzenLabel Text="Đơn vị đang hoạt động" Component="DangHoatDong" />
+        }
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem">
+            <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" />
+            <RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu khoa" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+        </RadzenStack>
+    </RadzenStack>
+@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public Khoa DuLieuBanDau { get; set; } = new();
+    [Parameter] public bool DangSua { get; set; }
+    private Khoa banSao = new();
+
+    protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
+
+    // Chỉ trả bản nháp về trang; service sẽ kiểm tra quyền, mã trùng và dữ liệu lần cuối.
+    // Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.
+    private bool dangLuu;
+    private string? loi;
+    private async Task Luu(Khoa _)
+    {
+        if (dangLuu) return;
+        dangLuu = true; loi = null;
+        try
+        {
+            var ketQua = await DuLieu.LuuKhoaAsync(banSao, DangSua ? DuLieuBanDau.MaKhoa : null);
+            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            else loi = ketQua.ThongBao;
+        }
+        finally { dangLuu = false; }
+    }
+    private void Huy() => HoiThoai.Close(null);
+}
+

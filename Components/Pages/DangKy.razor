@@ -1,0 +1,15 @@
+@page "/dang-ky"
+<PageTitle>Đăng ký tài khoản</PageTitle>
+<h2>Đăng ký tài khoản Guest</h2>
+<form method="post" action="/phien/dang-ky" data-bieu-mau-phien data-enhance="false">
+    <AntiforgeryToken />
+    <label for="ten">Tên đăng nhập</label><input class="form-control" id="ten" name="tenDangNhap" required maxlength="64" autocomplete="username" />
+    <label for="mk">Mật khẩu</label><input class="form-control" id="mk" name="matKhau" type="password" required autocomplete="new-password" />
+    <p class="@(Loi is not null ? "text-danger" : null)">Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt.</p>
+    <label for="xn">Nhập lại mật khẩu</label><input class="form-control" id="xn" name="xacNhan" type="password" required autocomplete="new-password" />
+    @if (Loi is not null) { <p class="text-danger" role="alert">Không tạo được tài khoản. Kiểm tra tên đăng nhập, chính sách mật khẩu và xác nhận mật khẩu; tên có thể đã được sử dụng.</p> }
+    <button class="btn btn-primary" type="submit">Đăng ký</button>
+    <a href="/dang-nhap">Về đăng nhập</a>
+</form>
+@code { [SupplyParameterFromQuery(Name = "loi")] public string? Loi { get; set; } }
+

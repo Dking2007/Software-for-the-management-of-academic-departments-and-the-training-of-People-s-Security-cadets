@@ -1,0 +1,62 @@
+D:\T01\LTMT\Nhom2-BTL\.tmp\KiemThuTaiKhoan\Test.csproj : warning NU1900: Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.
+PASS create admin
+PASS weak password rejected
+PASS register
+PASS duplicate normalized name
+PASS default viewer
+PASS hashed password
+PASS viewer cannot elevate
+PASS self demotion blocked
+PASS old claims revoked after role change
+PASS assigned role persisted
+PASS blocked account login rejected
+PASS lockout after failed attempts
+PASS survives provider restart
+PASS seed is idempotent
+PASS fixed admin login
+PASS fixed guest login
+PASS reserved sample name rejected
+PASS fixed guest cannot be promoted or locked
+PASS sample admin disabled in production
+PASS sample guest disabled in production
+PASS regular account works in production
+PASS two scoped managers
+PASS manager cannot create admin
+PASS manager cannot delete account
+PASS manager cannot list accounts
+PASS invalid manager scope rejected
+PASS admin creates manager
+PASS admin updates account and password
+PASS scope and password update revokes session
+PASS old password rejected
+PASS immutable ID and new scope
+PASS account listing omits credentials
+PASS delete revokes account
+PASS scope authorization quanlykhoa
+PASS staff privacy quanlykhoa
+PASS student privacy quanlykhoa
+PASS own scope staff update quanlykhoa
+PASS deny cross-scope class mutations
+PASS deny cross-scope student mutations
+PASS scope authorization quanlyhocvien
+PASS staff privacy quanlyhocvien
+PASS student privacy quanlyhocvien
+PASS own scope student update quanlyhocvien
+PASS deny cross-scope faculty write
+PASS deny cross-scope faculty delete
+PASS deny cross-scope team mutations
+PASS deny cross-scope staff mutations
+PASS scope authorization admin
+PASS staff privacy admin
+PASS student privacy admin
+PASS own scope staff update admin
+PASS own scope student update admin
+PASS privacy filtering does not mutate store
+PASS guest rename preserves ID and hash
+PASS other accounts retained after rename
+PASS legacy schema upgrade is repeatable
+BENCH records=4240; old-loop-ms=1792.71; new-read-ms=0.63
+PASS one authentication check per student list
+PASS one authentication check per staff list
+PASS unauthorized identifiers removed from service results
+PASS source identifiers remain intact

@@ -1,0 +1,12 @@
+@* Nội dung chỉ đọc dùng chung cho hai loại hồ sơ; nhãn do trang nghiệp vụ cung cấp. *@
+<RadzenStack Gap="1rem">
+    @foreach (var truong in CacTruong.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
+    {
+        <RadzenStack Gap=".25rem"><RadzenText TextStyle="TextStyle.Caption">@truong.Key</RadzenText><RadzenText>@truong.Value</RadzenText></RadzenStack>
+    }
+</RadzenStack>
+@code {
+    [Parameter] public Dictionary<string, string> CacTruong { get; set; } = new();
+}
+
+

@@ -1,0 +1,53 @@
+@using Nhom2_BTL.Models
+@inject DialogService HoiThoai
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@* Biểu mẫu học viên gom đủ trường theo hồ sơ; mọi dữ liệu nhạy cảm đều là giả lập. *@
+<RadzenTemplateForm TItem="HocVien" Data="@banSao" Submit="Luu"><RadzenStack Gap="1rem"><div class="form-grid">
+<RadzenFormField Text="Mã học viên" Variant="Variant.Outlined"><RadzenTextBox Name="MaHocVien" @bind-Value="banSao.MaHocVien" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Họ tên *" Variant="Variant.Outlined"><RadzenTextBox Name="HoTen" @bind-Value="banSao.HoTen" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Lớp" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="MaLop" Data="@DanhSachLop" TextProperty="MaLop" ValueProperty="MaLop" @bind-Value="banSao.MaLop" Placeholder="Chọn lớp" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Chức vụ trong lớp" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="ChucVu" Data="@cacChucVu" @bind-Value="banSao.ChucVu" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Ngày sinh" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" Name="NgaySinh" @bind-Value="banSao.NgaySinh" DateFormat="dd/MM/yyyy" Max="@DateTime.Today" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Giới tính" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="GioiTinh" Data="@cacGioiTinh" @bind-Value="banSao.GioiTinh" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Quê quán" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="QueQuan" Data="@QuyTacDuLieu.TinhThanh" @bind-Value="banSao.QueQuan" AllowFiltering="true" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Số điện thoại" Variant="Variant.Outlined"><RadzenTextBox Name="SoDienThoai" @bind-Value="banSao.SoDienThoai" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Số CCCD" Variant="Variant.Outlined"><RadzenTextBox Name="SoCCCD" @bind-Value="banSao.SoCCCD" MaxLength="12" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Địa chỉ thường trú" Variant="Variant.Outlined"><RadzenTextBox Name="DiaChiThuongTru" @bind-Value="banSao.DiaChiThuongTru" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Email" Variant="Variant.Outlined"><RadzenTextBox Name="Email" @bind-Value="banSao.Email" Style="width:100%" /></RadzenFormField>
+</div>
+@if (DanhSachLop.FirstOrDefault(x => x.MaLop == banSao.MaLop) is { } lop) { <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">@lop.HeDaoTao · Khóa @lop.KhoaHoc · @lop.ChuyenNganh</RadzenAlert> }
+<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem"><RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" /><RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu học viên" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" /></RadzenStack></RadzenStack>@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
+<RadzenRequiredValidator Component="MaHocVien" Text="Vui lòng nhập hoặc chọn mã học viên." />
+<RadzenRequiredValidator Component="HoTen" Text="Vui lòng nhập hoặc chọn họ tên." />
+<RadzenRequiredValidator Component="SoDienThoai" Text="Vui lòng nhập hoặc chọn số điện thoại." />
+<RadzenRequiredValidator Component="SoCCCD" Text="Vui lòng nhập hoặc chọn số cccd." />
+<RadzenRequiredValidator Component="DiaChiThuongTru" Text="Vui lòng nhập hoặc chọn địa chỉ thường trú." />
+<RadzenRequiredValidator Component="MaLop" Text="Vui lòng nhập hoặc chọn lớp đào tạo." />
+</RadzenTemplateForm>
+@code {
+[Parameter] public HocVien DuLieuBanDau { get; set; } = new();
+[Parameter] public IReadOnlyList<LopDaoTao> DanhSachLop { get; set; } = [];
+[Parameter] public bool DangSua { get; set; }
+private HocVien banSao = new();
+private readonly string[] cacChucVu = ["B trưởng", "B phó", "A trưởng", "A phó", "BTĐ", "PBT", "UVĐ", "Học viên"];
+private readonly string[] cacGioiTinh = ["Nam", "Nữ"];
+protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
+// Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.
+    private bool dangLuu;
+    private string? loi;
+    private async Task Luu(HocVien _)
+    {
+        if (dangLuu) return;
+        dangLuu = true; loi = null;
+        try
+        {
+            var ketQua = await DuLieu.LuuHocVienAsync(banSao, DangSua ? DuLieuBanDau.MaHocVien : null);
+            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            else loi = ketQua.ThongBao;
+        }
+        finally { dangLuu = false; }
+    }
+private void Huy() => HoiThoai.Close(null);
+}
+

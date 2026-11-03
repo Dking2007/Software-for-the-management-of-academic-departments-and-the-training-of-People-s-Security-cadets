@@ -1,0 +1,88 @@
+@implements IAsyncDisposable
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject IJSRuntime JavaScript
+
+@if (string.IsNullOrWhiteSpace(MaCanBo))
+{
+    <span class="text-muted">Chưa phân công</span>
+}
+else
+{
+    <button @ref="tenLanhDao" type="button" class="ten-can-bo" @onmouseenter="ChoMo" @onmouseleave="ChoDong"
+            @onfocus="ChoMo" @onblur="ChoDong" @onclick="HienNgay" @onkeydown="NhanPhim"
+            aria-haspopup="dialog" aria-expanded="@(hienHoSo ? "true" : "false")" aria-controls="@maThe"
+            aria-label="@($"Xem hồ sơ {DuLieu.LayTenCanBo(MaCanBo)}")">
+        @DuLieu.LayTenCanBo(MaCanBo)
+    </button>
+    <div @ref="theHoSo" id="@maThe" class="the-ho-so-noi" popover="manual" role="dialog"
+         aria-label="Hồ sơ cán bộ, giảng viên" hidden="@(!hienHoSo)" tabindex="0"
+         @onmouseenter="GiuMo" @onmouseleave="ChoDong" @onfocusin="GiuMo" @onfocusout="ChoDong" @onkeydown="NhanPhim">
+        @if (hienHoSo)
+        {
+            <h2>Hồ sơ cán bộ, giảng viên</h2>
+            <HoSoCanBo MaCanBo="@MaCanBo" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string? MaCanBo { get; set; }
+    private readonly string maThe = "ho-so-" + Guid.NewGuid().ToString("N");
+    private ElementReference tenLanhDao, theHoSo;
+    private CancellationTokenSource? cho;
+    private IJSObjectReference? module;
+    private bool hienHoSo, canDatViTri, daHuy;
+
+    // Chờ ngắn khi mở; cho phép đi từ tên sang thẻ để đọc/cuộn thông tin.
+    private Task ChoMo() => SauKhoangCho(true, 250);
+    private Task ChoDong() => SauKhoangCho(false, 150);
+    private void GiuMo() => HuyCho();
+    private void HienNgay() { HuyCho(); DatHienThi(true); }
+    private void NhanPhim(KeyboardEventArgs e) { if (e.Key == "Escape") { HuyCho(); DatHienThi(false); } }
+
+    private async Task SauKhoangCho(bool hien, int miliGiay)
+    {
+        HuyCho();
+        using var tamDung = new CancellationTokenSource();
+        cho = tamDung;
+        try { await Task.Delay(miliGiay, tamDung.Token); if (!daHuy) DatHienThi(hien); }
+        catch (OperationCanceledException) { }
+        finally { if (ReferenceEquals(cho, tamDung)) cho = null; }
+    }
+
+    private void DatHienThi(bool hien)
+    {
+        if (daHuy || hienHoSo == hien) return;
+        hienHoSo = hien;
+        canDatViTri = true;
+    }
+    private void HuyCho() { cho?.Cancel(); cho = null; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!canDatViTri || daHuy) return;
+        canDatViTri = false;
+        try
+        {
+            if (hienHoSo)
+            {
+                module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./ho-so-noi.js");
+                if (!daHuy && hienHoSo) await module.InvokeVoidAsync("mo", tenLanhDao, theHoSo);
+            }
+            else if (module is not null) await module.InvokeVoidAsync("dong", theHoSo);
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        daHuy = true;
+        HuyCho();
+        if (module is null) return;
+        try { await module.InvokeVoidAsync("dong", theHoSo); await module.DisposeAsync(); }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+}
+

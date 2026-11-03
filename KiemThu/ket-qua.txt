@@ -1,0 +1,112 @@
+D:\T01\LTMT\Nhom2-BTL\KiemThu\NghiepVu.csproj : warning NU1900: Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.
+PASS: Cơ cấu ban đầu theo tài liệu
+PASS: Chuyên ngành mọi lớp và sĩ số ban đầu
+PASS: Cơ cấu bảy chức vụ trên mọi lớp
+PASS: Hồ sơ khởi tạo không mang nhãn mới
+PASS: Tên tiếng Việt đa dạng, trên 4000 tên duy nhất
+PASS: Định dạng toàn bộ dữ liệu khởi tạo
+PASS: CCCD khởi tạo duy nhất
+PASS: Cán bộ có tổ và khoa nhất quán
+PASS: Khách chưa đăng nhập không được ghi — dữ liệu không đổi
+PASS: Sai mật khẩu bị từ chối
+PASS: Admin đăng nhập
+PASS: Thêm học viên thứ 41 vào B10D57 | Đã thêm học viên vào lớp B10D57.
+PASS: Sĩ số lớp, khóa, hệ và toàn hệ thống tăng đúng
+PASS: Các lớp khác và cán bộ không thay đổi
+PASS: Bản ghi người dùng thêm có mốc nhãn Mới
+PASS: Sửa thông tin cá nhân | Đã cập nhật học viên tại lớp B10D57.
+PASS: Sửa tên không đổi sĩ số
+PASS: Chuyển lớp cùng khóa | Đã cập nhật học viên tại lớp B11D57.
+PASS: Chuyển cùng khóa giữ tổng
+PASS: Chuyển khác khóa | Đã cập nhật học viên tại lớp B1D58.
+PASS: Tổng hai khóa cập nhật đúng
+PASS: Chuyển khác hệ | Đã cập nhật học viên tại lớp B1K6.
+PASS: Tổng hai hệ cập nhật đúng
+PASS: Không vượt chỉ tiêu B trưởng khi chuyển/sửa — dữ liệu không đổi
+PASS: Xóa đúng học viên vừa thêm | Đã xóa học viên.
+PASS: Xóa khôi phục các tổng ban đầu
+PASS: Xóa học viên giữ chức vụ | Đã xóa học viên.
+PASS: Không tự phân công người thay thế
+PASS: Thêm cán bộ Tổ 2 Khoa Luật | Đã thêm cán bộ vào Tổ 2, Khoa Luật.
+PASS: Tăng đúng tổ/khoa/cán bộ, học viên giữ nguyên
+PASS: Sửa cá nhân cán bộ | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Sửa cán bộ không tăng bản ghi
+PASS: Chuyển tổ cùng khoa | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Tổ cũ giảm, khoa giữ tổng
+PASS: Chuyển cán bộ sang khoa khác | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Hai khoa và tổng cán bộ cập nhật đúng
+PASS: Xóa cán bộ | Đã xóa cán bộ, giảng viên.
+PASS: Xóa cán bộ không ảnh hưởng học viên
+PASS: Xóa lãnh đạo khoa | Đã xóa cán bộ, giảng viên.
+PASS: Không để tham chiếu lãnh đạo đã xóa
+PASS: Tổ thuộc khoa không tồn tại — dữ liệu không đổi
+PASS: Cán bộ thuộc tổ không tồn tại — dữ liệu không đổi
+PASS: Khoa/tổ không khớp — dữ liệu không đổi
+PASS: Học viên thuộc lớp không tồn tại — dữ liệu không đổi
+PASS: CCCD sai độ dài — dữ liệu không đổi
+PASS: Điện thoại sai đầu số — dữ liệu không đổi
+PASS: Email sai định dạng — dữ liệu không đổi
+PASS: Ngày sinh tương lai — dữ liệu không đổi
+PASS: Lớp trùng mã — dữ liệu không đổi
+PASS: Không xóa khoa còn tổ — dữ liệu không đổi
+PASS: Không xóa tổ còn cán bộ — dữ liệu không đổi
+PASS: Không xóa lớp còn học viên — dữ liệu không đổi
+PASS: B10D57 không được gán sai chuyên ngành — dữ liệu không đổi
+PASS: VB2 cho phép lớp thứ năm | Đã thêm lớp.
+PASS: Lớp mới có sĩ số thực bằng 0
+PASS: Xóa lớp không có học viên | Đã xóa lớp.
+PASS: Không đổi mã khoa gây mồ côi — dữ liệu không đổi
+PASS: Thêm khoa rỗng | Đã thêm khoa.
+PASS: Sửa tên khoa giữ mã | Đã cập nhật khoa.
+PASS: Thêm tổ đúng khoa | Đã thêm tổ.
+PASS: Sửa tổ giữ mã | Đã cập nhật tổ.
+PASS: Phân công tổ trưởng mới | Đã thêm cán bộ vào Tổ kiểm thử cập nhật, Khoa kiểm thử cập nhật.
+PASS: Liên kết tổ trưởng đúng mã
+PASS: Từ chối trùng mã cán bộ — dữ liệu không đổi
+PASS: Từ chối xóa tổ đang có cán bộ — dữ liệu không đổi
+PASS: Thêm tổ đích | Đã thêm tổ.
+PASS: Chuyển tổ trưởng sang khoa khác | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Xóa phân công cũ và gán đúng phân công mới
+PASS: Xóa tổ trưởng | Đã xóa cán bộ, giảng viên.
+PASS: Xóa tổ trưởng không còn tham chiếu
+PASS: Xóa tổ rỗng | Đã xóa tổ.
+PASS: Xóa tổ đích rỗng | Đã xóa tổ.
+PASS: Xóa khoa rỗng | Đã xóa khoa.
+PASS: Tạo lớp để kiểm tra phân công | Đã thêm lớp.
+PASS: Sửa chuyên ngành hợp lệ của Văn bằng 2 | Đã cập nhật lớp.
+PASS: Thêm B trưởng vào vị trí trống | Đã thêm học viên vào lớp B6K6.
+PASS: Tên không tự thay đổi giới tính người dùng nhập | Đã cập nhật học viên tại lớp B6K6.
+PASS: Sửa giữ giới tính đã chọn và thời điểm tạo
+PASS: Từ chối trùng mã học viên — dữ liệu không đổi
+PASS: Từ chối trùng CCCD — dữ liệu không đổi
+PASS: Chuyển B trưởng sang vị trí đã trống | Đã cập nhật học viên tại lớp B1D58.
+PASS: Chuyển lớp giải phóng chức vụ cũ
+PASS: Dọn hồ sơ trong kho kiểm thử | Đã xóa học viên.
+PASS: Xóa lớp trống sau chuyển học viên | Đã xóa lớp.
+PASS: Chỉnh bản sao không làm thay đổi dữ liệu nguồn
+PASS: Mã rỗng trả lỗi thay vì ném ngoại lệ — dữ liệu không đổi
+PASS: Vé cũ bị thu hồi sau đăng xuất
+PASS: Khôi phục Admin để tiếp tục kiểm thử | Đăng nhập lại
+PASS: Phát thông báo thay đổi cho các tab
+PASS: Viewer không thêm/sửa học viên — dữ liệu không đổi
+PASS: Viewer không xóa học viên — dữ liệu không đổi
+PASS: Viewer không thêm/sửa cán bộ — dữ liệu không đổi
+PASS: Viewer không xóa cán bộ — dữ liệu không đổi
+PASS: Viewer không thêm/sửa khoa — dữ liệu không đổi
+PASS: Viewer không xóa khoa — dữ liệu không đổi
+PASS: Viewer không thêm/sửa tổ — dữ liệu không đổi
+PASS: Viewer không xóa tổ — dữ liệu không đổi
+PASS: Viewer không thêm/sửa lớp — dữ liệu không đổi
+PASS: Viewer không xóa lớp — dữ liệu không đổi
+PASS: Phiên mới không thừa hưởng quyền của phiên khác
+PASS: Vé tab giữ đúng vai trò Viewer
+PASS: Không nâng quyền bằng vé tự đặt
+PASS: HTML Viewer có bảng học viên, không có điều khiển ghi
+PASS: HTML Admin có điều khiển quản lý học viên
+PASS: STT trang đầu là 1–20 khi Radzen dựng bảng
+PASS: HTML cán bộ có cả bộ lọc khoa và tổ
+PASS: HTML trang chủ có thống kê và liên kết tab mới
+PASS: HTML form học viên hiện đúng khóa/chuyên ngành và không chọn khoa
+PASS: HTML form cán bộ chọn khoa/tổ, không chọn lớp
+PASS: HTML nhãn Mới có thời hạn, không đổi hồ sơ
+HOÀN TẤT: 110 kiểm tra đạt.

@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.tmp/**</DefaultItemExcludes>
+    <RootNamespace>Nhom2-BTL</RootNamespace>
+    <AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Chương trình kiểm thử độc lập không được biên dịch vào ứng dụng web. -->
+    <Compile Remove="KiemThu/**" />
+    <Content Remove="KiemThu/**" />
+    <None Remove="KiemThu/**" />
+    <Content Remove="App_Data/**" />
+    <None Remove="App_Data/**" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.22" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.22" />
+    <!-- Radzen cung cấp các điều khiển giao diện thống nhất cho Blazor. -->
+    <PackageReference Include="Radzen.Blazor" Version="6.4.0" />
+  </ItemGroup>
+
+</Project>
+

@@ -1,0 +1,155 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Nhom2_BTL.Services;
+using System.Security.Claims;
+var file = Path.Combine(Path.GetTempPath(), Guid.NewGuid()+".db");
+ServiceProvider Provider(string environment = "Development") {
+ var s=new ServiceCollection(); s.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = environment }); s.AddLogging(); s.AddDbContext<CoSoTaiKhoan>(o=>o.UseSqlite("Data Source="+file));
+ s.AddIdentityCore<TaiKhoan>(o=>{KiemTraMatKhau.CauHinh(o.Password);o.Lockout.MaxFailedAccessAttempts=5;}).AddPasswordValidator<KiemTraMatKhau>().AddEntityFrameworkStores<CoSoTaiKhoan>(); s.AddSingleton<DichVuTaiKhoan>(); return s.BuildServiceProvider();
+}
+void Check(bool ok,string name){if(!ok)throw new Exception(name);Console.WriteLine("PASS "+name);}
+ClaimsPrincipal Principal(TaiKhoan u)=>new(new ClaimsIdentity(new[]{new Claim(ClaimTypes.NameIdentifier,u.Id),new Claim(ClaimTypes.Role,u.VaiTro),new Claim("DauBaoMat",u.SecurityStamp!),new Claim("PhamVi",u.PhamVi)},"Test"));
+using(var p=Provider()) {
+ using(var scope=p.CreateScope()) { var db=scope.ServiceProvider.GetRequiredService<CoSoTaiKhoan>();await db.Database.EnsureCreatedAsync();var m=scope.ServiceProvider.GetRequiredService<UserManager<TaiKhoan>>();Check((await m.CreateAsync(new TaiKhoan{UserName="admin-test",VaiTro="Admin",LockoutEnabled=true},"Test-Only!98765")).Succeeded,"create admin"); }
+ var d=p.GetRequiredService<DichVuTaiKhoan>();
+ Check(!await d.DangKy("weak","123"),"weak password rejected");
+ foreach (var (ten, matKhau) in new[] { ("chi-chu", "abc"), ("chi-ky-tu", "!!!"), ("rong", ""), ("chu-va-dac-biet", "A!") })
+  Check(!await d.DangKy(ten, matKhau), "reject password missing letters or digits: " + ten);
+ foreach (var (ten, matKhau) in new[] { ("chu-thuong", "a1"), ("chu-hoa", "A1"), ("chu-tieng-viet", "á1"), ("mat-khau-dai", new string('a', 150) + "1"), ("co-dac-biet", "ab1!") }) {
+  Check(await d.DangKy(ten, matKhau), "accept letters and digits: " + ten);
+  Check(await d.DangNhap(ten, matKhau) is not null, "login with new password policy: " + ten);
+ }
+ Check(await d.DangKy("viewer-test","Test-Only!98765"),"register");
+ Check(!await d.DangKy("VIEWER-TEST","Test-Only!98765"),"duplicate normalized name");
+ var v=(await d.DangNhap("viewer-test","Test-Only!98765"))!;Check(v.VaiTro=="Guest","default viewer");Check(v.PasswordHash!="Test-Only!98765","hashed password");
+ var a=(await d.DangNhap("admin-test","Test-Only!98765"))!;var ap=Principal(a);var vp=Principal(v);
+ Check((await d.CapNhat(vp,v.Id,"Admin",false)).Contains("không có quyền"),"viewer cannot elevate");
+ Check((await d.CapNhat(ap,a.Id,"Guest",true)).Contains("Không được"),"self demotion blocked");
+ await d.CapNhat(ap,v.Id,"Admin",false);Check(!d.HopLe(vp),"old claims revoked after role change");
+ v=(await d.DangNhap("viewer-test","Test-Only!98765"))!;Check(v.VaiTro=="Admin","assigned role persisted");
+ await d.CapNhat(ap,v.Id,"Guest",true);Check(await d.DangNhap("viewer-test","Test-Only!98765")==null,"blocked account login rejected");
+ await d.CapNhat(ap,v.Id,"Guest",false);
+ for(var i=0;i<5;i++)await d.DangNhap("viewer-test","wrong");
+ Check(await d.DangNhap("viewer-test","Test-Only!98765")==null,"lockout after failed attempts");
+}
+using(var p=Provider()){Check(await p.GetRequiredService<DichVuTaiKhoan>().DangNhap("admin-test","Test-Only!98765")!=null,"survives provider restart");}
+using (var p = Provider()) {
+ using var scope = p.CreateScope();
+ var users = scope.ServiceProvider.GetRequiredService<UserManager<TaiKhoan>>();
+ await KhoiTaoTaiKhoanMau.TaoAsync(users);
+ var before = (await users.FindByNameAsync("admin"))!.PasswordHash;
+ await KhoiTaoTaiKhoanMau.TaoAsync(users);
+ Check((await users.FindByNameAsync("admin"))!.PasswordHash == before, "seed is idempotent");
+ var d = p.GetRequiredService<DichVuTaiKhoan>();
+ var admin = await d.DangNhap("admin", "demo123");
+ var guest = await d.DangNhap("nguoixem", "demo123");
+ Check(admin?.VaiTro == "Admin", "fixed admin login");
+ Check(guest?.VaiTro == "Guest", "fixed guest login");
+ Check(!await d.DangKy("ADMIN", "Test-Only!98765"), "reserved sample name rejected");
+ var realAdmin = (await d.DangNhap("admin-test", "Test-Only!98765"))!;
+ Check((await d.CapNhat(Principal(realAdmin), guest!.Id, "Admin", true)).Contains("cố định"), "fixed guest cannot be promoted or locked");
+}
+using (var p = Provider("Production")) {
+ var d = p.GetRequiredService<DichVuTaiKhoan>();
+ Check(await d.DangNhap("admin", "demo123") == null, "sample admin disabled in production");
+ Check(await d.DangNhap("nguoixem", "demo123") == null, "sample guest disabled in production");
+ Check(await d.DangNhap("admin-test", "Test-Only!98765") != null, "regular account works in production");
+}using (var p = Provider()) {
+ var d = p.GetRequiredService<DichVuTaiKhoan>();
+ var admin = (await d.DangNhap("admin", "demo123"))!; var ap = Principal(admin);
+ var mk = (await d.DangNhap("quanlykhoa", "demo123"))!; var ml = (await d.DangNhap("quanlyhocvien", "demo123"))!;
+ Check(mk.VaiTro == "Manager" && mk.PhamVi == "Khoa" && ml.PhamVi == "Lop", "two scoped managers");
+ Check((await d.LuuTaiKhoan(Principal(mk), null, "attack", "Test-Only!98765", "Admin", "", false)).Contains("không có quyền"), "manager cannot create admin");
+ Check((await d.Xoa(Principal(ml), admin.Id)).Contains("không có quyền"), "manager cannot delete account");
+ try { await d.DanhSach(Principal(mk)); throw new Exception("manager listed accounts"); } catch (UnauthorizedAccessException) { Console.WriteLine("PASS manager cannot list accounts"); }
+ Check((await d.LuuTaiKhoan(ap, null, "new-manager", "Test-Only!98765", "Manager", "Bad", false)).Contains("không hợp lệ"), "invalid manager scope rejected");
+ Check((await d.LuuTaiKhoan(ap, null, "new-manager", "Test-Only!98765", "Manager", "Khoa", false)).StartsWith("Đã"), "admin creates manager");
+ var u = (await d.DangNhap("new-manager", "Test-Only!98765"))!; var old = Principal(u); var id = u.Id;
+ Check((await d.LuuTaiKhoan(ap, id, "renamed-manager", "New-Test!987654", "Manager", "Lop", false)).StartsWith("Đã"), "admin updates account and password");
+ Check(!d.HopLe(old), "scope and password update revokes session");
+ Check(await d.DangNhap("renamed-manager", "Test-Only!98765") == null, "old password rejected");
+ u = (await d.DangNhap("renamed-manager", "New-Test!987654"))!;
+ Check(u.Id == id && u.PhamVi == "Lop", "immutable ID and new scope");
+ Check((await d.DanhSach(ap)).All(x => x.PasswordHash == null && x.SecurityStamp == null), "account listing omits credentials");
+ var current = Principal(u); await d.Xoa(ap, id); Check(!d.HopLe(current), "delete revokes account");
+ var kho = new KhoDuLieuDemo();
+ foreach (var user in new[] { mk, ml, admin }) {
+   var state = new TestAuth(Principal(user));
+   var quyen = new DichVuPhanQuyenDemo(state, null!);
+   var data = new DichVuQuanLyDuLieuDemo(kho, quyen);
+   bool khoa = user.VaiTro == "Admin" || user.PhamVi == "Khoa";
+   bool lop = user.VaiTro == "Admin" || user.PhamVi == "Lop";
+   Check(await quyen.CoQuyenVungAsync("Khoa") == khoa && await quyen.CoQuyenVungAsync("Lop") == lop, "scope authorization " + user.UserName);
+   Check(data.LayDanhSachCanBo().All(x => khoa || (x.MaCanBo == "" && x.SoCCCD == "" && x.SoDienThoai == "" && x.Email == null)), "staff privacy " + user.UserName);
+   Check(data.LayDanhSachHocVien().All(x => lop || (x.MaHocVien == "" && x.SoCCCD == "" && x.SoDienThoai == "" && x.DiaChiThuongTru == "" && x.Email == null)), "student privacy " + user.UserName);
+   if (khoa) { var cb = data.LayDanhSachCanBo().First(); Check((await data.LuuCanBoAsync(cb, cb.MaCanBo)).ThanhCong, "own scope staff update " + user.UserName); }
+   if (lop) { var hv = data.LayDanhSachHocVien().First(); Check((await data.LuuHocVienAsync(hv, hv.MaHocVien)).ThanhCong, "own scope student update " + user.UserName); }
+   if (!khoa) {
+     Check(!(await data.LuuKhoaAsync(new())).ThanhCong, "deny cross-scope faculty write");
+     Check(!(await data.XoaKhoaAsync("not-found")).ThanhCong, "deny cross-scope faculty delete");
+     Check(!(await data.LuuToAsync(new())).ThanhCong && !(await data.XoaToAsync("not-found")).ThanhCong, "deny cross-scope team mutations");
+     Check(!(await data.LuuCanBoAsync(new())).ThanhCong && !(await data.XoaCanBoAsync("not-found")).ThanhCong, "deny cross-scope staff mutations");
+   }
+   if (!lop) {
+     Check(!(await data.LuuLopAsync(new())).ThanhCong && !(await data.XoaLopAsync("not-found")).ThanhCong, "deny cross-scope class mutations");
+     Check(!(await data.LuuHocVienAsync(new())).ThanhCong && !(await data.XoaHocVienAsync("not-found")).ThanhCong, "deny cross-scope student mutations");
+   }
+ }
+ Check(kho.DanhSachHocVien.Any(x => x.SoCCCD.Length > 0), "privacy filtering does not mutate store");
+}using (var p = Provider()) {
+ using var scope = p.CreateScope(); var users = scope.ServiceProvider.GetRequiredService<UserManager<TaiKhoan>>();
+ var guest = (await users.FindByNameAsync("nguoixem"))!;
+ var id = guest.Id; var hash = guest.PasswordHash;
+ await users.SetUserNameAsync(guest, "guest");
+ await KhoiTaoTaiKhoanMau.TaoAsync(users);
+ guest = (await users.FindByNameAsync("nguoixem"))!;
+ Check(guest.Id == id && guest.PasswordHash == hash, "guest rename preserves ID and hash");
+ Check((await users.FindByNameAsync("admin")) != null, "other accounts retained after rename");
+}
+var legacyFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid()+".db");
+var options = new DbContextOptionsBuilder<CoSoTaiKhoan>().UseSqlite("Data Source="+legacyFile).Options;
+using (var db = new CoSoTaiKhoan(options)) {
+ await db.Database.EnsureCreatedAsync();
+ await db.Database.ExecuteSqlRawAsync("ALTER TABLE AspNetUsers DROP COLUMN PhamVi");
+ await KhoiTaoCoSoTaiKhoan.TaoAsync(db);
+ await KhoiTaoCoSoTaiKhoan.TaoAsync(db);
+ Check(await db.Users.CountAsync() == 0, "legacy schema upgrade is repeatable");
+}
+Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); File.Delete(legacyFile);using (var p = Provider()) {
+ var service = p.GetRequiredService<DichVuTaiKhoan>();
+ var admin = (await service.DangNhap("admin", "demo123"))!;
+ var session = new KhoPhienDemo(service);
+ var principal = Principal(admin);
+ ((ClaimsIdentity)principal.Identity!).AddClaim(new Claim("MaPhien", session.TaoPhien()));
+ var auth = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), session, service);
+ auth.SetAuthenticationState(Task.FromResult(new Microsoft.AspNetCore.Components.Authorization.AuthenticationState(principal)));
+ var rights = new DichVuPhanQuyenDemo(auth, null!);
+ var store = new KhoDuLieuDemo(); var data = new DichVuQuanLyDuLieuDemo(store, rights);
+ _ = data.LayDanhSachHocVien();
+ var watch = System.Diagnostics.Stopwatch.StartNew();
+ // Tái hiện đường đọc cũ: mỗi hồ sơ kiểm tra quyền, kéo theo một truy vấn SQLite.
+ foreach (var row in store.DanhSachHocVien) { var copy = row.TaoBanSao(); _ = rights.DuocXemThongTinMat("Lop"); }
+ watch.Stop(); var before = watch.Elapsed.TotalMilliseconds;
+ watch.Restart(); _ = data.LayDanhSachHocVien(); watch.Stop();
+ Console.WriteLine($"BENCH records={store.DanhSachHocVien.Count}; old-loop-ms={before:F2}; new-read-ms={watch.Elapsed.TotalMilliseconds:F2}");
+ auth.Dispose();
+ var guest = (await service.DangNhap("nguoixem", "demo123"))!;
+ var countAuth = new TestAuth(Principal(guest));
+ var filtered = new DichVuQuanLyDuLieuDemo(store, new DichVuPhanQuyenDemo(countAuth, null!));
+ var students = filtered.LayDanhSachHocVien();
+ Check(countAuth.Count == 1, "one authentication check per student list");
+ var staff = filtered.LayDanhSachCanBo();
+ Check(countAuth.Count == 2, "one authentication check per staff list");
+ Check(students.All(x => x.MaHocVien == "") && staff.All(x => x.MaCanBo == ""), "unauthorized identifiers removed from service results");
+ Check(store.DanhSachHocVien.All(x => x.MaHocVien != "") && store.DanhSachCanBo.All(x => x.MaCanBo != ""), "source identifiers remain intact");
+}
+Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();File.Delete(file);
+
+
+class TestAuth(ClaimsPrincipal user) : Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider {
+ public int Count { get; private set; }
+ public override Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> GetAuthenticationStateAsync() { Count++; return Task.FromResult(new Microsoft.AspNetCore.Components.Authorization.AuthenticationState(user)); }
+}
+
+

@@ -1,0 +1,22 @@
+@page "/dang-nhap"
+<PageTitle>Đăng nhập | Quản lý đào tạo</PageTitle>
+<div class="noi-dung-the-dang-nhap">
+<form class="bieu-mau-dang-nhap" data-bieu-mau-phien method="post" action="/phien/dang-nhap" data-enhance="false">
+    <AntiforgeryToken />
+    @if (Moi == "1") { <RadzenAlert AlertStyle="AlertStyle.Success">Đăng ký thành công. Bạn chỉ cần nhập mật khẩu để đăng nhập.</RadzenAlert> }
+    <div class="mb-3"><label class="form-label" for="tenDangNhap">Tên đăng nhập</label><input class="form-control" id="tenDangNhap" name="tenDangNhap" value="@TenDangNhap" autocomplete="username" placeholder="Nhập tên đăng nhập" required /></div>
+    <div class="mb-3"><label class="form-label" for="matKhau">Mật khẩu</label><input class="form-control" type="password" id="matKhau" name="matKhau" autocomplete="current-password" placeholder="Nhập mật khẩu" required /></div>
+    @if (Loi == "phien") { <RadzenAlert AlertStyle="AlertStyle.Warning">Phiên biểu mẫu đã thay đổi. Vui lòng đăng nhập lại.</RadzenAlert> }
+    @if (Loi == "1") { <RadzenAlert AlertStyle="AlertStyle.Danger">Tên đăng nhập hoặc mật khẩu chưa đúng.</RadzenAlert> }
+    <RadzenButton class="nut-dang-nhap w-100" ButtonType="ButtonType.Submit" Text="Đăng nhập" />
+    <div class="lien-ket-dang-ky"><a href="/dang-ky">Đăng ký tài khoản</a></div>
+</form>
+</div>
+@code {
+    [SupplyParameterFromQuery(Name = "loi")] public string? Loi { get; set; }
+    [SupplyParameterFromQuery(Name = "moi")] public string? Moi { get; set; }
+    [SupplyParameterFromQuery(Name = "tenDangNhap")] public string? TenDangNhap { get; set; }
+}
+
+
+

@@ -1,0 +1,218 @@
+@implements IDisposable
+@inject DichVuThongBao DichVu
+@inject KhoThongBaoDemo Kho
+@inject AuthenticationStateProvider XacThuc
+@inject Radzen.DialogService HopThoai
+
+<section class="bang-thong-bao" aria-labelledby="tieu-de-bang-tin">
+    <header class="dau-bang-tin">
+        <div><span class="nhan-tong-quan">CỔNG THÔNG TIN</span><h1 id="tieu-de-bang-tin">Bảng thông báo</h1></div>
+        @if (laAdmin) { <RadzenButton Text="Đăng thông báo" Icon="add" Click="Them" Disabled="dangBan" /> }
+    </header>
+    <p class="ghi-chu-demo">Nội dung tổng hợp phục vụ học tập. Thông báo và ảnh lưu trong bộ nhớ, được đặt lại khi khởi động ứng dụng.</p>
+    <div class="bo-loc-tin">
+        <div><label for="tim-thong-bao">Tìm thông báo</label><input id="tim-thong-bao" class="form-control" placeholder="Tiêu đề, nội dung, tác giả hoặc tag…" @bind="tuKhoa" @bind:event="oninput" /></div>
+        <div><label for="loc-tag-tin">Đối tượng hướng tới</label><select id="loc-tag-tin" class="form-select" @bind="tagLoc"><option value="">Tất cả thông báo</option><option value="chung">Không gắn tag</option><option value="lop:*">Lớp đào tạo…</option>@foreach (var tag in danhMucTags.Where(x => x.Ma.StartsWith("khoa:"))) { <option value="@tag.Ma">@tag.Ten</option> }</select></div>
+    </div>
+    @if (tagLoc == "lop:*") { <ChonPhamViLop Id="loc-lop-tin" @bind-Value="phamViLoc" /> }
+    @if (banNhap is null && (!string.IsNullOrEmpty(loi) || !string.IsNullOrEmpty(thanhCong)))
+    {
+        <div class="phan-hoi-tin @(loi != "" ? "phan-hoi-loi" : "phan-hoi-thanh-cong")" role="@(loi != "" ? "alert" : "status")" tabindex="-1" @ref="khungPhanHoi">
+            <strong>@(loi != "" ? "Không thực hiện được thao tác" : "Thành công")</strong>
+            <p>@(loi != "" ? loi : thanhCong)</p>
+        </div>
+    }
+    @if (banNhap is not null && laAdmin)
+    {
+        @if (banNhap.Ma == Guid.Empty) { @BieuMau }
+    }
+
+    @if (KetQua.Count == 0)
+    {
+        <div class="tin-trong">@(danhSach.Count == 0 ? "Chưa có thông báo." : "Không có thông báo phù hợp. Hãy đổi từ khóa hoặc bộ lọc.")</div>
+    }
+    else if (BaiDangXem is { } bai)
+    {
+        <div class="noi-dung-bang-tin">
+            <aside class="cot-tieu-de" aria-label="Danh sách thông báo">
+                <div class="nhan-danh-sach">@KetQua.Count thông báo · Mới nhất trước</div>
+                <div class="danh-sach-tieu-de" tabindex="0" aria-label="Cuộn danh sách tiêu đề">
+                    @foreach (var tin in KetQua)
+                    {
+                        <button type="button" class="muc-tin @(tin.Ma == bai.Ma ? "dang-chon" : "")" @onclick="() => maDangXem = tin.Ma" aria-pressed="@(tin.Ma == bai.Ma)">
+                            @if (tin.LaMoi(hienTai)) { <span class="nhan-new">new</span> }
+                            <strong>@tin.TieuDe</strong><time datetime="@tin.DangLuc.ToString("O")">@NgayGio(tin.DangLuc)</time>
+                        </button>
+                    }
+                </div>
+            </aside>
+            <article class="chi-tiet-tin" aria-live="polite">
+                <div class="dau-chi-tiet"><span class="nhan-tong-quan">THÔNG BÁO</span>@if (bai.LaMoi(hienTai)) { <span class="nhan-new">new</span> }</div>
+                <h2>@bai.TieuDe</h2>
+                <div class="thong-tin-tin"><span>Tác giả: <strong>@bai.TacGia</strong></span><time datetime="@bai.DangLuc.ToString("O")">@NgayGio(bai.DangLuc) (UTC+7)</time></div>
+                @if (bai.SuaLuc is { } sua) { <small class="lan-sua">Cập nhật: @NgayGio(sua)</small> }
+                <div class="tags-tin">
+                    @if (bai.Tags.Count == 0) { <span class="tag-tin">Thông báo chung</span> }
+                    @foreach (var tag in bai.Tags) { <span class="tag-tin">@TenTag(tag)</span> }
+                </div>
+                @if (bai.Anh is not null) { <img class="anh-thong-bao" src="@bai.Anh" alt="Ảnh đính kèm: @bai.TieuDe" /> }
+                <div class="van-ban-tin">@bai.NoiDung</div>
+                @if (laAdmin)
+                {
+                    <div class="hanh-dong-tin"><RadzenButton Text="Sửa" Icon="edit" Click="() => Sua(bai)" ButtonStyle="ButtonStyle.Light" Disabled="dangBan" /><RadzenButton Text="Xóa" Icon="delete" Click="() => Xoa(bai)" ButtonStyle="ButtonStyle.Danger" Disabled="dangBan" /></div>
+                }
+            </article>
+        </div>
+    }
+</section>
+
+@code {
+    private List<ThongBao> danhSach = [];
+    private List<TagThongBao> danhMucTags = [];
+    private ThongBao? banNhap;
+    private IEnumerable<string> tagsChon = [];
+    private string phamViLoc = "lop:*", phamViThem = "lop:*";
+    private List<LopDaoTao> cacLop = [];
+    private IEnumerable<string> tagsKhoa {
+        get => tagsChon.Where(x => x.StartsWith("khoa:"));
+        set => tagsChon = tagsChon.Where(x => !x.StartsWith("khoa:")).Concat(value ?? []).Distinct().ToList();
+    }
+    private void ThemPhamVi() => tagsChon = tagsChon.Append(phamViThem).Distinct().ToList();
+    private void BoPhamVi(string tag) => tagsChon = tagsChon.Where(x => x != tag).ToList();
+    private Guid? maDangXem;
+    private string tuKhoa = "", tagLoc = "", loi = "", thanhCong = "";
+    private byte[]? anhMoi;
+    private string? anhXemTruoc;
+    private bool laAdmin, dangBan, dangTaiAnh, xoaAnh, daHuy;
+    private DateTimeOffset hienTai = DateTimeOffset.UtcNow;
+    private System.Threading.Timer? dongHo;
+    private ElementReference khungPhanHoi;
+    private bool canFocusPhanHoi;
+    private void BaoLoiBieuMau(EditContext context)
+    {
+        thanhCong = "";
+        loi = "Vui lòng kiểm tra các ô được đánh dấu đỏ bên trên và sửa theo hướng dẫn.";
+        canFocusPhanHoi = true;
+    }
+    private string TenTag(string ma) => danhMucTags.FirstOrDefault(x => x.Ma == ma)?.Ten ?? ma;
+    private static string NgayGio(DateTimeOffset moc) => moc.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm · dd/MM/yyyy");
+    private List<ThongBao> KetQua => danhSach.Where(x =>
+        (tagLoc == "" || (tagLoc == "chung" ? x.Tags.Count == 0 : tagLoc == "lop:*" ? DichVuThongBao.KhopPhamVi(x.Tags, phamViLoc, cacLop) : x.Tags.Contains(tagLoc))) &&
+        string.Join(" ", x.TieuDe, x.NoiDung, x.TacGia, string.Join(" ", x.Tags.Select(TenTag))).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+    private ThongBao? BaiDangXem => KetQua.FirstOrDefault(x => x.Ma == maDangXem) ?? KetQua.FirstOrDefault();
+    protected override async Task OnInitializedAsync()
+    {
+        laAdmin = (await XacThuc.GetAuthenticationStateAsync()).User.IsInRole("Admin");
+        TaiLai();
+        Kho.DaThayDoi += KhiThayDoi;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) dongHo = new System.Threading.Timer(_ => KhiThayDoi(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        if (banNhap is not null && banNhap.Ma != Guid.Empty) HopThoai.Refresh();
+        if (canFocusPhanHoi)
+        {
+            canFocusPhanHoi = false;
+            if (banNhap is null || banNhap.Ma == Guid.Empty) await khungPhanHoi.FocusAsync();
+        }
+    }
+    private void TaiLai() { danhSach = DichVu.LayDanhSach(); danhMucTags = DichVu.LayTags(); cacLop = DichVu.LayLop(); hienTai = DateTimeOffset.UtcNow; }
+    private void KhiThayDoi() { if (!daHuy) _ = InvokeAsync(() => { if (!daHuy) { TaiLai(); StateHasChanged(); } }); }
+    private void Them() { banNhap = new(); tagsChon = []; phamViThem = "lop:*"; anhMoi = null; anhXemTruoc = null; xoaAnh = false; loi = thanhCong = ""; }
+    private async Task Sua(ThongBao bai)
+    {
+        banNhap = bai.TaoBanSao(); phamViThem = "lop:*"; tagsChon = [.. bai.Tags];
+        anhMoi = null; anhXemTruoc = bai.Anh; xoaAnh = false; loi = thanhCong = "";
+        await HopThoai.OpenAsync("Sửa thông báo", _ => BieuMau, new DialogOptions
+        {
+            Width = "960px", Height = "85vh", ShowClose = false,
+            CloseDialogOnOverlayClick = false, CloseDialogOnEsc = false
+        });
+    }
+    private void Huy()
+    {
+        var dangSua = banNhap is not null && banNhap.Ma != Guid.Empty;
+        banNhap = null; anhMoi = null; anhXemTruoc = null;
+        if (dangSua) HopThoai.Close();
+    }
+    private void BoAnh() { anhMoi = null; anhXemTruoc = null; xoaAnh = true; }
+    private async Task ChonAnh(InputFileChangeEventArgs e)
+    {
+        dangTaiAnh = true; loi = thanhCong = "";
+        try
+        {
+            using var boNho = new MemoryStream();
+            await using var tep = e.File.OpenReadStream(DichVuThongBao.GioiHanAnh);
+            await tep.CopyToAsync(boNho);
+            var duLieu = boNho.ToArray();
+            var xemTruoc = DichVuThongBao.TaoAnh(duLieu);
+            anhMoi = duLieu; anhXemTruoc = xemTruoc; xoaAnh = false;
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentException or InvalidOperationException) { loi = "Không đọc được ảnh. Chọn ảnh PNG, JPEG hoặc WebP không quá 3 MB."; }
+        finally { dangTaiAnh = false; canFocusPhanHoi = loi != ""; }
+    }
+    private async Task Luu()
+    {
+        if (banNhap is null || dangBan || dangTaiAnh) return;
+        dangBan = true; loi = thanhCong = "";
+        try
+        {
+            var dangMoi = banNhap.Ma == Guid.Empty;
+            banNhap.Tags = tagsChon?.ToList() ?? [];
+            maDangXem = await DichVu.LuuAsync(banNhap, anhMoi, xoaAnh);
+            tuKhoa = tagLoc = ""; Huy(); TaiLai(); thanhCong = dangMoi ? "Đã đăng thông báo thành công. Bài vừa đăng đang được hiển thị bên dưới." : "Đã cập nhật thông báo thành công.";
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException) { loi = ex.Message; }
+        catch { loi = "Không lưu được thông báo. Vui lòng thử lại."; }
+        finally { dangBan = false; canFocusPhanHoi = true; }
+    }
+    private async Task Xoa(ThongBao bai)
+    {
+        if (await HopThoai.Confirm($"Xóa thông báo “{bai.TieuDe}”?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" }) != true) return;
+        dangBan = true; loi = thanhCong = "";
+        try { await DichVu.XoaAsync(bai.Ma); if (banNhap?.Ma == bai.Ma) Huy(); TaiLai(); thanhCong = "Đã xóa thông báo."; }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException) { loi = ex.Message; }
+        catch { loi = "Không xóa được thông báo. Vui lòng thử lại."; }
+        finally { dangBan = false; canFocusPhanHoi = true; }
+    }
+    public void Dispose() { daHuy = true; Kho.DaThayDoi -= KhiThayDoi; dongHo?.Dispose(); }
+    private RenderFragment BieuMau => @<div class="noi-dung-hop-soan @(banNhap?.Ma != Guid.Empty ? "dang-sua" : "")">
+        <EditForm Model="banNhap" OnValidSubmit="Luu" OnInvalidSubmit="BaoLoiBieuMau" class="soan-thong-bao">
+            <DataAnnotationsValidator />
+            <div class="dau-hop-soan">
+                <h2 id="tieu-de-hop-sua">@(banNhap!.Ma == Guid.Empty ? "Đăng thông báo mới" : "Sửa thông báo")</h2>
+                @if (banNhap.Ma != Guid.Empty)
+                {
+                    <button type="button" class="dong-hop-soan" data-dong-hop-sua aria-label="Đóng hộp sửa thông báo" @onclick="Huy" disabled="@(dangBan || dangTaiAnh)">×</button>
+                }
+            </div>
+            <label for="tieu-de-tin">Tiêu đề</label><InputText id="tieu-de-tin" class="form-control" @bind-Value="banNhap.TieuDe" maxlength="200" aria-describedby="loi-tieu-de-tin" />
+            <div id="loi-tieu-de-tin"><ValidationMessage For="@(() => banNhap.TieuDe)" /></div>
+            <label for="noi-dung-tin">Nội dung</label><InputTextArea id="noi-dung-tin" class="form-control" rows="7" @bind-Value="banNhap.NoiDung" maxlength="20000" aria-describedby="loi-noi-dung-tin" />
+            <div id="loi-noi-dung-tin"><ValidationMessage For="@(() => banNhap.NoiDung)" /></div>
+            <label for="tag-bai">Tags khoa</label>
+            <RadzenDropDown Name="tag-bai" InputAttributes="@(new Dictionary<string, object> { ["id"] = "tag-bai" })" TValue="IEnumerable<string>" @bind-Value="tagsKhoa" Data="@(danhMucTags.Where(x => x.Ma.StartsWith("khoa:")))" TextProperty="Ten" ValueProperty="Ma" Multiple="true" AllowFiltering="true" AllowClear="true" Placeholder="Không chọn tag: thông báo chung" Style="width:100%" />
+            <label>Chọn đối tượng lớp đào tạo</label>
+            <ChonPhamViLop Id="them-lop-tin" @bind-Value="phamViThem" />
+            <RadzenButton Text="Thêm nhóm lớp đã chọn" Icon="add" ButtonStyle="ButtonStyle.Light" Click="ThemPhamVi" />
+            <div class="tags-tin">@foreach (var tag in tagsChon.Where(x => !x.StartsWith("khoa:"))) { <button type="button" class="tag-tin" @onclick="() => BoPhamVi(tag)" aria-label="@("Bỏ " + TenTag(tag))">@TenTag(tag) ×</button> }</div>
+            <small>Chọn phạm vi rồi bấm Thêm nhóm lớp đã chọn. Có thể thêm nhiều nhóm; bấm × để bỏ. Không chọn khoa hoặc nhóm lớp: thông báo chung.</small>
+            <small>Tags dùng để phân loại và tìm kiếm. Mọi tài khoản đã đăng nhập đều xem được thông báo.</small>
+            <label for="anh-tin">Ảnh đính kèm (PNG, JPEG, WebP; tối đa 3 MB)</label><InputFile id="anh-tin" OnChange="ChonAnh" accept="image/png,image/jpeg,image/webp" disabled="@dangBan" @key="banNhap" />
+            @if (anhXemTruoc is not null)
+            {
+                <img class="anh-xem-truoc" src="@anhXemTruoc" alt="Ảnh đang chọn cho thông báo" />
+                <RadzenButton Text="Bỏ ảnh" Icon="close" Click="BoAnh" ButtonStyle="ButtonStyle.Light" Disabled="dangBan" />
+            }
+            @if (!string.IsNullOrEmpty(loi))
+            {
+                <div class="phan-hoi-tin phan-hoi-loi" role="alert" tabindex="-1" @ref="khungPhanHoi">
+                    <strong>Chưa lưu được thông báo</strong><p>@loi</p>
+                    <ValidationSummary />
+                </div>
+            }
+            <div class="hanh-dong-tin"><RadzenButton Text="@(dangBan ? "Đang lưu…" : "Lưu thông báo")" Icon="save" ButtonType="ButtonType.Submit" Disabled="@(dangBan || dangTaiAnh)" /><RadzenButton Text="Hủy" Click="Huy" ButtonStyle="ButtonStyle.Light" Disabled="dangBan" /></div>
+        </EditForm>
+    </div>;
+
+}

@@ -1,0 +1,25 @@
+@implements IDisposable
+@* Nhãn tự hết hạn sau 15 phút; bộ hẹn giờ chỉ cập nhật giao diện, không xóa hồ sơ. *@
+@if (TaoLuc is { } tao && DateTimeOffset.UtcNow - tao < TimeSpan.FromMinutes(15))
+{
+    <RadzenBadge Text="Mới" BadgeStyle="BadgeStyle.Success" class="record-badge" />
+}
+else if (CapNhatLuc is { } sua && DateTimeOffset.UtcNow - sua < TimeSpan.FromMinutes(2))
+{
+    <RadzenBadge Text="Vừa cập nhật" BadgeStyle="BadgeStyle.Info" class="record-badge" />
+}
+@code {
+    [Parameter] public DateTimeOffset? TaoLuc { get; set; }
+    [Parameter] public DateTimeOffset? CapNhatLuc { get; set; }
+    private System.Threading.Timer? boHenGio;
+    // Dữ liệu khởi tạo không cần bộ hẹn giờ; chỉ tạo khi có nhãn đang hiệu lực.
+    protected override void OnParametersSet()
+    {
+        boHenGio?.Dispose();
+        boHenGio = null;
+        if (TaoLuc > DateTimeOffset.UtcNow.AddMinutes(-15) || CapNhatLuc > DateTimeOffset.UtcNow.AddMinutes(-2))
+            boHenGio = new(_ => { InvokeAsync(StateHasChanged); }, null, 30000, 30000);
+    }
+    public void Dispose() => boHenGio?.Dispose();
+}
+

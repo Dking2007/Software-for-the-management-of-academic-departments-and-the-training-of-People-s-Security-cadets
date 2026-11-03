@@ -1,0 +1,62 @@
+[
+  {
+    "DuongDan": "/dang-nhap",
+    "TrangThai": 200,
+    "SoByte": 6359
+  },
+  {
+    "DuongDan": "/",
+    "TrangThai": 200,
+    "SoByte": 3115
+  },
+  {
+    "DuongDan": "/khoa",
+    "TrangThai": 200,
+    "SoByte": 3065
+  },
+  {
+    "DuongDan": "/khoa/to",
+    "TrangThai": 200,
+    "SoByte": 3105
+  },
+  {
+    "DuongDan": "/khoa/can-bo",
+    "TrangThai": 200,
+    "SoByte": 3130
+  },
+  {
+    "DuongDan": "/lop",
+    "TrangThai": 200,
+    "SoByte": 3110
+  },
+  {
+    "DuongDan": "/hoc-vien",
+    "TrangThai": 200,
+    "SoByte": 3100
+  },
+  {
+    "DuongDan": "/images/logo-hoc-vien-an-ninh.png",
+    "TrangThai": 200,
+    "SoByte": 19422
+  },
+  {
+    "DuongDan": "/_content/Radzen.Blazor/css/material-base.css",
+    "TrangThai": 200,
+    "SoByte": 656170
+  },
+  {
+    "DuongDan": "/_content/Radzen.Blazor/Radzen.Blazor.js",
+    "TrangThai": 200,
+    "SoByte": 91280
+  },
+  {
+    "DuongDan": "/_framework/blazor.web.js",
+    "TrangThai": 200,
+    "SoByte": 186918
+  },
+  {
+    "DuongDan": "/app.css",
+    "TrangThai": 200,
+    "SoByte": 35776
+  }
+]

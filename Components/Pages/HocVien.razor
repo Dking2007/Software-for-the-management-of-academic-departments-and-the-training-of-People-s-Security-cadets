@@ -1,0 +1,229 @@
+@implements IDisposable
+
+@page "/hoc-vien"
+
+@using System.Globalization
+
+@using HocVienModel = Nhom2_BTL.Models.HocVien
+
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@inject DichVuPhanQuyenDemo PhanQuyen
+
+@inject DialogService HoiThoai
+
+@inject NotificationService ThongBao
+
+
+
+@* Bảng hiển thị các trường hồ sơ học viên và sắp xếp số thứ tự theo họ tên tiếng Việt. *@
+
+<PageTitle>Học viên | Quản lý đào tạo</PageTitle>
+
+<div class="page-heading-row">
+
+    <div class="page-heading"><span class="eyebrow">PHÂN HỆ HỌC VIÊN</span><h1>Danh sách học viên</h1><p>Tra cứu hồ sơ toàn bộ học viên tại Học viện.</p></div>
+
+    @if (duocChinhSua) { <RadzenButton class="btn btn-primary page-action" Icon="person_add" Text="Thêm học viên" Click="ThemHocVien" /> }
+
+</div>
+
+<RadzenCard class="directory-panel">
+
+    <div class="panel-toolbar">
+
+        <div class="search-box"><RadzenIcon Icon="search" aria-hidden="true" /><input class="form-control" value="@tuKhoa" data-tim-kiem @onchange="NhapTuKhoa" Placeholder="@(duocChinhSua ? "Tìm tên chính xác hoặc mã học viên" : "Tìm tên học viên")" aria-label="Tìm học viên" /></div>
+
+        <RadzenDropDown TValue="string" Data="@cacLop" TextProperty="MaLop" ValueProperty="MaLop" @bind-Value="maLopLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả lớp" class="filter-dropdown" />
+
+    <RadzenButton Text="Bỏ bộ lọc" Icon="filter_alt_off" ButtonStyle="ButtonStyle.Light" Click="BoLoc" /></div>
+
+    <p class="ket-qua-tim-kiem" role="status">Kết quả phù hợp: <strong>@DanhSachHienThi.Count().ToString("N0") / @danhSachHocVien.Count.ToString("N0")</strong></p>
+
+<RadzenDataGrid @ref="bang" TItem="HocVienModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="20" AllowSorting="true" ShowPagingSummary="true" PagingSummaryFormat="Trang {0}/{1} · {2} bản ghi" AllowColumnResize="true" EmptyText="Không tìm thấy học viên phù hợp." class="directory-grid wide-directory-grid">
+
+        <Columns>
+
+            <RadzenDataGridColumn TItem="HocVienModel" Title="STT" Width="5rem"><Template Context="hv">@SoThuTu(hv)</Template></RadzenDataGridColumn>
+
+@if (duocChinhSua) {
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.MaHocVien)" Title="MÃ HỌC VIÊN" Width="10rem"><Template Context="hv"><span class="record-code">@hv.MaHocVien</span></Template></RadzenDataGridColumn>
+}
+
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.KhoaSapXepTen)" Title="HỌ VÀ TÊN" Width="14rem"><Template Context="hv"><strong>@hv.HoTen</strong> <NhanBanGhi TaoLuc="hv.TaoLuc" CapNhatLuc="hv.CapNhatLuc" /></Template></RadzenDataGridColumn>
+
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.ChucVu)" Title="CHỨC VỤ" Width="10rem" />
+
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.NgaySinh)" Title="NGÀY SINH" FormatString="{0:dd/MM/yyyy}" Width="9rem" />
+
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.GioiTinh)" Title="GIỚI TÍNH" Width="7rem" />
+
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.QueQuan)" Title="QUÊ QUÁN" Width="13rem" />
+
+            @if (duocChinhSua) {
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.SoDienThoai)" Title="SỐ ĐIỆN THOẠI" Width="10rem" />
+
+            }
+            @if (duocChinhSua) {
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.SoCCCD)" Title="SỐ CCCD" Width="12rem" />
+
+            }
+            @if (duocChinhSua) {
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.DiaChiThuongTru)" Title="ĐỊA CHỈ THƯỜNG TRÚ" Width="22rem" />
+
+            }
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.MaLop)" Title="LỚP" Width="8rem" />
+
+            @if (duocChinhSua)
+
+            {
+
+                <RadzenDataGridColumn TItem="HocVienModel" Title="THAO TÁC" Sortable="false" Width="8rem">
+
+                    <Template Context="hv"><div class="actions-cell"><RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" aria-label="@($"Sửa học viên {hv.MaHocVien}")" Click="@(() => SuaHocVien(hv))" /><RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" aria-label="@($"Xóa học viên {hv.MaHocVien}")" Click="@(() => XoaHocVien(hv))" /></div></Template>
+
+                </RadzenDataGridColumn>
+
+            }
+
+        <RadzenDataGridColumn TItem="HocVienModel" Title="CHI TIẾT" Width="7rem" Sortable="false"><Template Context="hv"><RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" aria-label="Xem chi tiết hồ sơ" Click="@(() => XemChiTiet(hv))" /></Template></RadzenDataGridColumn>
+
+</Columns>
+
+    </RadzenDataGrid>
+
+</RadzenCard>
+
+
+
+
+
+@code {
+
+    // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
+
+    private async Task NhapTuKhoa(ChangeEventArgs e)
+
+    {
+
+        tuKhoa = e.Value?.ToString() ?? string.Empty;
+
+        if (bang is not null) await bang.FirstPage(true);
+
+    }
+
+
+
+    // Hồ sơ được lọc theo quyền tại dịch vụ; hộp thoại này không có thao tác ghi.
+
+    private Task XemChiTiet(HocVienModel x) => HoiThoai.OpenAsync<ChiTietHoSo>("Chi tiết hồ sơ", new Dictionary<string, object> { [nameof(ChiTietHoSo.CacTruong)] = new Dictionary<string, string> { ["Mã"] = x.MaHocVien, ["Họ tên"] = x.HoTen, ["Chức vụ"] = x.ChucVu, ["Ngày sinh"] = x.NgaySinh.ToString("dd/MM/yyyy"), ["Quê quán"] = x.QueQuan, ["Số điện thoại"] = x.SoDienThoai, ["Email"] = x.Email ?? "", ["Lớp"] = x.MaLop, ["Giới tính"] = x.GioiTinh, ["Số CCCD"] = x.SoCCCD, ["Địa chỉ thường trú"] = x.DiaChiThuongTru, } }, new DialogOptions { Width = "650px" });
+
+
+
+    private RadzenDataGrid<HocVienModel>? bang;
+
+    private int SoThuTu(HocVienModel banGhi) => (bang?.View.ToList().IndexOf(banGhi) ?? -1) + 1;
+
+
+
+    // Mỗi tab chỉ giữ bản sao; cập nhật từ kho chung và hủy đăng ký khi component kết thúc.
+
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+
+
+
+    private List<HocVienModel> danhSachHocVien = [];
+
+    private List<LopDaoTao> cacLop = [];
+
+    private string tuKhoa = string.Empty;
+
+    private string? maLopLoc;
+
+    private bool duocChinhSua;
+
+
+
+    // Kết hợp bộ lọc lớp và từ khóa trên các trường thường dùng để tra cứu.
+
+    private IEnumerable<HocVienModel> DanhSachHienThi => danhSachHocVien.Where(hv =>
+
+        (string.IsNullOrWhiteSpace(maLopLoc) || hv.MaLop == maLopLoc) &&
+
+        (string.IsNullOrWhiteSpace(tuKhoa) || hv.MaHocVien.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || QuyTacDuLieu.TenKhopTuKhoa(hv.HoTen, tuKhoa)));
+
+
+
+    protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Lop"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+
+    private void TaiDuLieu()
+
+    {
+
+        cacLop = DuLieu.LayDanhSachLop().ToList();
+
+        danhSachHocVien = DuLieu.LayDanhSachHocVien().OrderBy(h => h.KhoaSapXepTen, StringComparer.Ordinal).ToList();
+
+    }
+
+
+
+    // Đưa hồ sơ mới vào kết quả ngay, không phụ thuộc trang hay bộ lọc trước đó.
+
+    private async Task BoLoc() { tuKhoa = string.Empty; maLopLoc = null; if (bang is not null) await bang.FirstPage(true); }
+
+
+
+    private async Task ThemHocVien()
+
+    {
+
+        var kq = await HoiThoai.OpenAsync<BieuMauHocVien>("Thêm học viên", new Dictionary<string, object> { [nameof(BieuMauHocVien.DuLieuBanDau)] = new HocVienModel(), [nameof(BieuMauHocVien.DanhSachLop)] = cacLop }, new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = false });
+
+        if (kq is KetQuaThaoTac daLuu) { maLopLoc = null; tuKhoa = daLuu.MaBanGhi ?? string.Empty; await ThongBaoKetQua(daLuu); if (bang is not null) await bang.FirstPage(true); }
+
+    }
+
+    private async Task SuaHocVien(HocVienModel hv)
+
+    {
+
+        var kq = await HoiThoai.OpenAsync<BieuMauHocVien>("Sửa học viên", new Dictionary<string, object> { [nameof(BieuMauHocVien.DuLieuBanDau)] = hv.TaoBanSao(), [nameof(BieuMauHocVien.DanhSachLop)] = cacLop, [nameof(BieuMauHocVien.DangSua)] = true }, new DialogOptions { Width = "760px", CloseDialogOnOverlayClick = false });
+
+        if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu);
+
+    }
+
+    private async Task XoaHocVien(HocVienModel hv)
+
+    {
+
+        var ok = await HoiThoai.Confirm($"Xóa hồ sơ {hv.HoTen} ({hv.MaHocVien})?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" });
+
+        if (ok == true) await ThongBaoKetQua(await DuLieu.XoaHocVienAsync(hv.MaHocVien));
+
+    }
+
+    private async Task ThongBaoKetQua(KetQuaThaoTac kq)
+
+    {
+
+        ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao });
+
+        TaiDuLieu(); await InvokeAsync(StateHasChanged);
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+

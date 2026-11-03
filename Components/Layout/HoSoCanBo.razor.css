@@ -1,0 +1,4 @@
+.chi-tiet-can-bo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 0; }
+.chi-tiet-can-bo dt { color: var(--mau-phu); font-size: .85rem; font-weight: 500; margin-bottom: .3rem; }
+.chi-tiet-can-bo dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) { .chi-tiet-can-bo { grid-template-columns: 1fr; } }

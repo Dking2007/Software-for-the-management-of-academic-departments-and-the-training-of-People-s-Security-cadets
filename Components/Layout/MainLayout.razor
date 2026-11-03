@@ -1,0 +1,88 @@
+@inherits LayoutComponentBase
+
+@* Bố cục chính chứa thanh điều hướng, thông tin tài khoản và nội dung trang đã đăng nhập. *@
+<div class="app-shell @(sidebarThuGon ? "sidebar-thu-gon" : string.Empty)">
+    <aside class="sidebar">
+        <NavMenu />
+    </aside>
+
+    <div class="main-area">
+        <header class="top-row">
+            <RadzenButton class="nut-sidebar" Icon="@(sidebarThuGon ? "menu" : "menu_open")" ButtonStyle="ButtonStyle.Light" Click="@DoiTrangThaiSidebar" aria-label="@(sidebarThuGon ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng")" aria-expanded="@(!sidebarThuGon ? "true" : "false")" />
+            <div class="topbar-heading">
+                <div class="tieu-de-cong-thong-tin">Cổng thông tin quản lý khoa, lớp đào tạo Học viện An ninh nhân dân</div>
+
+            </div>
+            @* Tên và vai trò lấy từ claim của phiên hiện tại; nút Radzen đăng xuất xóa phiên đó. *@
+            <AuthorizeView>
+                <Authorized Context="nguoiDung">
+                    <div class="user-menu">
+                        <div class="user-avatar">@LayInitial(nguoiDung.User.Identity?.Name)</div>
+                        <div class="user-details">
+                            <span class="user-name">@nguoiDung.User.Identity?.Name</span>
+                            <span class="user-role">@LayTenVaiTro(nguoiDung.User)</span>
+                        </div>
+                        <form data-bieu-mau-phien method="post" action="/phien/dang-xuat" data-enhance="false"><AntiforgeryToken /><RadzenButton class="btn-logout" Icon="logout" Text="Đăng xuất" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" /></form>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </header>
+
+        <main class="content">
+            @Body
+            @* Trang chọn phân hệ chỉ giữ ba thẻ chính; chân trang nằm ở các màn hình quản lý. *@
+            @if (!LaTrangChu)
+            {
+                <footer class="app-footer">© Học viện An ninh nhân dân <span>•</span> Hệ thống quản lý đào tạo</footer>
+            }
+        </main>
+    </div>
+</div>
+
+<div id="blazor-error-ui">
+    @* Giữ bộ chọn CSS của Blazor nhưng dùng Radzen cho điều khiển trong thông báo lỗi. *@
+    Đã xảy ra lỗi. <RadzenLink Path="" class="reload">Tải lại trang</RadzenLink>
+    <RadzenButton class="dismiss" Text="×" ButtonStyle="ButtonStyle.Light" aria-label="Đóng thông báo lỗi" />
+</div>
+
+@* Đăng ký các thành phần Radzen cần dịch vụ tương tác như hộp thoại và thông báo. *@
+<RadzenComponents />
+
+@code {
+    [Inject] private NhaCungCapTrangThaiXacThucDemo XacThuc { get; set; } = default!;
+    [Inject] private NavigationManager DieuHuong { get; set; } = default!;
+
+    private bool sidebarThuGon;
+    private void DoiTrangThaiSidebar() => sidebarThuGon = !sidebarThuGon;
+
+    private bool LaTrangChu => string.IsNullOrEmpty(DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0]);
+
+    private async Task DangXuat()
+    {
+        // Xóa trạng thái xác thực trước khi điều hướng về trang đăng nhập.
+        await XacThuc.DangXuatAsync();
+        DieuHuong.NavigateTo("/dang-nhap", replace: true);
+    }
+
+    // Đổi tên vai trò kỹ thuật trong claim thành nhãn tiếng Việt dễ đọc.
+    private static string LayTenVaiTro(System.Security.Claims.ClaimsPrincipal nguoiDung)
+        => nguoiDung.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value switch
+        {
+            nameof(VaiTroDemo.Admin) => "Admin",
+            nameof(VaiTroDemo.Manager) => "Manager",
+            nameof(VaiTroDemo.Guest) => "Guest",
+            _ => "Chưa xác định"
+        };
+
+    // Lấy ký tự đầu làm chữ viết tắt; dùng dấu hỏi nếu tên chưa có giá trị.
+    private static string LayInitial(string? ten)
+        => string.IsNullOrWhiteSpace(ten) ? "?" : ten.Trim()[0].ToString().ToUpperInvariant();
+}
+
+
+
+
+
+
+
+

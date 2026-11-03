@@ -1,0 +1,153 @@
+@implements IDisposable
+
+@page "/khoa/can-bo"
+
+@using CanBoModel = Nhom2_BTL.Models.CanBoGiangVien
+
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@inject DichVuPhanQuyenDemo PhanQuyen
+
+@inject DialogService HoiThoai
+
+@inject NotificationService ThongBao
+
+
+
+@* Danh sách nhân sự gồm các trường bắt buộc của sơ đồ; dữ liệu là giả lập. *@
+
+<PageTitle>Cán bộ, giảng viên | Quản lý đào tạo</PageTitle>
+
+<div class="page-heading-row"><div class="page-heading"><span class="eyebrow">PHÂN HỆ KHOA</span><h1>Cán bộ, giảng viên</h1><p>Tra cứu theo chức vụ, khoa, tổ và chuyên môn.</p></div>@if (duocChinhSua) { <RadzenButton class="btn btn-primary page-action" Icon="person_add" Text="Thêm cán bộ" Click="ThemCanBo" /> }</div>
+
+<RadzenCard class="directory-panel"><div class="panel-toolbar"><div class="search-box"><RadzenIcon Icon="search" aria-hidden="true" /><input class="form-control" value="@tuKhoa" data-tim-kiem @onchange="NhapTuKhoa" Placeholder="@(duocChinhSua ? "Tìm tên chính xác hoặc mã cán bộ" : "Tìm tên cán bộ")" aria-label="Tìm cán bộ" /></div>
+
+<RadzenDropDown TValue="string" Data="@DuLieu.LayDanhSachKhoa()" TextProperty="TenKhoa" ValueProperty="MaKhoa" @bind-Value="maKhoaLoc" Change="@(_ => maToLoc = null)" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả các khoa" class="filter-dropdown" />
+
+<RadzenDropDown TValue="string" Data="@DuLieu.LayDanhSachTo().Where(t => string.IsNullOrEmpty(maKhoaLoc) || t.MaKhoa == maKhoaLoc)" TextProperty="MaTo" ValueProperty="MaTo" @bind-Value="maToLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả các tổ" class="filter-dropdown" />
+
+<RadzenButton Text="Bỏ bộ lọc" Icon="filter_alt_off" ButtonStyle="ButtonStyle.Light" Click="BoLoc" /></div>
+
+<p class="ket-qua-tim-kiem" role="status">Kết quả phù hợp: <strong>@DanhSachHienThi.Count().ToString("N0") / @danhSachCanBo.Count.ToString("N0")</strong></p>
+
+<RadzenDataGrid @ref="bang" TItem="CanBoModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="15" AllowSorting="true" ShowPagingSummary="true" PagingSummaryFormat="Trang {0}/{1} · {2} bản ghi" AllowColumnResize="true" EmptyText="Không tìm thấy cán bộ phù hợp." class="directory-grid wide-directory-grid"><Columns>
+
+<RadzenDataGridColumn TItem="CanBoModel" Title="STT" Width="5rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
+
+@if (duocChinhSua) {
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.MaCanBo)" Title="MÃ CÁN BỘ" Width="9rem" />
+}
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.KhoaSapXepTen)" Title="HỌ VÀ TÊN" Width="16rem"><Template Context="cb"><strong>@cb.HoTen</strong> <NhanBanGhi TaoLuc="cb.TaoLuc" CapNhatLuc="cb.CapNhatLuc" /></Template></RadzenDataGridColumn>
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.ChucVu)" Title="CHỨC VỤ" Width="13rem" />
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.CapBacHam)" Title="CẤP BẬC HÀM" Width="10rem" />
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.HocHam)" Title="HỌC HÀM" Width="10rem" />
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.HocVi)" Title="HỌC VỊ" Width="10rem" />
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.NgaySinh)" Title="NGÀY SINH" FormatString="{0:dd/MM/yyyy}" Width="9rem" />
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.QueQuan)" Title="QUÊ QUÁN" Width="12rem" />
+
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.ChuyenMon)" Title="CHUYÊN MÔN" Width="14rem" />
+
+            @if (duocChinhSua) {
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.SoDienThoai)" Title="SỐ ĐIỆN THOẠI" Width="11rem" />
+
+            }
+            @if (duocChinhSua) {
+<RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.SoCCCD)" Title="SỐ CCCD" Width="12rem" />
+
+            }
+<RadzenDataGridColumn TItem="CanBoModel" Property="TenKhoa" Title="KHOA" Width="22rem" /><RadzenDataGridColumn TItem="CanBoModel" Property="TenTo" Title="TỔ" Width="10rem" />
+
+@if (duocChinhSua) { <RadzenDataGridColumn TItem="CanBoModel" Title="THAO TÁC" Sortable="false" Width="8rem"><Template Context="cb"><div class="actions-cell"><RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => SuaCanBo(cb))" /><RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => XoaCanBo(cb))" /></div></Template></RadzenDataGridColumn> }
+
+<RadzenDataGridColumn TItem="CanBoModel" Title="CHI TIẾT" Width="7rem" Sortable="false"><Template Context="cb"><RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" aria-label="Xem chi tiết hồ sơ" Click="@(() => XemChiTiet(cb))" /></Template></RadzenDataGridColumn>
+
+</Columns></RadzenDataGrid></RadzenCard>
+
+
+
+@code {
+
+    // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
+
+    private async Task NhapTuKhoa(ChangeEventArgs e)
+
+    {
+
+        tuKhoa = e.Value?.ToString() ?? string.Empty;
+
+        if (bang is not null) await bang.FirstPage(true);
+
+    }
+
+
+
+    // Hồ sơ được lọc theo quyền tại dịch vụ; hộp thoại này không có thao tác ghi.
+
+    private Task XemChiTiet(CanBoModel x) => HoiThoai.OpenAsync<HoSoCanBo>("Hồ sơ cán bộ, giảng viên",
+
+        new Dictionary<string, object> { [nameof(HoSoCanBo.MaCanBo)] = x.MaTraCuuNoiBo },
+
+        new DialogOptions { Width = "700px", CloseDialogOnOverlayClick = true });
+
+
+
+    private RadzenDataGrid<CanBoModel>? bang;
+
+    private int SoThuTu(CanBoModel banGhi) => (bang?.View.ToList().IndexOf(banGhi) ?? -1) + 1;
+
+
+
+    // Mỗi tab chỉ giữ bản sao; cập nhật từ kho chung và hủy đăng ký khi component kết thúc.
+
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+
+
+
+private List<CanBoModel> danhSachCanBo = [];
+
+private string tuKhoa = string.Empty;
+
+private bool duocChinhSua;
+
+private string? maKhoaLoc, maToLoc;
+
+private IEnumerable<CanBoModel> DanhSachHienThi => danhSachCanBo.Where(cb => (string.IsNullOrEmpty(maKhoaLoc) || cb.MaKhoa == maKhoaLoc) && (string.IsNullOrEmpty(maToLoc) || cb.MaTo == maToLoc) && (string.IsNullOrWhiteSpace(tuKhoa) || cb.MaCanBo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || QuyTacDuLieu.TenKhopTuKhoa(cb.HoTen, tuKhoa)));
+
+protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+
+private void TaiDuLieu() => danhSachCanBo = DuLieu.LayDanhSachCanBo().OrderBy(c => c.KhoaSapXepTen, StringComparer.Ordinal).ToList();
+
+// Giữ hồ sơ mới trong vùng nhìn thấy; người dùng có thể bỏ lọc để xem lại toàn bộ.
+
+private async Task BoLoc() { tuKhoa = string.Empty; maKhoaLoc = maToLoc = null; if (bang is not null) await bang.FirstPage(true); }
+
+private async Task ThemCanBo() { var kq = await HoiThoai.OpenAsync<BieuMauCanBo>("Thêm cán bộ", new Dictionary<string, object> { [nameof(BieuMauCanBo.DuLieuBanDau)] = new CanBoModel(), [nameof(BieuMauCanBo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauCanBo.DanhSachTo)] = DuLieu.LayDanhSachTo() }, new DialogOptions { Width = "780px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) { maKhoaLoc = maToLoc = null; tuKhoa = daLuu.MaBanGhi ?? string.Empty; await ThongBaoKetQua(daLuu); if (bang is not null) await bang.FirstPage(true); } }
+
+private async Task SuaCanBo(CanBoModel cb) { var kq = await HoiThoai.OpenAsync<BieuMauCanBo>("Sửa cán bộ", new Dictionary<string, object> { [nameof(BieuMauCanBo.DuLieuBanDau)] = cb.TaoBanSao(), [nameof(BieuMauCanBo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauCanBo.DanhSachTo)] = DuLieu.LayDanhSachTo(), [nameof(BieuMauCanBo.DangSua)] = true }, new DialogOptions { Width = "780px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
+
+private async Task XoaCanBo(CanBoModel cb) { var ok = await HoiThoai.Confirm($"Xóa hồ sơ {cb.HoTen} ({cb.MaCanBo})?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaCanBoAsync(cb.MaCanBo)); }
+
+private async Task ThongBaoKetQua(KetQuaThaoTac kq) { ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+

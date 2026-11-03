@@ -1,0 +1,8 @@
+@inject NavigationManager DieuHuong
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) DieuHuong.NavigateTo("/dang-nhap", replace: true);
+    }
+}
+

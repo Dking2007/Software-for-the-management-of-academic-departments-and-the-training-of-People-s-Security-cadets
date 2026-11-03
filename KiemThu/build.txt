@@ -1,0 +1,7 @@
+  Nhom2-BTL -> D:\T01\LTMT\Nhom2-BTL\bin\GiaiDoan78\Nhom2-BTL.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.04

@@ -1,0 +1,115 @@
+@implements IDisposable
+@inject NavigationManager DieuHuong
+@inject NhaCungCapTrangThaiXacThucDemo XacThuc
+
+@* Sidebar giữ logo Học viện và luôn có đủ ba nhóm chức năng để đổi phân hệ. *@
+<div class="sidebar-menu @(menuDangMo ? "menu-open" : string.Empty)">
+    <div class="brand-block">
+        <a class="brand-link rz-link" href="/" aria-label="Về trang chọn phân hệ">
+            <img class="brand-logo" src="images/logo-hoc-vien-an-ninh.png" alt="Logo Học viện An ninh nhân dân" />
+            <span class="brand-copy"><strong>HỌC VIỆN AN NINH NHÂN DÂN</strong><small>QUẢN LÝ ĐÀO TẠO</small></span>
+        </a>
+    </div>
+    <RadzenButton class="navbar-toggler" Icon="menu" ButtonStyle="ButtonStyle.Light" Click="@ToggleMenu" aria-label="Mở hoặc đóng menu điều hướng" />
+    <nav class="nav-scrollable" aria-label="Điều hướng các phân hệ">
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="module-groups">
+                    <section class="module-menu-group">
+                        <div class="module-menu-heading">
+                            <a class="module-menu-main rz-link" href="/khoa" aria-label="Mở phân hệ Khoa"><RadzenIcon Icon="account_balance" /><span class="ten-phan-he">Khoa</span></a>
+                            <RadzenButton class="module-menu-toggle" Icon="@(moKhoa ? "expand_less" : "expand_more")" ButtonStyle="ButtonStyle.Light" Click="@ToggleKhoa" aria-label="@(moKhoa ? "Thu gọn mục Khoa" : "Mở các mục con của Khoa")" />
+                        </div>
+                        @if (moKhoa)
+                        {
+                            <RadzenPanelMenu class="menu-radzen menu-radzen-child">
+                                <RadzenPanelMenuItem Text="Danh sách khoa" Icon="list_alt" Path="/khoa" />
+                                <RadzenPanelMenuItem Text="Tổ chuyên môn" Icon="account_tree" Path="/khoa/to" />
+                                <RadzenPanelMenuItem Text="Cán bộ, giảng viên" Icon="badge" Path="/khoa/can-bo" />
+                            </RadzenPanelMenu>
+                        }
+                    <div class="menu-bay" aria-label="Các mục quản lý khoa"><strong>Khoa</strong><RadzenLink Path="/khoa" Text="Danh sách khoa" /><RadzenLink Path="/khoa/to" Text="Tổ chuyên môn" /><RadzenLink Path="/khoa/can-bo" Text="Cán bộ, giảng viên" /></div>
+                    </section>
+                    <section class="module-menu-group">
+                        <div class="module-menu-heading">
+                            <a class="module-menu-main rz-link" href="/lop" aria-label="Mở phân hệ Lớp đào tạo"><RadzenIcon Icon="groups" /><span class="ten-phan-he">Lớp đào tạo</span></a>
+                            <RadzenButton class="module-menu-toggle" Icon="@(moLop ? "expand_less" : "expand_more")" ButtonStyle="ButtonStyle.Light" Click="@ToggleLop" aria-label="@(moLop ? "Thu gọn mục Lớp đào tạo" : "Mở các mục con của Lớp đào tạo")" />
+                        </div>
+                        @if (moLop)
+                        {
+                            <RadzenPanelMenu class="menu-radzen menu-radzen-child"><RadzenPanelMenuItem Text="Danh sách lớp" Icon="view_list" Path="/lop" /></RadzenPanelMenu>
+                        }
+                    <div class="menu-bay" aria-label="Các mục quản lý lớp"><strong>Lớp đào tạo</strong><RadzenLink Path="/lop" Text="Danh sách lớp" /></div>
+                    </section>
+                    <section class="module-menu-group">
+                        <div class="module-menu-heading">
+                            <a class="module-menu-main rz-link" href="/hoc-vien" aria-label="Mở phân hệ Học viên"><RadzenIcon Icon="school" /><span class="ten-phan-he">Học viên</span></a>
+                            <RadzenButton class="module-menu-toggle" Icon="@(moHocVien ? "expand_less" : "expand_more")" ButtonStyle="ButtonStyle.Light" Click="@ToggleHocVien" aria-label="@(moHocVien ? "Thu gọn mục Học viên" : "Mở các mục con của Học viên")" />
+                        </div>
+                        @if (moHocVien)
+                        {
+                            <RadzenPanelMenu class="menu-radzen menu-radzen-child"><RadzenPanelMenuItem Text="Danh sách học viên" Icon="people" Path="/hoc-vien" /></RadzenPanelMenu>
+                        }
+                    <div class="menu-bay" aria-label="Các mục quản lý học viên"><strong>Học viên</strong><RadzenLink Path="/hoc-vien" Text="Danh sách học viên" /></div>
+                    </section>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <RadzenPanelMenu class="menu-radzen"><RadzenPanelMenuItem Text="Đăng nhập" Path="/dang-nhap" Icon="login" /></RadzenPanelMenu>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+    <AuthorizeView Roles="Admin" Context="admin">
+        <section class="module-menu-group menu-quan-tri">
+            <div class="module-menu-heading"><a class="module-menu-main rz-link" href="/quan-tri/tai-khoan" aria-label="Quản trị hệ thống"><RadzenIcon Icon="manage_accounts" /><span class="ten-phan-he">Quản trị hệ thống</span></a></div>
+            <div class="menu-bay"><strong>Quản trị hệ thống</strong><RadzenLink Path="/quan-tri/tai-khoan" Text="Tài khoản và phân quyền" /></div>
+        </section>
+    </AuthorizeView>
+</div>
+
+@code {
+    private bool menuDangMo;
+    private bool moKhoa;
+    private bool moLop;
+    private bool moHocVien;
+    private string phanHe = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        CapNhatPhanHe();
+        DieuHuong.LocationChanged += KhiDoiTrang;
+    }
+
+    // Mở sẵn nhóm hiện tại để mục con dễ nhìn; nhóm khác vẫn có thể mở bằng mũi tên.
+    private void CapNhatPhanHe()
+    {
+        var duongDan = DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0];
+        phanHe = duongDan.StartsWith("khoa", StringComparison.OrdinalIgnoreCase) ? "khoa"
+            : duongDan.StartsWith("lop", StringComparison.OrdinalIgnoreCase) ? "lop"
+            : duongDan.StartsWith("hoc-vien", StringComparison.OrdinalIgnoreCase) ? "hoc-vien"
+            : string.Empty;
+        moKhoa = phanHe == "khoa";
+        moLop = phanHe == "lop";
+        moHocVien = phanHe == "hoc-vien";
+    }
+
+    private void KhiDoiTrang(object? sender, LocationChangedEventArgs args)
+    {
+        menuDangMo = false;
+        CapNhatPhanHe();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleKhoa() => moKhoa = !moKhoa;
+    private void ToggleLop() => moLop = !moLop;
+    private void ToggleHocVien() => moHocVien = !moHocVien;
+    private void ToggleMenu() => menuDangMo = !menuDangMo;
+    public void Dispose() { DieuHuong.LocationChanged -= KhiDoiTrang; }
+
+
+}
+
+
+
+

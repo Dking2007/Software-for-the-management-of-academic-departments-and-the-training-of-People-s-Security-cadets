@@ -1,0 +1,80 @@
+@implements IDisposable
+@page "/lop"
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject DialogService HoiThoai
+@inject NotificationService ThongBao
+
+@* Bảng lớp giữ đúng mã lớp, hệ, khóa, chuyên ngành và sĩ số trong sơ đồ. *@
+<PageTitle>Lớp đào tạo | Quản lý đào tạo</PageTitle>
+<div class="page-heading-row"><div class="page-heading"><span class="eyebrow">PHÂN HỆ LỚP ĐÀO TẠO</span><h1>Danh sách lớp</h1><p>Tổng hợp danh sách lớp của các hệ học tại Học viện.</p></div>@if (duocChinhSua) { <RadzenButton class="btn btn-primary page-action" Icon="add" Text="Thêm lớp" Click="ThemLop" /> }</div>
+<RadzenCard class="directory-panel">
+    <div class="panel-toolbar">
+        <div class="search-box"><RadzenIcon Icon="search" aria-hidden="true" /><input class="form-control" value="@tuKhoa" data-tim-kiem @onchange="NhapTuKhoa" Placeholder="Tìm mã lớp, hệ, khóa hoặc chuyên ngành" aria-label="Tìm lớp đào tạo" /></div>
+        <RadzenDropDown TValue="string" Data="@cacHeDaoTaoLoc" @bind-Value="heDaoTaoLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả hệ đào tạo" class="filter-dropdown" />
+        <RadzenDropDown TValue="string" Data="@danhSachLop.Select(l => l.KhoaHoc).Distinct()" @bind-Value="khoaLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả các khóa" class="filter-dropdown" />
+    </div>
+    <p class="ket-qua-tim-kiem" role="status">Kết quả phù hợp: <strong>@DanhSachHienThi.Count().ToString("N0") / @danhSachLop.Count.ToString("N0")</strong></p>
+<RadzenDataGrid @ref="bang" TItem="LopDaoTao" Data="@DanhSachHienThi" AllowPaging="true" PageSize="15" AllowSorting="true" ShowPagingSummary="true" PagingSummaryFormat="Trang {0}/{1} · {2} bản ghi" AllowColumnResize="true" EmptyText="Không tìm thấy lớp phù hợp." class="directory-grid">
+        <Columns>
+<RadzenDataGridColumn TItem="LopDaoTao" Title="STT" Width="5rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.MaLop)" Title="MÃ LỚP" Width="9rem"><Template Context="lop"><span class="record-code">@lop.MaLop</span></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.HeDaoTao)" Title="HỆ ĐÀO TẠO" Width="12rem" />
+            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.KhoaHoc)" Title="KHÓA" Width="7rem" />
+            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.ChuyenNganh)" Title="CHUYÊN NGÀNH" Width="20rem" />
+            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.SiSo)" Title="SĨ SỐ" TextAlign="TextAlign.Center" Width="7rem" />
+
+            @if (duocChinhSua) { <RadzenDataGridColumn TItem="LopDaoTao" Title="THAO TÁC" Sortable="false" Width="8rem"><Template Context="lop"><div class="actions-cell"><RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" aria-label="@($"Sửa lớp {lop.MaLop}")" Click="@(() => SuaLop(lop))" /><RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" aria-label="@($"Xóa lớp {lop.MaLop}")" Click="@(() => XoaLop(lop))" /></div></Template></RadzenDataGridColumn> }
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
+    private async Task NhapTuKhoa(ChangeEventArgs e)
+    {
+        tuKhoa = e.Value?.ToString() ?? string.Empty;
+        if (bang is not null) await bang.FirstPage(true);
+    }
+
+    private RadzenDataGrid<LopDaoTao>? bang;
+    private int SoThuTu(LopDaoTao banGhi) => (bang?.View.ToList().IndexOf(banGhi) ?? -1) + 1;
+
+    // Mỗi tab chỉ giữ bản sao; cập nhật từ kho chung và hủy đăng ký khi component kết thúc.
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+
+    private readonly string[] cacHeDaoTaoLoc = ["Chính quy", "Văn bằng 2"];
+    private List<LopDaoTao> danhSachLop = [];
+    private string tuKhoa = string.Empty;
+    private string? heDaoTaoLoc;
+    private string? khoaLoc;
+    private bool duocChinhSua;
+    private IEnumerable<LopDaoTao> DanhSachHienThi => danhSachLop.Where(lop =>
+        (string.IsNullOrWhiteSpace(khoaLoc) || lop.KhoaHoc == khoaLoc) &&
+        (string.IsNullOrWhiteSpace(heDaoTaoLoc) || lop.HeDaoTao == heDaoTaoLoc) &&
+        (string.IsNullOrWhiteSpace(tuKhoa) || lop.MaLop.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.HeDaoTao.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.KhoaHoc.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.ChuyenNganh.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase)));
+
+    protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Lop"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+    private void TaiDuLieu() { danhSachLop = DuLieu.LayDanhSachLop().ToList(); }
+    private async Task ThemLop()
+    {
+        var kq = await HoiThoai.OpenAsync<BieuMauLop>("Thêm lớp", new Dictionary<string, object> { [nameof(BieuMauLop.DuLieuBanDau)] = new LopDaoTao() }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu);
+    }
+    private async Task SuaLop(LopDaoTao lop)
+    {
+        var kq = await HoiThoai.OpenAsync<BieuMauLop>("Sửa lớp", new Dictionary<string, object> { [nameof(BieuMauLop.DuLieuBanDau)] = lop.TaoBanSao(), [nameof(BieuMauLop.DangSua)] = true }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu);
+    }
+    private async Task XoaLop(LopDaoTao lop)
+    {
+        var ok = await HoiThoai.Confirm($"Xóa lớp {lop.MaLop}?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" });
+        if (ok == true) await ThongBaoKetQua(await DuLieu.XoaLopAsync(lop.MaLop));
+    }
+    private async Task ThongBaoKetQua(KetQuaThaoTac kq) { ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
+}
+
+
+
+

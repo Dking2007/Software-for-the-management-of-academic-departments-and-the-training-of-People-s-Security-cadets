@@ -1,0 +1,36 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        @if (routeData.PageType == typeof(Nhom2_BTL.Components.Pages.DangNhap) || routeData.PageType == typeof(Nhom2_BTL.Components.Pages.DangKy))
+        {
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.BoCucDangNhap)" />
+        }
+        else
+        {
+            <AuthorizeView>
+                <Authorized>
+                    <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"><NotAuthorized Context="quyenTrang"><p>Bạn không có quyền truy cập trang này.</p></NotAuthorized></AuthorizeRouteView>
+                </Authorized>
+                <NotAuthorized>
+                    <ChuyenDenDangNhap />
+                </NotAuthorized>
+            </AuthorizeView>
+        }
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <PageTitle>Không tìm thấy trang | Quản lý đào tạo</PageTitle>
+            <section class="empty-state trang-khong-ton-tai">
+                <RadzenIcon Icon="search_off" class="empty-state-icon" />
+                <h1>Không tìm thấy trang</h1>
+                <p>Địa chỉ bạn mở không khớp với trang nào trong hệ thống.</p>
+                <RadzenLink Text="Về trang chủ" Icon="home" Path="/" class="btn btn-primary" />
+            </section>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@* Router dành riêng trang đăng nhập, còn các trang khác được kiểm tra trạng thái xác thực trước khi hiển thị. *@
+
+
+

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    @* Khai báo ngôn ngữ, khung nhìn, CSS và giao diện Radzen dùng chung cho mọi trang. *@
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    @* Nạp kiểu nền và font biểu tượng Material Symbols đi kèm gói Radzen đang cài. *@
+    <RadzenTheme Theme="material" />
+    <link rel="stylesheet" href="app.css?v=20261103-bang-tin-2" />
+    <link rel="stylesheet" href="Nhom2-BTL.styles.css?v=20261103-hop-sua-thong-bao-4" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    @* Routes chạy ở chế độ Interactive Server để xử lý sự kiện và trạng thái phiên trên máy chủ. *@
+    <Routes @rendermode="InteractiveServer" />
+    @* Tải runtime Blazor trước rồi đến các hàm JavaScript mà Radzen cần. *@
+    <script src="phien-dang-nhap.js"></script>
+    <script src="tim-kiem.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+</body>
+
+</html>
+
