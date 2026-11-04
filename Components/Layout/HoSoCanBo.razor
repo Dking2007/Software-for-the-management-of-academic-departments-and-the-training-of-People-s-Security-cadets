@@ -7,12 +7,7 @@
 }
 else
 {
-    <dl class="chi-tiet-can-bo">
-        @foreach (var truong in CacTruong.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
-        {
-            <div><dt>@truong.Key</dt><dd>@(string.IsNullOrWhiteSpace(truong.Value) ? "—" : truong.Value)</dd></div>
-        }
-    </dl>
+    <ChiTietHoSo CacTruong="@CacTruong" />
 }
 
 @code {

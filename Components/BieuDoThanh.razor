@@ -1,0 +1,36 @@
+@using System.Globalization
+@* Biểu đồ thanh ngang đơn giản bằng HTML/CSS (không cần thư viện biểu đồ): mỗi dòng gồm nhãn, thanh dài theo
+   tỉ lệ với giá trị lớn nhất và số ở đầu thanh. Rê chuột hoặc Tab vào dòng để xem gợi ý chi tiết. *@
+@if (CacDong.Count == 0)
+{
+    <p class="bieu-do-trong">Chưa có số liệu.</p>
+}
+else
+{
+    <ul class="bieu-do-thanh @(NhanRong ? "nhan-rong" : "")">
+        @foreach (var dong in CacDong)
+        {
+            var chiTiet = $"{dong.Ten}{(dong.Nhom is null ? "" : $" · {dong.Nhom}")}: {dong.GiaTri:N0} {DonVi} ({(double)dong.GiaTri / Tong:P0})";
+            <li class="dong-bieu-do" tabindex="0" aria-label="@chiTiet">
+                <span class="ten-dong" aria-hidden="true">@dong.Ten</span>
+                <span class="ranh-thanh" aria-hidden="true"><span class="thanh @dong.LopMau" style="width: @((dong.GiaTri * 100.0 / GiaTriLonNhat).ToString("0.##", CultureInfo.InvariantCulture))%"></span></span>
+                <span class="gia-tri-dong" aria-hidden="true">@dong.GiaTri.ToString("N0")</span>
+                <span class="goi-y-dong" aria-hidden="true">@chiTiet</span>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    // LopMau: "mau-du-lieu-1" hoặc "mau-du-lieu-2" (màu định nghĩa trong app.css); Nhom: tên nhóm hiện trong gợi ý, ví dụ hệ đào tạo.
+    public sealed record Dong(string Ten, int GiaTri, string LopMau, string? Nhom);
+
+    [Parameter, EditorRequired] public IReadOnlyList<Dong> CacDong { get; set; } = [];
+    [Parameter] public string DonVi { get; set; } = string.Empty;
+
+    // Nhãn dài (tên khoa) cần cột nhãn rộng hơn mã khóa học ngắn.
+    [Parameter] public bool NhanRong { get; set; }
+
+    private int GiaTriLonNhat => Math.Max(1, CacDong.Max(x => x.GiaTri));
+    private int Tong => Math.Max(1, CacDong.Sum(x => x.GiaTri));
+}

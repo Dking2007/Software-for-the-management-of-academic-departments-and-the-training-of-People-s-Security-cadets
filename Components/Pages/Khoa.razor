@@ -9,28 +9,25 @@
 
 @* Danh sách khoa hiển thị lãnh đạo và số tổ; hồ sơ tổ, cán bộ có mục riêng trong sidebar. *@
 <PageTitle>Khoa | Quản lý đào tạo</PageTitle>
-<div class="page-heading-row">
-    <div class="page-heading"><span class="eyebrow">PHÂN HỆ KHOA</span><h1>Danh sách khoa</h1><p>Quản lý khoa và các vị trí lãnh đạo trực thuộc.</p></div>
-    @if (duocChinhSua) { <RadzenButton class="btn btn-primary page-action" Icon="add" Text="Thêm khoa" Click="ThemKhoa" /> }
-</div>
+<DauTrang TieuDe="Danh sách khoa" MoTa="Quản lý khoa và các vị trí lãnh đạo trực thuộc.">
+    <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="add" Text="Thêm khoa" ButtonStyle="ButtonStyle.Primary" Click="ThemKhoa" /> }</ThaoTac>
+</DauTrang>
 <RadzenCard class="directory-panel">
-    <div class="panel-toolbar"><div class="search-box"><RadzenIcon Icon="search" aria-hidden="true" /><input class="form-control" value="@tuKhoa" data-tim-kiem @onchange="NhapTuKhoa" Placeholder="Tìm theo mã hoặc tên khoa" aria-label="Tìm khoa" /></div></div>
-    <p class="ket-qua-tim-kiem" role="status">Kết quả phù hợp: <strong>@DanhSachHienThi.Count().ToString("N0") / @danhSachKhoa.Count.ToString("N0")</strong></p>
-<RadzenDataGrid @ref="bang" TItem="KhoaModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="10" AllowSorting="true" ShowPagingSummary="true" PagingSummaryFormat="Trang {0}/{1} · {2} bản ghi" AllowColumnResize="true" EmptyText="Không tìm thấy khoa phù hợp." class="directory-grid">
+    <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="Tìm theo mã hoặc tên khoa" NhanTimKiem="Tìm khoa" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachKhoa.Count" />
+    <RadzenDataGrid @ref="bang" GridLines="DataGridGridLines.Horizontal" TItem="KhoaModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="10" AllowSorting="true" PagerHorizontalAlign="HorizontalAlign.Center" AllowColumnResize="true" EmptyText="Không tìm thấy khoa phù hợp." class="directory-grid">
         <Columns>
-<RadzenDataGridColumn TItem="KhoaModel" Title="STT" Width="5rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.MaKhoa)" Title="MÃ KHOA" Width="8rem"><Template Context="khoa"><span class="record-code">@khoa.MaKhoa</span></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.TenKhoa)" Title="TÊN KHOA" Width="22rem"><Template Context="khoa"><strong>@khoa.TenKhoa</strong></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Title="TRƯỞNG KHOA" Width="12rem"><Template Context="khoa"><TenCanBo MaCanBo="@khoa.MaTruongKhoa" /></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Title="PHÓ KHOA" Width="12rem"><Template Context="khoa"><div class="cac-pho-khoa"><TenCanBo MaCanBo="@khoa.MaPhoKhoa" /><TenCanBo MaCanBo="@khoa.MaPhoKhoaThuHai" /></div></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Title="SỐ TỔ" TextAlign="TextAlign.Center" Width="12rem"><Template Context="khoa">@cacTo.Count(to => to.MaKhoa == khoa.MaKhoa)</Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.SiSo)" Title="SĨ SỐ CÁN BỘ" TextAlign="TextAlign.Center" Width="9rem" />
-            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.DangHoatDong)" Title="TRẠNG THÁI" TextAlign="TextAlign.Center" Width="12rem"><Template Context="khoa"><RadzenBadge Text="@(khoa.DangHoatDong ? "Đang hoạt động" : "Tạm dừng")" BadgeStyle="@(khoa.DangHoatDong ? BadgeStyle.Success : BadgeStyle.Warning)" /></Template></RadzenDataGridColumn>
-            @if (duocChinhSua) { <RadzenDataGridColumn TItem="KhoaModel" Title="THAO TÁC" Sortable="false" Width="8rem"><Template Context="khoa"><div class="actions-cell"><RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" aria-label="@($"Sửa khoa {khoa.MaKhoa}")" Click="@(() => SuaKhoa(khoa))" /><RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" aria-label="@($"Xóa khoa {khoa.MaKhoa}")" Click="@(() => XoaKhoa(khoa))" /></div></Template></RadzenDataGridColumn> }
+            <RadzenDataGridColumn TItem="KhoaModel" Title="STT" Width="5rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.MaKhoa)" Title="Mã khoa" Width="8rem"><Template Context="khoa"><span class="record-code">@khoa.MaKhoa</span></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.TenKhoa)" Title="Tên khoa" Width="22rem"><Template Context="khoa"><strong>@khoa.TenKhoa</strong></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Title="Trưởng khoa" Width="12rem"><Template Context="khoa"><TenCanBo MaCanBo="@khoa.MaTruongKhoa" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Title="Phó khoa" Width="12rem"><Template Context="khoa"><div class="cac-pho-khoa"><TenCanBo MaCanBo="@khoa.MaPhoKhoa" /><TenCanBo MaCanBo="@khoa.MaPhoKhoaThuHai" /></div></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Title="Số tổ" TextAlign="TextAlign.Right" Width="7rem"><Template Context="khoa">@cacTo.Count(to => to.MaKhoa == khoa.MaKhoa)</Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.SiSo)" Title="Sĩ số cán bộ" TextAlign="TextAlign.Right" Width="9rem" />
+            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.DangHoatDong)" Title="Trạng thái" Width="11rem"><Template Context="khoa"><span class="nhan-trang-thai @(khoa.DangHoatDong ? "hoat-dong" : "tam-dung")">@(khoa.DangHoatDong ? "Đang hoạt động" : "Tạm dừng")</span></Template></RadzenDataGridColumn>
+            @if (duocChinhSua) { <RadzenDataGridColumn TItem="KhoaModel" Title="Thao tác" Sortable="false" Width="7rem"><Template Context="khoa"><div class="actions-cell"><RadzenButton Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa khoa {khoa.MaKhoa}")" Click="@(() => SuaKhoa(khoa))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa khoa {khoa.MaKhoa}")" Click="@(() => XoaKhoa(khoa))" /></div></Template></RadzenDataGridColumn> }
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
-
 
 @code {
     // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
@@ -70,7 +67,7 @@
     }
     private async Task XoaKhoa(KhoaModel khoa)
     {
-        var xacNhan = await HoiThoai.Confirm($"Xóa {khoa.TenKhoa}?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" });
+        var xacNhan = await HoiThoai.Confirm($"Bạn sắp xóa khoa {khoa.TenKhoa} ({khoa.MaKhoa}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" });
         if (xacNhan == true) await ThongBaoKetQua(await DuLieu.XoaKhoaAsync(khoa.MaKhoa));
     }
     private async Task ThongBaoKetQua(KetQuaThaoTac ketQua)

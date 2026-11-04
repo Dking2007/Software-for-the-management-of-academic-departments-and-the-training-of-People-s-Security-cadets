@@ -3,19 +3,21 @@
 @inject DichVuQuanLyDuLieuDemo DuLieu
 
 @* Biểu mẫu học viên gom đủ trường theo hồ sơ; mọi dữ liệu nhạy cảm đều là giả lập. *@
-<RadzenTemplateForm TItem="HocVien" Data="@banSao" Submit="Luu"><RadzenStack Gap="1rem"><div class="form-grid">
+<RadzenTemplateForm TItem="HocVien" Data="@banSao" Submit="Luu"><RadzenStack Gap="1rem"><fieldset class="nhom-bieu-mau"><legend>Thông tin cá nhân</legend><div class="form-grid">
 <RadzenFormField Text="Mã học viên" Variant="Variant.Outlined"><RadzenTextBox Name="MaHocVien" @bind-Value="banSao.MaHocVien" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
 <RadzenFormField Text="Họ tên *" Variant="Variant.Outlined"><RadzenTextBox Name="HoTen" @bind-Value="banSao.HoTen" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Giới tính" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="GioiTinh" Data="@cacGioiTinh" @bind-Value="banSao.GioiTinh" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Ngày sinh" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" Name="NgaySinh" @bind-Value="banSao.NgaySinh" DateFormat="dd/MM/yyyy" Max="@DateTime.Today" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Quê quán" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="QueQuan" Data="@QuyTacDuLieu.TinhThanh" @bind-Value="banSao.QueQuan" AllowFiltering="true" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Số CCCD" Variant="Variant.Outlined"><RadzenTextBox Name="SoCCCD" @bind-Value="banSao.SoCCCD" MaxLength="12" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Số điện thoại" Variant="Variant.Outlined"><RadzenTextBox Name="SoDienThoai" @bind-Value="banSao.SoDienThoai" Style="width:100%" /></RadzenFormField>
+<RadzenFormField Text="Email" Variant="Variant.Outlined"><RadzenTextBox Name="Email" @bind-Value="banSao.Email" Style="width:100%" /></RadzenFormField>
+<RadzenFormField class="toan-hang" Text="Địa chỉ thường trú" Variant="Variant.Outlined"><RadzenTextBox Name="DiaChiThuongTru" @bind-Value="banSao.DiaChiThuongTru" Style="width:100%" /></RadzenFormField>
+</div></fieldset>
+<fieldset class="nhom-bieu-mau"><legend>Đơn vị học tập</legend><div class="form-grid">
 <RadzenFormField Text="Lớp" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="MaLop" Data="@DanhSachLop" TextProperty="MaLop" ValueProperty="MaLop" @bind-Value="banSao.MaLop" Placeholder="Chọn lớp" Style="width:100%" /></RadzenFormField>
 <RadzenFormField Text="Chức vụ trong lớp" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="ChucVu" Data="@cacChucVu" @bind-Value="banSao.ChucVu" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Ngày sinh" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" Name="NgaySinh" @bind-Value="banSao.NgaySinh" DateFormat="dd/MM/yyyy" Max="@DateTime.Today" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Giới tính" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="GioiTinh" Data="@cacGioiTinh" @bind-Value="banSao.GioiTinh" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Quê quán" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="QueQuan" Data="@QuyTacDuLieu.TinhThanh" @bind-Value="banSao.QueQuan" AllowFiltering="true" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Số điện thoại" Variant="Variant.Outlined"><RadzenTextBox Name="SoDienThoai" @bind-Value="banSao.SoDienThoai" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Số CCCD" Variant="Variant.Outlined"><RadzenTextBox Name="SoCCCD" @bind-Value="banSao.SoCCCD" MaxLength="12" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Địa chỉ thường trú" Variant="Variant.Outlined"><RadzenTextBox Name="DiaChiThuongTru" @bind-Value="banSao.DiaChiThuongTru" Style="width:100%" /></RadzenFormField>
-<RadzenFormField Text="Email" Variant="Variant.Outlined"><RadzenTextBox Name="Email" @bind-Value="banSao.Email" Style="width:100%" /></RadzenFormField>
-</div>
+</div></fieldset>
 @if (DanhSachLop.FirstOrDefault(x => x.MaLop == banSao.MaLop) is { } lop) { <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">@lop.HeDaoTao · Khóa @lop.KhoaHoc · @lop.ChuyenNganh</RadzenAlert> }
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem"><RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" /><RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu học viên" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" /></RadzenStack></RadzenStack>@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
 <RadzenRequiredValidator Component="MaHocVien" Text="Vui lòng nhập hoặc chọn mã học viên." />

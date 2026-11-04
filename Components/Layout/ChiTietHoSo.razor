@@ -1,12 +1,85 @@
-@* Nội dung chỉ đọc dùng chung cho hai loại hồ sơ; nhãn do trang nghiệp vụ cung cấp. *@
-<RadzenStack Gap="1rem">
-    @foreach (var truong in CacTruong.Where(x => !string.IsNullOrWhiteSpace(x.Value)))
-    {
-        <RadzenStack Gap=".25rem"><RadzenText TextStyle="TextStyle.Caption">@truong.Key</RadzenText><RadzenText>@truong.Value</RadzenText></RadzenStack>
-    }
-</RadzenStack>
-@code {
-    [Parameter] public Dictionary<string, string> CacTruong { get; set; } = new();
+@* Phiếu hồ sơ chỉ đọc dùng chung cho cán bộ và học viên.
+   Đầu phiếu: avatar, họ tên, chức vụ và các nhãn nổi bật (mã, cấp bậc hàm, học vị); bên dưới chia trường thành nhóm.
+   Trường không có giá trị (kể cả trường đã bị lọc theo quyền ở dịch vụ) không hiển thị; nhóm không còn trường nào cũng ẩn. *@
+@{
+    var ten = Lay("Họ tên");
+    var ma = Lay("Mã cán bộ") ?? Lay("Mã");
+    var chucVu = Lay("Chức vụ");
+    var nhanNoiBat = new[] { Lay("Cấp bậc hàm"), Lay("Học hàm"), Lay("Học vị") }.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
 }
+<div class="phieu-ho-so">
+    @if (!string.IsNullOrWhiteSpace(ten))
+    {
+        <header class="dau-phieu">
+            <span class="user-avatar phieu-avatar" aria-hidden="true">@ChuCaiDau(ten)</span>
+            <div class="dau-phieu-chu">
+                <strong class="ten-phieu">@ten</strong>
+                @if (!string.IsNullOrWhiteSpace(chucVu)) { <span class="chuc-vu-phieu">@chucVu</span> }
+                @if (!string.IsNullOrWhiteSpace(ma) || nhanNoiBat.Count > 0)
+                {
+                    <span class="nhan-phieu">
+                        @if (!string.IsNullOrWhiteSpace(ma)) { <span class="record-code" title="Mã hồ sơ">@ma</span> }
+                        @foreach (var nhan in nhanNoiBat) { <span class="nhan-phieu-muc">@nhan</span> }
+                    </span>
+                }
+            </div>
+        </header>
+    }
 
+    @foreach (var nhom in CacNhom)
+    {
+        var cacTruong = nhom.Truong.Select(k => (Nhan: k, GiaTri: Lay(k))).Where(x => !string.IsNullOrWhiteSpace(x.GiaTri)).ToList();
+        if (cacTruong.Count == 0) continue;
+        <section class="nhom-ho-so">
+            <h3><RadzenIcon Icon="@nhom.BieuTuong" />@nhom.Ten</h3>
+            <dl class="luoi-ho-so">
+                @foreach (var truong in cacTruong)
+                {
+                    <div class="@(TruongDai.Contains(truong.Nhan) ? "toan-hang" : null)"><dt>@truong.Nhan</dt><dd>@truong.GiaTri</dd></div>
+                }
+            </dl>
+        </section>
+    }
 
+    @* Trường lạ do trang khác truyền vào mà chưa thuộc nhóm nào vẫn được hiển thị, không bị mất. *@
+    @{ var conLai = CacTruong.Where(x => !DaXep.Contains(x.Key) && !string.IsNullOrWhiteSpace(x.Value)).ToList(); }
+    @if (conLai.Count > 0)
+    {
+        <section class="nhom-ho-so">
+            <h3><RadzenIcon Icon="more_horiz" />Thông tin khác</h3>
+            <dl class="luoi-ho-so">
+                @foreach (var truong in conLai) { <div><dt>@truong.Key</dt><dd>@truong.Value</dd></div> }
+            </dl>
+        </section>
+    }
+</div>
+
+@code {
+    // Chấp nhận cả Dictionary<string, string> do trang truyền qua hộp thoại lẫn từ điển có giá trị rỗng.
+    [Parameter] public IReadOnlyDictionary<string, string?> CacTruong { get; set; } = new Dictionary<string, string?>();
+
+    private sealed record NhomTruong(string Ten, string BieuTuong, string[] Truong);
+
+    // Thứ tự nhóm và trường cố định; nhãn trùng với khóa mà HoSoCanBo và trang Học viên truyền vào.
+    private static readonly NhomTruong[] CacNhom =
+    [
+        new("Đơn vị và chuyên môn", "work", ["Khoa", "Tổ", "Lớp", "Chuyên môn"]),
+        new("Thông tin cá nhân", "person", ["Giới tính", "Ngày sinh", "Quê quán", "Số CCCD"]),
+        new("Liên hệ", "call", ["Số điện thoại", "Email", "Địa chỉ thường trú"])
+    ];
+
+    // Trường thường dài (tên khoa ghép, địa chỉ) chiếm cả hàng để không bị ngắt dòng vụn.
+    private static readonly HashSet<string> TruongDai = ["Khoa", "Địa chỉ thường trú", "Email"];
+
+    // Đã hiện ở đầu phiếu (họ tên, mã, chức vụ, nhãn cấp bậc/học hàm/học vị) hoặc trong một nhóm.
+    private static readonly HashSet<string> DaXep = ["Họ tên", "Mã", "Mã cán bộ", "Chức vụ", "Cấp bậc hàm", "Học hàm", "Học vị", .. CacNhom.SelectMany(n => n.Truong)];
+
+    private string? Lay(string nhan) => CacTruong.TryGetValue(nhan, out var giaTri) ? giaTri : null;
+
+    // Tên Việt Nam lấy chữ cái đầu của tên gọi (từ cuối) làm chữ viết tắt trên avatar.
+    private static string ChuCaiDau(string ten)
+    {
+        var tu = ten.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tu.Length == 0 ? "?" : tu[^1][0].ToString().ToUpperInvariant();
+    }
+}

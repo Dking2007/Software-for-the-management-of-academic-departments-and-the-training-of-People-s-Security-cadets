@@ -1,0 +1,20 @@
+/* Thanh mảnh 10px, đầu dữ liệu bo 4px và vuông ở gốc; chữ dùng màu chữ, chỉ thanh mang màu dữ liệu. */
+.bieu-do-thanh { display: grid; gap: .125rem; margin: 0; padding: 0; list-style: none; }
+.dong-bieu-do { position: relative; display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) 3.5rem; align-items: center; gap: var(--kc-3); min-height: 2rem; padding: 0 var(--kc-2); border-radius: 6px; cursor: default; }
+.nhan-rong .dong-bieu-do { grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) 2.5rem; }
+.dong-bieu-do:hover, .dong-bieu-do:focus-visible { background: var(--nen-dai); }
+.dong-bieu-do:focus-visible { outline: 2px solid var(--mau-chinh-sang); outline-offset: 0; }
+.ten-dong { overflow: hidden; color: var(--chu-phu); font-size: var(--cc-13); text-overflow: ellipsis; white-space: nowrap; }
+.ranh-thanh { display: block; height: 10px; }
+.thanh { display: block; min-width: 2px; height: 100%; border-radius: 0 4px 4px 0; transition: width .4s cubic-bezier(.4, 0, .2, 1); }
+.gia-tri-dong { color: var(--chu-chinh); font-size: var(--cc-13); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Gợi ý hiện phía trên dòng khi rê chuột/focus; chữ đầy đủ nên tên khoa dài bị cắt vẫn đọc được. */
+.goi-y-dong { position: absolute; z-index: 5; right: var(--kc-2); bottom: calc(100% + 4px); max-width: 18rem; padding: .375rem .625rem; border-radius: 6px; background: var(--chu-chinh); color: #fff; font-size: var(--cc-12); line-height: 1.4; opacity: 0; pointer-events: none; transform: translateY(2px); transition: opacity .12s ease, transform .12s ease; }
+.dong-bieu-do:hover .goi-y-dong, .dong-bieu-do:focus-visible .goi-y-dong { opacity: 1; transform: none; }
+
+.bieu-do-trong { margin: 0; padding: var(--kc-6) 0; color: var(--chu-phu); font-size: var(--cc-13); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+    .thanh, .goi-y-dong { transition: none; }
+}

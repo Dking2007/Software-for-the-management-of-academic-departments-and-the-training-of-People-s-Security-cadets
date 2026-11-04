@@ -3,41 +3,94 @@
 @inject Radzen.DialogService HopThoai
 @inject DichVuTaiKhoan TaiKhoan
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider XacThuc
-<PageTitle>Quản lý tài khoản</PageTitle>
-<h1>Quản lý tài khoản và phân quyền</h1>
-<p>Tài khoản đăng ký mới có quyền Guest. Đổi mật khẩu, quyền hoặc khóa tài khoản sẽ vô hiệu hóa phiên cũ.</p>
-<div class="bo-loc-tai-khoan">
-    <div><label for="tim">Tìm mã hoặc tên tài khoản</label><input id="tim" class="form-control" @bind="tim" @bind:event="oninput" /></div>
-    <div><label for="loc-vai-tro">Vai trò</label><select id="loc-vai-tro" class="form-select" @bind="locVaiTro"><option value="">Tất cả</option><option>Admin</option><option>Manager</option><option>Guest</option></select></div>
-    <RadzenButton Text="Thêm tài khoản" Icon="person_add" Click="Them" Disabled="dangLuu" />
+
+@* Trang quản trị tài khoản: bố cục giống các trang danh sách (đầu trang, thanh công cụ, bảng trong một khung). Chỉ đổi giao diện, quyền Admin vẫn do thuộc tính Authorize và DichVuTaiKhoan kiểm tra. *@
+<PageTitle>Quản lý tài khoản | Quản lý đào tạo</PageTitle>
+<DauTrang TieuDe="Quản lý tài khoản và phân quyền" MoTa="Tài khoản đăng ký mới có quyền Guest. Đổi mật khẩu, quyền hoặc khóa tài khoản sẽ vô hiệu hóa phiên cũ.">
+    <ThaoTac><RadzenButton Text="Thêm tài khoản" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="Them" Disabled="dangLuu" /></ThaoTac>
+</DauTrang>
+
+<div role="status">
+    @if (!string.IsNullOrEmpty(thongBao))
+    {
+        <RadzenAlert class="thong-bao-trang" AlertStyle="@(thongBao.StartsWith("Đã") ? AlertStyle.Success : AlertStyle.Warning)" AllowClose="false">@thongBao</RadzenAlert>
+    }
 </div>
-<p role="status">@thongBao</p>
-@if (dangSua) {
-<section class="bieu-mau-tai-khoan">
-    <h2>@(maSua is null ? "Thêm tài khoản" : "Sửa tài khoản")</h2>
-    @if (maSua is not null) { <p>Mã cố định: @maSua</p> }
-    <label for="ten-tk">Tên đăng nhập</label><input id="ten-tk" class="form-control" @bind="ten" maxlength="64" autocomplete="off" />
-    <label for="mk-tk">@(maSua is null ? "Mật khẩu ban đầu" : "Mật khẩu mới (để trống nếu giữ nguyên)")</label><input id="mk-tk" class="form-control" type="password" @bind="matKhau" autocomplete="new-password" />
-    <p>Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt. Không thể xem mật khẩu hiện tại.</p>
-    <label for="vai-tro">Vai trò</label><select id="vai-tro" class="form-select hop-vai-tro" @bind="vaiTro"><option>Guest</option><option>Manager</option><option>Admin</option></select>
-    @if (vaiTro == "Manager") { <label for="pham-vi">Phạm vi quản lý</label><select id="pham-vi" class="form-select" @bind="phamVi"><option value="">Chọn phạm vi</option><option value="Khoa">Quản lý Khoa</option><option value="Lop">Quản lý Lớp đào tạo</option></select> }
-    <label class="my-3"><input type="checkbox" @bind="khoa" /> Khóa tài khoản</label>
-    <div><RadzenButton Text="Lưu" Icon="save" Click="Luu" Disabled="dangLuu" /><RadzenButton Text="Hủy" Click="Huy" Disabled="dangLuu" ButtonStyle="ButtonStyle.Light" /></div>
-</section>
+
+@if (dangSua)
+{
+    <section class="bieu-mau-tai-khoan" aria-labelledby="tieu-de-bieu-mau-tk">
+        <h2 id="tieu-de-bieu-mau-tk">@(maSua is null ? "Thêm tài khoản" : "Sửa tài khoản")</h2>
+        @if (maSua is not null) { <p class="ghi-chu-bieu-mau">Mã cố định: @maSua</p> }
+        <div class="form-grid">
+            <div><label for="ten-tk">Tên đăng nhập</label><input id="ten-tk" class="form-control" @bind="ten" maxlength="64" autocomplete="off" /></div>
+            <div><label for="mk-tk">@(maSua is null ? "Mật khẩu ban đầu" : "Mật khẩu mới (để trống nếu giữ nguyên)")</label><input id="mk-tk" class="form-control" type="password" @bind="matKhau" autocomplete="new-password" /></div>
+            <div><label for="vai-tro">Vai trò</label><select id="vai-tro" class="form-select" @bind="vaiTro"><option value="Guest">Người xem</option><option value="Manager">Cán bộ quản lý</option><option value="Admin">Quản trị viên</option></select></div>
+            @if (vaiTro == "Manager")
+            {
+                <div><label for="pham-vi">Phạm vi quản lý</label><select id="pham-vi" class="form-select" @bind="phamVi"><option value="">Chọn phạm vi</option><option value="Khoa">Quản lý Khoa</option><option value="Lop">Quản lý Lớp đào tạo</option></select></div>
+            }
+            <p class="ghi-chu-bieu-mau toan-hang">Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt. Không thể xem mật khẩu hiện tại.</p>
+            <label class="chon-khoa toan-hang"><input type="checkbox" @bind="khoa" /> Khóa tài khoản</label>
+        </div>
+        <div class="thao-tac-bieu-mau">
+            <RadzenButton Text="Hủy" Click="Huy" Disabled="dangLuu" ButtonStyle="ButtonStyle.Light" />
+            <RadzenButton Text="Lưu" Icon="save" Click="Luu" Disabled="dangLuu" ButtonStyle="ButtonStyle.Primary" />
+        </div>
+    </section>
 }
-@if (danhSach is null) { <p>Đang tải...</p> }
-else {
-<div class="bang-tai-khoan"><table class="table align-middle"><thead><tr><th>Mã tài khoản</th><th>Tên đăng nhập</th><th class="text-center">Vai trò</th><th>Phạm vi</th><th>Mật khẩu</th><th class="text-center">Khóa</th><th>Thao tác</th></tr></thead><tbody>
-@foreach (var u in KetQua) {
-<tr @key="u.Id"><td class="ma-tai-khoan">@u.Id</td><td>@u.UserName</td><td class="text-center"><span class="nhan-vai-tro-tk">@u.VaiTro</span></td><td>@(u.PhamVi == "Khoa" ? "Quản lý Khoa" : u.PhamVi == "Lop" ? "Quản lý Lớp đào tạo" : "—")</td><td>@if (KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u)) { <span>demo123</span> } else { <span title="Chỉ lưu bản băm; dùng Sửa để đặt mật khẩu mới">Không thể xem lại</span> }</td><td class="text-center"><input type="checkbox" checked="@u.BiKhoa" disabled aria-label="Trạng thái khóa của @u.UserName" /></td><td>
-@if (KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u)) { <span>Tài khoản mẫu cố định</span> }
-else { <RadzenButton Text="Sửa" Icon="edit" Click="@(() => Sua(u))" Disabled="dangLuu" /><RadzenButton Text="Xóa" Icon="delete" Click="@(() => Xoa(u))" Disabled="dangLuu" ButtonStyle="ButtonStyle.Danger" /> }
-</td></tr>
+
+@if (danhSach is null)
+{
+    <p class="bang-trong" role="status">Đang tải...</p>
 }
-</tbody></table></div>
-@if (!KetQua.Any()) { <p>Không có tài khoản phù hợp.</p> }
+else
+{
+    var ketQua = KetQua.ToList();
+    <div class="directory-panel">
+        <div class="panel-toolbar">
+            <div class="search-box">
+                <RadzenIcon Icon="search" aria-hidden="true" />
+                <input id="tim" class="form-control" @bind="tim" @bind:event="oninput" placeholder="Tìm mã hoặc tên tài khoản" aria-label="Tìm tài khoản" />
+            </div>
+            <select id="loc-vai-tro" class="form-select loc-vai-tro" @bind="locVaiTro" aria-label="Lọc theo vai trò"><option value="">Tất cả vai trò</option><option value="Admin">Quản trị viên</option><option value="Manager">Cán bộ quản lý</option><option value="Guest">Người xem</option></select>
+            <p class="ket-qua-tim-kiem" role="status">Hiển thị <strong>@ketQua.Count.ToString("N0") / @danhSach.Count.ToString("N0")</strong> tài khoản</p>
+        </div>
+        <div class="bang-tai-khoan">
+            <table class="table align-middle">
+                <thead><tr><th>Mã tài khoản</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Phạm vi</th><th>Mật khẩu</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
+                <tbody>
+                    @foreach (var u in ketQua)
+                    {
+                        var laMau = KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u);
+                        <tr @key="u.Id">
+                            <td class="ma-tai-khoan"><span class="record-code">@u.Id</span></td>
+                            <td><strong>@u.UserName</strong></td>
+                            <td><span class="nhan-trang-thai hoat-dong">@TenVaiTro(u.VaiTro)</span></td>
+                            <td>@(u.PhamVi == "Khoa" ? "Quản lý Khoa" : u.PhamVi == "Lop" ? "Quản lý Lớp đào tạo" : "—")</td>
+                            <td>@if (laMau) { <span class="record-code">demo123</span> } else { <span class="phu-dong" title="Chỉ lưu bản băm; dùng Sửa để đặt mật khẩu mới">Không thể xem lại</span> }</td>
+                            <td><span class="nhan-trang-thai @(u.BiKhoa ? "tam-dung" : "hoat-dong")">@(u.BiKhoa ? "Đã khóa" : "Hoạt động")</span></td>
+                            <td>
+                                @if (laMau) { <span class="phu-dong text-end">Tài khoản mẫu cố định</span> }
+                                else
+                                {
+                                    <div class="actions-cell">
+                                        <RadzenButton Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa tài khoản {u.UserName}")" Click="@(() => Sua(u))" Disabled="dangLuu" />
+                                        <RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa tài khoản {u.UserName}")" Click="@(() => Xoa(u))" Disabled="dangLuu" />
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (ketQua.Count == 0) { <p class="bang-trong">Không có tài khoản phù hợp.</p> }
+        </div>
+    </div>
 }
 @code {
+    // Giá trị vai trò trong dữ liệu giữ nguyên (Admin/Manager/Guest); chỉ nhãn hiển thị là tiếng Việt.
+    private static string TenVaiTro(string? vaiTro) => vaiTro switch { "Admin" => "Quản trị viên", "Manager" => "Cán bộ quản lý", "Guest" => "Người xem", _ => vaiTro ?? "" };
     private List<TaiKhoan>? danhSach;
     private string tim = "", locVaiTro = "", thongBao = "", ten = "", matKhau = "", vaiTro = "Guest", phamVi = "";
     private string? maSua;
@@ -59,11 +112,10 @@ else { <RadzenButton Text="Sửa" Icon="edit" Click="@(() => Sua(u))" Disabled="
         finally { matKhau = ""; dangLuu = false; }
     }
     private async Task Xoa(TaiKhoan u) {
-        if (await HopThoai.Confirm($"Xóa tài khoản {u.UserName}? Thao tác không thể hoàn tác.", "Xác nhận xóa", new Radzen.ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" }) != true) return;
+        if (await HopThoai.Confirm($"Xóa tài khoản {u.UserName}? Thao tác không thể hoàn tác.", "Xác nhận xóa", new Radzen.ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }) != true) return;
         dangLuu = true;
         try { thongBao = await TaiKhoan.Xoa((await XacThuc.GetAuthenticationStateAsync()).User, u.Id); await TaiLai(); }
         catch { thongBao = "Không xóa được. Vui lòng thử lại."; }
         finally { dangLuu = false; }
     }
 }
-

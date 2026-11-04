@@ -1,67 +1,82 @@
+/* Chia đôi màn hình: giới thiệu trên nền xanh đậm phẳng (có vòng tròn nét mảnh làm họa tiết), bên phải là thẻ kính mờ
+   đặt trên hai vệt màu nhạt. Vàng đồng chỉ ở vòng trang trí và viền trên của thẻ. */
 .trang-dang-nhap {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    display: grid;
-    place-items: center;
+    display: flex;
+    flex-wrap: wrap;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 2rem 1rem;
+    background: var(--nen-trang);
+}
+
+.gioi-thieu-dang-nhap {
+    position: relative;
+    overflow: hidden;
+    flex: 1 1 520px;
+    box-sizing: border-box;
+    min-height: 30rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3rem;
+    padding: 3.5rem 4rem;
+    background: var(--mau-chinh-dam);
+    color: var(--chu-tren-nen-toi);
+}
+
+/* Họa tiết chỉ để trang trí, không chặn thao tác. */
+.vong-trang-tri { position: absolute; border: 1px solid var(--vien-tren-nen-toi); border-radius: 50%; pointer-events: none; }
+.vong-mot { right: -16rem; bottom: -19rem; width: 51rem; height: 51rem; }
+.vong-hai { right: -11rem; bottom: -14rem; width: 41rem; height: 41rem; }
+.vong-ba { right: -6rem; bottom: -9rem; width: 31rem; height: 31rem; border-color: #8a6f2e; }
+
+.thuong-hieu-dang-nhap, .loi-gioi-thieu { position: relative; }
+.thuong-hieu-dang-nhap { display: flex; align-items: center; gap: var(--kc-4); }
+.logo-dang-nhap { flex: 0 0 auto; width: 3.5rem; height: 3.5rem; padding: .2rem; border-radius: 50%; background: #fff; object-fit: contain; }
+.thuong-hieu-dang-nhap div { display: flex; flex-direction: column; gap: .125rem; }
+.ten-hoc-vien { color: #fff; font-size: .875rem; font-weight: 700; letter-spacing: .08em; }
+.ten-he-thong { color: var(--chu-phu-tren-nen-toi); font-size: var(--cc-13); }
+
+.loi-gioi-thieu { max-width: 35rem; }
+.nhan-gioi-thieu { margin-bottom: var(--kc-4); color: var(--mau-nhan-sang); font-size: var(--cc-12); font-weight: 600; letter-spacing: .14em; }
+.tieu-de-gioi-thieu { margin: 0 0 var(--kc-5); color: #fff; font-family: var(--font-co-chan); font-size: 2.75rem; font-weight: 600; line-height: 1.2; }
+.mo-ta-gioi-thieu { max-width: 29rem; margin: 0; color: #b9cbc0; font-size: 1rem; line-height: 1.7; }
+
+.cot-dang-nhap {
+    flex: 1 1 480px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
     background:
-        radial-gradient(ellipse at 12% 15%, rgba(160, 201, 166, .12), transparent 45%),
-        radial-gradient(ellipse at 90% 85%, rgba(160, 201, 166, .08), transparent 40%),
-        var(--xanh-la-dam);
+        radial-gradient(28rem 22rem at 78% 18%, rgba(45,107,73,.20), transparent 70%),
+        radial-gradient(26rem 20rem at 18% 86%, rgba(184,146,58,.22), transparent 70%);
 }
 
-/* Các vòng tròn chỉ trang trí nền, không chặn thao tác với biểu mẫu. */
-.trang-dang-nhap::before,
-.trang-dang-nhap::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    width: clamp(20rem, 45vw, 44rem);
-    aspect-ratio: 1;
-    border: 1px solid rgba(255, 255, 255, .1);
-    border-radius: 50%;
-    box-shadow: 0 0 0 3rem rgba(255, 255, 255, .025),
-                0 0 0 6rem rgba(255, 255, 255, .02);
-    pointer-events: none;
-}
-
-.trang-dang-nhap::before {
-    top: -12rem;
-    left: -10rem;
-}
-
-.trang-dang-nhap::after {
-    right: -12rem;
-    bottom: -15rem;
-}
+.khung-dang-nhap { width: 100%; max-width: 26.25rem; }
 
 .hop-dang-nhap {
-    width: min(100%, 28rem);
-    padding: 2.5rem;
-    border: 1px solid rgba(255, 255, 255, .65);
-    border-radius: 1.25rem;
-    background: #fff;
-    box-shadow: 0 24px 64px rgba(7, 30, 20, .24);
+    padding: 2.5rem 2.25rem 2rem;
+    border: 1px solid var(--kinh-vien);
+    border-top: 3px solid var(--mau-nhan);
+    border-radius: var(--bo-goc-lon);
+    background: var(--kinh-nen);
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    box-shadow: var(--kinh-bong);
 }
 
-.nhan-dien-dang-nhap { text-align: center; margin-bottom: 2rem; }
-.logo-dang-nhap { display: block; width: 5.5rem; height: 5.5rem; margin: 0 auto 1.25rem; object-fit: contain; }
-.nhan-dien-dang-nhap h1 { display: flex; flex-direction: column; gap: .65rem; margin: 0; line-height: 1.4; }
-.nhan-dien-dang-nhap h1:focus { outline: none; }
-.ten-hoc-vien { color: var(--xanh-la-dam); font-size: .95rem; font-weight: 700; letter-spacing: .045em; text-transform: uppercase; }
-.ten-he-thong { color: var(--mau-chu); font-size: 1.5rem; font-weight: 650; letter-spacing: -.035em; text-wrap: balance; }
-.hop-dang-nhap ::deep .form-label { margin-bottom: .5rem; color: #3f5546; font-size: .9rem; font-weight: 600; }
-.hop-dang-nhap ::deep .form-control { width: 100%; min-height: 3.15rem; border: 1px solid #d9e4da; border-radius: .65rem; background: #fff; font-size: .95rem; }
-.hop-dang-nhap ::deep .form-control:focus,
-.hop-dang-nhap ::deep .form-control:focus-within { border-color: var(--xanh-la-chinh); box-shadow: 0 0 0 .2rem rgba(60, 128, 88, .12); }
-.hop-dang-nhap ::deep .nut-dang-nhap { justify-content: center; min-height: 3.15rem; margin-top: .75rem; border-radius: .65rem; font-size: .95rem; font-weight: 600; }
-.hop-dang-nhap ::deep .nut-dang-nhap span { color: inherit; font-size: inherit; }
+.hop-dang-nhap ::deep .tieu-de-the { margin: 0 0 var(--kc-1); font-family: var(--font-co-chan); font-size: var(--cc-28); font-weight: 600; line-height: 1.25; }
+.hop-dang-nhap ::deep .tieu-de-the:focus { outline: none; }
+.hop-dang-nhap ::deep .mo-ta-the { margin: 0 0 1.75rem; color: var(--chu-phu); font-size: .875rem; }
+.hop-dang-nhap ::deep .form-control { width: 100%; }
 
-@media (max-width: 480px) {
-    .hop-dang-nhap { padding: 2rem 1.5rem; }
-    .ten-hoc-vien { font-size: .85rem; }
-    .ten-he-thong { font-size: 1.35rem; }
+.ghi-chu-demo-dang-nhap { margin: var(--kc-5) 0 0; color: var(--chu-phu); font-size: var(--cc-12); line-height: 1.6; text-align: center; }
+
+@media (max-width: 760px) {
+    .gioi-thieu-dang-nhap { min-height: 0; padding: 1.5rem; gap: 1.5rem; }
+    .tieu-de-gioi-thieu { font-size: 1.75rem; }
+    .mo-ta-gioi-thieu { display: none; }
+    .cot-dang-nhap { padding: 1.5rem 1rem 2rem; }
+    .hop-dang-nhap { padding: 1.5rem 1.25rem; }
 }

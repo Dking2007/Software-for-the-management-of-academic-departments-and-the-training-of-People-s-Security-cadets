@@ -1,15 +1,17 @@
 @page "/dang-ky"
-<PageTitle>Đăng ký tài khoản</PageTitle>
-<h2>Đăng ký tài khoản Guest</h2>
-<form method="post" action="/phien/dang-ky" data-bieu-mau-phien data-enhance="false">
-    <AntiforgeryToken />
-    <label for="ten">Tên đăng nhập</label><input class="form-control" id="ten" name="tenDangNhap" required maxlength="64" autocomplete="username" />
-    <label for="mk">Mật khẩu</label><input class="form-control" id="mk" name="matKhau" type="password" required autocomplete="new-password" />
-    <p class="@(Loi is not null ? "text-danger" : null)">Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt.</p>
-    <label for="xn">Nhập lại mật khẩu</label><input class="form-control" id="xn" name="xacNhan" type="password" required autocomplete="new-password" />
-    @if (Loi is not null) { <p class="text-danger" role="alert">Không tạo được tài khoản. Kiểm tra tên đăng nhập, chính sách mật khẩu và xác nhận mật khẩu; tên có thể đã được sử dụng.</p> }
-    <button class="btn btn-primary" type="submit">Đăng ký</button>
-    <a href="/dang-nhap">Về đăng nhập</a>
-</form>
+<PageTitle>Đăng ký tài khoản | Quản lý đào tạo</PageTitle>
+<div class="noi-dung-the-dang-nhap">
+    <h1 class="tieu-de-the">Đăng ký tài khoản</h1>
+    <p class="mo-ta-the">Tài khoản mới có quyền Guest (người xem).</p>
+    <form method="post" action="/phien/dang-ky" data-bieu-mau-phien data-enhance="false">
+        <AntiforgeryToken />
+        <div class="mb-3"><label class="form-label" for="ten">Tên đăng nhập</label><input class="form-control" id="ten" name="tenDangNhap" required maxlength="64" autocomplete="username" /></div>
+        <div class="mb-3"><label class="form-label" for="mk">Mật khẩu</label><input class="form-control" id="mk" name="matKhau" type="password" required autocomplete="new-password" /></div>
+        <div class="mb-3"><label class="form-label" for="xn">Nhập lại mật khẩu</label><input class="form-control" id="xn" name="xacNhan" type="password" required autocomplete="new-password" /></div>
+        <p class="goi-y-mat-khau">Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt.</p>
+        @if (Loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">Không tạo được tài khoản. Kiểm tra tên đăng nhập, chính sách mật khẩu và xác nhận mật khẩu; tên có thể đã được sử dụng.</RadzenAlert> }
+        <button class="btn btn-primary nut-dang-nhap" type="submit">Đăng ký</button>
+        <div class="lien-ket-dang-ky">Đã có tài khoản? <a href="/dang-nhap">Về đăng nhập</a></div>
+    </form>
+</div>
 @code { [SupplyParameterFromQuery(Name = "loi")] public string? Loi { get; set; } }
-

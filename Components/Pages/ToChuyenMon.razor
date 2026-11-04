@@ -8,20 +8,23 @@
 
 @* Danh sách tổ hiển thị quan hệ với khoa, tổ trưởng và tổ phó. *@
 <PageTitle>Tổ chuyên môn | Quản lý đào tạo</PageTitle>
-<div class="page-heading-row"><div class="page-heading"><span class="eyebrow">PHÂN HỆ KHOA</span><h1>Tổ chuyên môn</h1><p>Các tổ trực thuộc khoa và người phụ trách.</p></div>@if (duocChinhSua) { <RadzenButton class="btn btn-primary page-action" Icon="add" Text="Thêm tổ" Click="ThemTo" /> }</div>
+<DauTrang TieuDe="Tổ chuyên môn" MoTa="Các tổ trực thuộc khoa và người phụ trách.">
+    <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="add" Text="Thêm tổ" ButtonStyle="ButtonStyle.Primary" Click="ThemTo" /> }</ThaoTac>
+</DauTrang>
 <RadzenCard class="directory-panel">
-<div class="panel-toolbar"><div class="search-box"><RadzenIcon Icon="search" aria-hidden="true" /><input class="form-control" value="@tuKhoa" data-tim-kiem @onchange="NhapTuKhoa" Placeholder="Tìm tên tổ, mã tổ hoặc khoa" aria-label="Tìm tổ" /></div></div>
-<p class="ket-qua-tim-kiem" role="status">Kết quả phù hợp: <strong>@DanhSachHienThi.Count().ToString("N0") / @danhSachTo.Count.ToString("N0")</strong></p>
-<RadzenDataGrid @ref="bang" TItem="ToModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="12" AllowSorting="true" ShowPagingSummary="true" PagingSummaryFormat="Trang {0}/{1} · {2} bản ghi" AllowColumnResize="true" EmptyText="Không tìm thấy tổ phù hợp." class="directory-grid"><Columns>
-<RadzenDataGridColumn TItem="ToModel" Title="STT" Width="5rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
-<RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.MaTo)" Title="MÃ TỔ" Width="12rem"><Template Context="to"><span class="record-code">@to.MaTo</span></Template></RadzenDataGridColumn>
-<RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.TenTo)" Title="TÊN TỔ" Width="12rem" />
-<RadzenDataGridColumn TItem="ToModel" Title="KHOA" Width="12rem"><Template Context="to">@DuLieu.LayTenKhoa(to.MaKhoa)</Template></RadzenDataGridColumn>
-<RadzenDataGridColumn TItem="ToModel" Title="TỔ TRƯỞNG" Width="12rem"><Template Context="to"><TenCanBo MaCanBo="@to.MaToTruong" /></Template></RadzenDataGridColumn>
-<RadzenDataGridColumn TItem="ToModel" Title="TỔ PHÓ" Width="12rem"><Template Context="to"><TenCanBo MaCanBo="@to.MaToPho" /></Template></RadzenDataGridColumn>
-<RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.SiSo)" Title="SĨ SỐ CÁN BỘ" TextAlign="TextAlign.Center" Width="9rem" />
-@if (duocChinhSua) { <RadzenDataGridColumn TItem="ToModel" Title="THAO TÁC" Sortable="false" Width="8rem"><Template Context="to"><div class="actions-cell"><RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => SuaTo(to))" /><RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => XoaTo(to))" /></div></Template></RadzenDataGridColumn> }
-</Columns></RadzenDataGrid>
+    <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="Tìm tên tổ, mã tổ hoặc khoa" NhanTimKiem="Tìm tổ" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachTo.Count" />
+    <RadzenDataGrid @ref="bang" GridLines="DataGridGridLines.Horizontal" TItem="ToModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="12" AllowSorting="true" PagerHorizontalAlign="HorizontalAlign.Center" AllowColumnResize="true" EmptyText="Không tìm thấy tổ phù hợp." class="directory-grid">
+        <Columns>
+            <RadzenDataGridColumn TItem="ToModel" Title="STT" Width="5rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.MaTo)" Title="Mã tổ" Width="12rem"><Template Context="to"><span class="record-code">@to.MaTo</span></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.TenTo)" Title="Tên tổ" Width="12rem" />
+            <RadzenDataGridColumn TItem="ToModel" Title="Khoa" Width="12rem"><Template Context="to">@DuLieu.LayTenKhoa(to.MaKhoa)</Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ToModel" Title="Tổ trưởng" Width="12rem"><Template Context="to"><TenCanBo MaCanBo="@to.MaToTruong" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ToModel" Title="Tổ phó" Width="12rem"><Template Context="to"><TenCanBo MaCanBo="@to.MaToPho" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.SiSo)" Title="Sĩ số cán bộ" TextAlign="TextAlign.Right" Width="9rem" />
+            @if (duocChinhSua) { <RadzenDataGridColumn TItem="ToModel" Title="Thao tác" Sortable="false" Width="7rem"><Template Context="to"><div class="actions-cell"><RadzenButton Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa tổ {to.MaTo}")" Click="@(() => SuaTo(to))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa tổ {to.MaTo}")" Click="@(() => XoaTo(to))" /></div></Template></RadzenDataGridColumn> }
+        </Columns>
+    </RadzenDataGrid>
 </RadzenCard>
 
 @code {
@@ -47,7 +50,7 @@ protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQu
 private void TaiDuLieu() => danhSachTo = DuLieu.LayDanhSachTo().ToList();
 private async Task ThemTo() { var kq = await HoiThoai.OpenAsync<BieuMauTo>("Thêm tổ", new Dictionary<string, object> { [nameof(BieuMauTo.DuLieuBanDau)] = new ToModel(), [nameof(BieuMauTo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa() }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
 private async Task SuaTo(ToModel to) { var kq = await HoiThoai.OpenAsync<BieuMauTo>("Sửa tổ", new Dictionary<string, object> { [nameof(BieuMauTo.DuLieuBanDau)] = to.TaoBanSao(), [nameof(BieuMauTo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauTo.DangSua)] = true }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
-private async Task XoaTo(ToModel to) { var ok = await HoiThoai.Confirm($"Xóa tổ {to.TenTo}?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaToAsync(to.MaTo)); }
+private async Task XoaTo(ToModel to) { var ok = await HoiThoai.Confirm($"Bạn sắp xóa tổ {to.TenTo} ({to.MaTo}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaToAsync(to.MaTo)); }
 private async Task ThongBaoKetQua(KetQuaThaoTac kq) { ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 }
 

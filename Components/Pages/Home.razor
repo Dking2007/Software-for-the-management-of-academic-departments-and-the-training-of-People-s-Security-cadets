@@ -1,10 +1,182 @@
 @page "/"
+@implements IDisposable
+@using System.Globalization
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@* Trang chủ: dải chào mừng, thẻ số liệu (lối vào từng phân hệ), hai biểu đồ cơ cấu và bảng thông báo.
+   Mọi con số lấy từ dữ liệu mẫu trong bộ nhớ nên sẽ đổi khi dữ liệu được đặt lại. *@
 <PageTitle>Trang chủ | Quản lý đào tạo</PageTitle>
+
+<section class="tong-quan-hero" aria-labelledby="tieu-de-tong-quan">
+    <div class="tong-quan-hero-chu">
+        <span class="tong-quan-ngay">@NgayHomNay</span>
+        <h1 id="tieu-de-tong-quan">
+            <AuthorizeView>
+                <Authorized Context="nguoiDung">Xin chào, @nguoiDung.User.Identity?.Name</Authorized>
+                <NotAuthorized>Tổng quan</NotAuthorized>
+            </AuthorizeView>
+        </h1>
+        <p>Theo dõi nhanh khoa, tổ chuyên môn, lớp đào tạo và học viên của Học viện.</p>
+    </div>
+    <span class="tong-quan-nhan-demo"><RadzenIcon Icon="science" />Bản demo · dữ liệu giả lập, đặt lại khi khởi động</span>
+</section>
+
+@* Thẻ số liệu nằm chồng lên mép dưới dải chào mừng (margin âm trong app.css). *@
+<section class="luoi-so-lieu" aria-label="Chỉ số hệ thống">
+    @foreach (var muc in CacMucSoLieu)
+    {
+        <a class="the-so-lieu" href="@muc.DuongDan" aria-label="@($"{muc.Ten}: {muc.GiaTri?.ToString("N0") ?? "chưa có số liệu"}. Mở danh sách")">
+            <span class="the-so-lieu-dau">
+                <span class="the-so-lieu-bieu-tuong"><RadzenIcon Icon="@muc.BieuTuong" /></span>
+                <span class="the-so-lieu-mui-ten"><RadzenIcon Icon="arrow_outward" /></span>
+            </span>
+            <span class="the-so-lieu-nhan">@muc.Ten</span>
+            <strong class="the-so-lieu-gia-tri">@(muc.GiaTri?.ToString("N0") ?? "—")</strong>
+            <span class="the-so-lieu-phu">@muc.MoTa</span>
+        </a>
+    }
+</section>
+
+@if (thongKe is { } tk)
+{
+    <div class="luoi-tong-quan">
+        <section class="the-bieu-do" aria-labelledby="tieu-de-co-cau-hv">
+            <header class="dau-bieu-do">
+                <div>
+                    <h2 id="tieu-de-co-cau-hv">Cơ cấu học viên</h2>
+                    <p>Theo hệ đào tạo và khóa học · @tk.SoHocVien.ToString("N0") học viên</p>
+                </div>
+                <a class="lien-ket-bieu-do" href="/hoc-vien">Xem danh sách<RadzenIcon Icon="arrow_forward" /></a>
+            </header>
+
+            @* Thanh tỉ lệ: mỗi đoạn là một hệ, rộng theo phần trăm; chú giải bên dưới ghi tên, số và tỉ lệ. *@
+            <div class="thanh-ti-le" role="img" aria-label="@string.Join("; ", CacHe.Select(h => $"{h.Ten}: {h.SoLuong:N0} học viên ({h.TiLe:P0})"))">
+                @foreach (var he in CacHe)
+                {
+                    <span class="doan-ti-le @he.LopMau" style="flex-grow: @he.SoLuong.ToString(CultureInfo.InvariantCulture)" title="@($"{he.Ten}: {he.SoLuong:N0} học viên · {he.TiLe:P0}")"></span>
+                }
+            </div>
+            <ul class="chu-giai">
+                @foreach (var he in CacHe)
+                {
+                    <li><span class="o-mau @he.LopMau" aria-hidden="true"></span><span class="chu-giai-ten">@he.Ten</span><strong>@he.SoLuong.ToString("N0")</strong><span class="chu-giai-ti-le">@he.TiLe.ToString("P0")</span></li>
+                }
+            </ul>
+
+            <h3 class="nhan-bieu-do">Học viên theo khóa học</h3>
+            <BieuDoThanh CacDong="CacKhoaHoc" DonVi="học viên" />
+        </section>
+
+        <section class="the-bieu-do" aria-labelledby="tieu-de-lop-chuyen-nganh">
+            <header class="dau-bieu-do">
+                <div>
+                    <h2 id="tieu-de-lop-chuyen-nganh">Lớp theo chuyên ngành</h2>
+                    <p>@tk.SoLop.ToString("N0") lớp · @CacChuyenNganh.Count.ToString("N0") chuyên ngành</p>
+                </div>
+                <a class="lien-ket-bieu-do" href="/lop">Xem danh sách<RadzenIcon Icon="arrow_forward" /></a>
+            </header>
+            <BieuDoThanh CacDong="CacChuyenNganh" DonVi="lớp" NhanRong="true" />
+            <dl class="so-lop-theo-he">
+                @foreach (var he in CacLopTheoHe)
+                {
+                    <div><dt><span class="o-mau @LopMauHe(he.Key)" aria-hidden="true"></span>Lớp @he.Key.ToLower(new CultureInfo("vi-VN"))</dt><dd>@he.Value.ToString("N0")</dd></div>
+                }
+            </dl>
+        </section>
+    </div>
+}
+
 <BangThongBao />
 
-<div class="dau-muc-tong-quan dau-muc-phan-he"><div><span class="nhan-tong-quan">CÁC PHÂN HỆ</span><h2>Truy cập công việc của bạn</h2></div></div>
-<div class="launcher-grid" aria-label="Các phân hệ quản lý">
-    <RadzenCard class="launcher-card"><RadzenIcon Icon="account_balance" class="launcher-icon" /><h2>Khoa</h2><p>Quản lý khoa, tổ chuyên môn và cán bộ giảng viên.</p><RadzenLink Path="/khoa" class="launcher-link" aria-label="Mở phân hệ quản lý khoa" /></RadzenCard>
-    <RadzenCard class="launcher-card"><RadzenIcon Icon="groups" class="launcher-icon" /><h2>Lớp đào tạo</h2><p>Quản lý hệ đào tạo, khóa học và chuyên ngành.</p><RadzenLink Path="/lop" class="launcher-link" aria-label="Mở phân hệ lớp đào tạo" /></RadzenCard>
-    <RadzenCard class="launcher-card"><RadzenIcon Icon="school" class="launcher-icon" /><h2>Học viên</h2><p>Quản lý hồ sơ và chức vụ học viên theo từng lớp.</p><RadzenLink Path="/hoc-vien" class="launcher-link" aria-label="Mở phân hệ học viên" /></RadzenCard>
-</div>
+@code {
+    private sealed record MucSoLieu(string Ten, string BieuTuong, string DuongDan, int? GiaTri, string MoTa);
+    private sealed record PhanHe(string Ten, int SoLuong, double TiLe, string LopMau);
+
+    // Thứ tự màu cố định theo hệ (không theo thứ hạng): Chính quy luôn xanh, Văn bằng 2 luôn vàng đồng.
+    private static readonly string[] ThuTuHe = ["Chính quy", "Văn bằng 2"];
+    private static string LopMauHe(string he) => Array.IndexOf(ThuTuHe, he) == 1 ? "mau-du-lieu-2" : "mau-du-lieu-1";
+
+    private ThongKeQuanLy? thongKe;
+    private List<PhanHe> CacHe = [];
+    private List<BieuDoThanh.Dong> CacKhoaHoc = [];
+    private List<BieuDoThanh.Dong> CacChuyenNganh = [];
+    private List<KeyValuePair<string, int>> CacLopTheoHe = [];
+
+    protected override void OnInitialized()
+    {
+        TaiSoLieu();
+        DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    }
+
+    // Nếu dữ liệu tạm thời không nhất quán thì ẩn số liệu và biểu đồ (hiện "—"), không làm hỏng cả trang chủ.
+    private void TaiSoLieu()
+    {
+        try
+        {
+            thongKe = DuLieu.LayThongKe();
+            var tk = thongKe;
+            var tong = Math.Max(1, tk.HocVienTheoHe.Values.Sum());
+            CacHe = tk.HocVienTheoHe
+                .OrderBy(x => Array.IndexOf(ThuTuHe, x.Key) is var i && i < 0 ? int.MaxValue : i)
+                .Select(x => new PhanHe(x.Key, x.Value, (double)x.Value / tong, LopMauHe(x.Key)))
+                .ToList();
+
+            // Khóa học tô màu theo hệ của lớp; xếp Chính quy trước rồi theo số khóa tăng dần (D53 → D58, K3 → K6).
+            var cacLop = DuLieu.LayDanhSachLop();
+            var heCuaKhoaHoc = cacLop.GroupBy(l => l.KhoaHoc).ToDictionary(g => g.Key, g => g.First().HeDaoTao);
+            CacKhoaHoc = tk.HocVienTheoKhoaHoc
+                .Select(x => (x.Key, x.Value, He: heCuaKhoaHoc.GetValueOrDefault(x.Key, "")))
+                .OrderBy(x => Array.IndexOf(ThuTuHe, x.He) is var i && i < 0 ? int.MaxValue : i)
+                .ThenBy(x => int.TryParse(x.Key[1..], out var so) ? so : int.MaxValue)
+                .Select(x => new BieuDoThanh.Dong(x.Key, x.Value, LopMauHe(x.He), x.He))
+                .ToList();
+
+            // Gộp lớp của cả hai hệ theo tên chuyên ngành, nhiều lớp nhất lên đầu; chỉ một chuỗi số liệu nên dùng một màu.
+            CacChuyenNganh = cacLop
+                .GroupBy(l => l.ChuyenNganh)
+                .OrderByDescending(g => g.Count()).ThenBy(g => g.Key, StringComparer.Create(new CultureInfo("vi-VN"), false))
+                .Select(g => new BieuDoThanh.Dong(g.Key, g.Count(), "mau-du-lieu-1", null))
+                .ToList();
+            CacLopTheoHe = cacLop
+                .GroupBy(l => l.HeDaoTao)
+                .OrderBy(g => Array.IndexOf(ThuTuHe, g.Key) is var i && i < 0 ? int.MaxValue : i)
+                .Select(g => KeyValuePair.Create(g.Key, g.Count()))
+                .ToList();
+        }
+        catch (Exception)
+        {
+            thongKe = null; CacHe = []; CacKhoaHoc = []; CacChuyenNganh = []; CacLopTheoHe = [];
+        }
+    }
+
+    // Ngày theo giờ Việt Nam (UTC+7), ví dụ "Thứ Tư, 04/11/2026".
+    private static string NgayHomNay
+    {
+        get
+        {
+            var ngay = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).ToString("dddd, dd/MM/yyyy", new CultureInfo("vi-VN"));
+            return char.ToUpper(ngay[0]) + ngay[1..];
+        }
+    }
+
+    // Dòng phụ dưới mỗi số liệu được suy ra từ chính dữ liệu mẫu; không có số liệu thì để mô tả chung.
+    private IEnumerable<MucSoLieu> CacMucSoLieu
+    {
+        get
+        {
+            var tk = thongKe;
+            return
+            [
+                new("Khoa", "account_balance", "/khoa", tk?.SoKhoa, "Đơn vị đào tạo"),
+                new("Tổ chuyên môn", "account_tree", "/khoa/to", tk?.SoTo, tk is { SoKhoa: > 0 } ? $"Thuộc {tk.SoKhoa:N0} khoa" : "Theo từng khoa"),
+                new("Cán bộ, giảng viên", "badge", "/khoa/can-bo", tk?.SoCanBo, tk is { SoTo: > 0 } ? $"Trung bình {(double)tk.SoCanBo / tk.SoTo:N1} người/tổ" : "Giảng dạy và quản lý"),
+                new("Lớp đào tạo", "groups", "/lop", tk?.SoLop, tk is { HocVienTheoHe.Count: > 0 } ? $"{tk.HocVienTheoHe.Count:N0} hệ đào tạo" : "Theo hệ và khóa học"),
+                new("Học viên", "school", "/hoc-vien", tk?.SoHocVien, tk is { SoLop: > 0 } ? $"Trung bình {(double)tk.SoHocVien / tk.SoLop:N0} học viên/lớp" : "Đang theo học")
+            ];
+        }
+    }
+
+    // Số liệu cập nhật khi tab khác thêm hoặc xóa bản ghi; hủy đăng ký khi rời trang.
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiSoLieu(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+}

@@ -1,15 +1,32 @@
 @inherits LayoutComponentBase
 
-<main class="trang-dang-nhap">
-    <section class="hop-dang-nhap" aria-labelledby="tieu-de-dang-nhap">
-        <header class="nhan-dien-dang-nhap">
+@* Bố cục đăng nhập và đăng ký: bên trái giới thiệu hệ thống trên nền xanh đậm, bên phải là thẻ biểu mẫu.
+   Tiêu đề h1 của trang (Đăng nhập / Đăng ký) nằm trong @Body để trình đọc màn hình và FocusOnNavigate dùng đúng tiêu đề. *@
+<div class="trang-dang-nhap">
+    <section class="gioi-thieu-dang-nhap" aria-label="Giới thiệu hệ thống">
+        <span class="vong-trang-tri vong-mot" aria-hidden="true"></span>
+        <span class="vong-trang-tri vong-hai" aria-hidden="true"></span>
+        <span class="vong-trang-tri vong-ba" aria-hidden="true"></span>
+        <div class="thuong-hieu-dang-nhap">
             <img class="logo-dang-nhap" src="images/logo-hoc-vien-an-ninh.png" alt="Logo Học viện An ninh nhân dân" />
-            <h1 id="tieu-de-dang-nhap" tabindex="-1">
-                <span class="ten-hoc-vien">Học viện An ninh nhân dân</span>
+            <div>
+                <span class="ten-hoc-vien">HỌC VIỆN AN NINH NHÂN DÂN</span>
                 <span class="ten-he-thong">Hệ thống quản lý đào tạo</span>
-            </h1>
-        </header>
-        @Body
+            </div>
+        </div>
+        <div class="loi-gioi-thieu">
+            <div class="nhan-gioi-thieu">QUẢN LÝ ĐÀO TẠO</div>
+            <p class="tieu-de-gioi-thieu">Khoa, lớp đào tạo và học viên trong một hệ thống.</p>
+            <p class="mo-ta-gioi-thieu">Tra cứu, quản lý và theo dõi hồ sơ cán bộ, giảng viên, lớp và học viên theo đúng quyền được cấp.</p>
+        </div>
     </section>
-</main>
 
+    <main class="cot-dang-nhap">
+        <div class="khung-dang-nhap">
+            <section class="hop-dang-nhap">
+                @Body
+            </section>
+            <p class="ghi-chu-demo-dang-nhap">Đăng nhập, phân quyền và dữ liệu chỉ để minh họa học tập, không dùng cho hệ thống thật.</p>
+        </div>
+    </main>
+</div>
