@@ -1,0 +1,73 @@
+@inject TuyChonGiaoDien TuyChon
+@page "/dao-tao"
+@page "/dao-tao/chuyen-nganh"
+@page "/dao-tao/khoa-hoc"
+@implements IDisposable
+@attribute [Authorize]
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject NavigationManager DieuHuong
+
+<PageTitle>Quản lý đào tạo | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Quản lý đào tạo" MoTa="Tổng hợp hệ đào tạo, chuyên ngành, khóa và niên khóa từ danh sách lớp hiện hành." />
+<div class="dieu-huong-phan-he">
+    <NavLink href="/dao-tao" Match="NavLinkMatch.All">Tổng quan</NavLink>
+    <NavLink href="/dao-tao/chuyen-nganh">Chuyên ngành</NavLink>
+    <NavLink href="/dao-tao/khoa-hoc">Khóa và niên khóa</NavLink>
+</div>
+@if (LaTongQuan)
+{
+    <div class="so-lieu-dao-tao">
+        <RadzenCard><span>Hệ đào tạo</span><strong>@cacLop.Select(l => l.HeDaoTao).Distinct().Count()</strong></RadzenCard>
+        <RadzenCard><span>Chuyên ngành</span><strong>@cacLop.Select(l => l.ChuyenNganh).Distinct().Count()</strong></RadzenCard>
+        <RadzenCard><span>Khóa học</span><strong>@cacLop.Select(l => (l.HeDaoTao, l.KhoaHoc)).Distinct().Count()</strong></RadzenCard>
+        <RadzenCard><span>Lớp đào tạo</span><strong>@cacLop.Count</strong></RadzenCard>
+    </div>
+    <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">Danh mục được tổng hợp tự động từ dữ liệu lớp. Thêm hoặc sửa lớp tại Quản lý học viên sẽ cập nhật thống kê tại đây. Dữ liệu chỉ phục vụ minh họa học tập.</RadzenAlert>
+}
+@if (!LaKhoaHoc)
+{
+    <section class="directory-panel"><h2 class="tieu-de-khu-vuc">Danh mục chuyên ngành</h2>
+        <RadzenDataGrid TItem="DongChuyenNganh" Data="@cacChuyenNganh" AllowPaging="true" PageSize="10" PageSizeOptions="@(new int[] { 5, 10, 20, 30, 40 })" PageSizeText="@TuyChon.Dich("dòng / trang")" AllowSorting="true" EmptyText="Chưa có lớp để tổng hợp chuyên ngành." class="directory-grid">
+            <Columns>
+                <RadzenDataGridColumn TItem="DongChuyenNganh" Property="HeDaoTao" Title="@TuyChon.Dich("Hệ đào tạo")" Width="9rem" />
+                <RadzenDataGridColumn TItem="DongChuyenNganh" Property="ChuyenNganh" Title="@TuyChon.Dich("Chuyên ngành")" Width="18rem" />
+                <RadzenDataGridColumn TItem="DongChuyenNganh" Property="SoLop" Title="@TuyChon.Dich("Số lớp")" TextAlign="TextAlign.Center" Width="6rem" />
+                <RadzenDataGridColumn TItem="DongChuyenNganh" Property="SoHocVien" Title="@TuyChon.Dich("Số học viên")" TextAlign="TextAlign.Center" Width="8rem" />
+            </Columns>
+        </RadzenDataGrid>
+    </section>
+}
+@if (LaKhoaHoc || LaTongQuan)
+{
+    <section class="directory-panel"><h2 class="tieu-de-khu-vuc">Khóa và niên khóa</h2>
+        <RadzenDataGrid TItem="DongKhoaHoc" Data="@cacKhoaHoc" AllowPaging="true" PageSize="10" PageSizeOptions="@(new int[] { 5, 10, 20, 30, 40 })" PageSizeText="@TuyChon.Dich("dòng / trang")" AllowSorting="true" EmptyText="Chưa có khóa học." class="directory-grid">
+            <Columns>
+                <RadzenDataGridColumn TItem="DongKhoaHoc" Property="HeDaoTao" Title="@TuyChon.Dich("Hệ đào tạo")" Width="9rem" />
+                <RadzenDataGridColumn TItem="DongKhoaHoc" Property="KhoaHoc" Title="@TuyChon.Dich("Khóa")" Width="6rem" />
+                <RadzenDataGridColumn TItem="DongKhoaHoc" Property="NienKhoa" Title="@TuyChon.Dich("Niên khóa (4 năm)")" Width="11rem" />
+                <RadzenDataGridColumn TItem="DongKhoaHoc" Property="SoLop" Title="@TuyChon.Dich("Số lớp")" TextAlign="TextAlign.Center" Width="6rem" />
+                <RadzenDataGridColumn TItem="DongKhoaHoc" Property="SoHocVien" Title="@TuyChon.Dich("Số học viên")" TextAlign="TextAlign.Center" Width="8rem" />
+            </Columns>
+        </RadzenDataGrid>
+    </section>
+}
+@code {
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
+    public sealed record DongChuyenNganh(string HeDaoTao, string ChuyenNganh, int SoLop, int SoHocVien);
+    public sealed record DongKhoaHoc(string HeDaoTao, string KhoaHoc, string NienKhoa, int SoLop, int SoHocVien);
+    private List<LopDaoTao> cacLop = [];
+    private List<DongChuyenNganh> cacChuyenNganh = [];
+    private List<DongKhoaHoc> cacKhoaHoc = [];
+    private string DuongDan => DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0].Trim('/');
+    private bool LaTongQuan => DuongDan == "dao-tao";
+    private bool LaKhoaHoc => DuongDan == "dao-tao/khoa-hoc";
+    protected override void OnInitialized() { TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+    private void TaiDuLieu()
+    {
+        cacLop = DuLieu.LayDanhSachLop().ToList();
+        cacChuyenNganh = cacLop.GroupBy(l => (l.HeDaoTao, l.ChuyenNganh)).Select(g => new DongChuyenNganh(g.Key.HeDaoTao, g.Key.ChuyenNganh, g.Count(), g.Sum(l => l.SiSo))).OrderBy(x => x.HeDaoTao).ThenBy(x => x.ChuyenNganh).ToList();
+        cacKhoaHoc = cacLop.GroupBy(l => (l.HeDaoTao, l.KhoaHoc, l.NienKhoa)).Select(g => new DongKhoaHoc(g.Key.HeDaoTao, g.Key.KhoaHoc, g.Key.NienKhoa, g.Count(), g.Sum(l => l.SiSo))).OrderBy(x => x.HeDaoTao).ThenByDescending(x => x.NienKhoa).ToList();
+    }
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+}

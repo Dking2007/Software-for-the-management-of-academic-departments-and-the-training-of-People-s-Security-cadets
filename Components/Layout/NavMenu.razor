@@ -1,97 +1,85 @@
+@inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @inject NavigationManager DieuHuong
-@inject NhaCungCapTrangThaiXacThucDemo XacThuc
 
-@* Sidebar: thương hiệu, nhóm "Nghiệp vụ" (Khoa, Lớp, Học viên) và nhóm "Hệ thống" cho quản trị viên.
-   Dùng liên kết và nút HTML thường thay cho RadzenPanelMenu để chữ, khoảng cách và trạng thái đang chọn đồng nhất. *@
 <div class="sidebar-menu @(menuDangMo ? "menu-open" : string.Empty)">
     <div class="brand-block">
-        <a class="brand-link" href="/" aria-label="Về trang chủ">
+        <a class="brand-link" href="/" aria-label="@TuyChon.Dich("Về trang chủ")">
             <img class="brand-logo" src="images/logo-hoc-vien-an-ninh.png" alt="Logo Học viện An ninh nhân dân" />
-            <span class="brand-copy"><strong>HỌC VIỆN AN NINH NHÂN DÂN</strong><small>Hệ thống quản lý đào tạo</small></span>
+            <span class="brand-copy"><strong>HỌC VIỆN AN NINH NHÂN DÂN</strong><small>Hệ thống quản lý Khoa/Lớp đào tạo</small></span>
         </a>
     </div>
-    <RadzenButton class="navbar-toggler" Icon="menu" ButtonStyle="ButtonStyle.Light" Click="@ToggleMenu" aria-label="Mở hoặc đóng menu điều hướng" />
-    <nav class="nav-scrollable" aria-label="Điều hướng các phân hệ">
-
+    <RadzenButton class="navbar-toggler" Icon="menu" ButtonStyle="ButtonStyle.Light" Click="ToggleMenu" aria-label="@TuyChon.Dich("Mở hoặc đóng điều hướng")" />
+    <nav class="nav-scrollable" aria-label="@TuyChon.Dich("Điều hướng các phân hệ")">
         <AuthorizeView>
             <Authorized>
-                <span class="nhan-nhom-menu">Nghiệp vụ</span>
+                <span class="nhan-nhom-menu">@TuyChon.Dich("Nghiệp vụ")</span>
                 <div class="module-groups">
-                    <section class="module-menu-group @LopDangChon("khoa")">
-                        <div class="module-menu-heading">
-                            <a class="module-menu-main" href="/khoa" aria-label="Mở phân hệ Khoa"><RadzenIcon Icon="account_balance" /><span class="ten-phan-he">Khoa</span></a>
-                            <button type="button" class="module-menu-toggle" @onclick="ToggleKhoa" aria-expanded="@(moKhoa ? "true" : "false")" aria-controls="muc-con-khoa" aria-label="@(moKhoa ? "Thu gọn mục Khoa" : "Mở các mục con của Khoa")"><RadzenIcon Icon="@(moKhoa ? "expand_less" : "expand_more")" /></button>
-                        </div>
-                        @if (moKhoa)
-                        {
-                            <ul class="menu-con" id="muc-con-khoa">
-                                <li><NavLink class="muc-con" href="/khoa" Match="NavLinkMatch.All">Danh sách khoa</NavLink></li>
-                                <li><NavLink class="muc-con" href="/khoa/to" Match="NavLinkMatch.All">Tổ chuyên môn</NavLink></li>
-                                <li><NavLink class="muc-con" href="/khoa/can-bo" Match="NavLinkMatch.All">Cán bộ, giảng viên</NavLink></li>
-                            </ul>
-                        }
-                    </section>
-                    @* Lớp và Học viên chỉ có một trang nên là liên kết thẳng; chỉ Khoa cần menu con. *@
-                    <section class="module-menu-group khong-con @LopDangChon("lop")">
-                        <div class="module-menu-heading"><a class="module-menu-main" href="/lop" aria-label="Lớp đào tạo"><RadzenIcon Icon="groups" /><span class="ten-phan-he">Lớp đào tạo</span></a></div>
-                    </section>
-                    <section class="module-menu-group khong-con @LopDangChon("hoc-vien")">
-                        <div class="module-menu-heading"><a class="module-menu-main" href="/hoc-vien" aria-label="Học viên"><RadzenIcon Icon="school" /><span class="ten-phan-he">Học viên</span></a></div>
-                    </section>
+                    @foreach (var nhom in cacNhom)
+                    {
+                        <section class="module-menu-group @(phanHe == nhom.Ma ? "dang-chon" : "")">
+                            <div class="module-menu-heading">
+                                <NavLink class="module-menu-main" href="@nhom.DuongDan" Match="NavLinkMatch.All"><RadzenIcon Icon="@nhom.BieuTuong" /><span class="ten-phan-he">@TuyChon.Dich(nhom.Ten)</span></NavLink>
+                                <RadzenButton class="module-menu-toggle" Icon="@(nhomMo.Contains(nhom.Ma) ? "expand_less" : "expand_more")" ButtonStyle="ButtonStyle.Light" Click="@(() => DoiNhom(nhom.Ma))" aria-label="@($"Mở/đóng {nhom.Ten}")" aria-expanded="@(nhomMo.Contains(nhom.Ma) ? "true" : "false")" aria-controls="@($"menu-{nhom.Ma}")" />
+                            </div>
+                            @if (nhomMo.Contains(nhom.Ma))
+                            {
+                                <ul class="menu-con" id="@($"menu-{nhom.Ma}")">
+                                    @foreach (var muc in nhom.CacMuc)
+                                    {
+                                        <li><NavLink class="muc-con" href="@muc.DuongDan" Match="NavLinkMatch.All">@TuyChon.Dich(muc.Ten)</NavLink></li>
+                                    }
+                                </ul>
+                            }
+                            <div class="menu-bay" aria-label="@nhom.Ten">
+                                <strong>@TuyChon.Dich(nhom.Ten)</strong>
+                                @foreach (var muc in nhom.CacMuc) { <RadzenLink Path="@muc.DuongDan" Text="@TuyChon.Dich(muc.Ten)" /> }
+                            </div>
+                        </section>
+                    }
                 </div>
             </Authorized>
-            <NotAuthorized>
-                <div class="module-groups">
-                    <section class="module-menu-group">
-                        <div class="module-menu-heading"><a class="module-menu-main" href="/dang-nhap"><RadzenIcon Icon="login" /><span class="ten-phan-he">Đăng nhập</span></a></div>
-                    </section>
-                </div>
-            </NotAuthorized>
+            <NotAuthorized><RadzenLink Path="/dang-nhap" Text="@TuyChon.Dich("Đăng nhập")" Icon="login" /></NotAuthorized>
         </AuthorizeView>
     </nav>
-    <AuthorizeView Roles="Admin" Context="admin">
-        <section class="module-menu-group khong-con menu-quan-tri @LopDangChon("quan-tri")">
-            <span class="nhan-nhom-menu">Hệ thống</span>
-            <div class="module-menu-heading"><a class="module-menu-main" href="/quan-tri/tai-khoan" aria-label="Quản trị hệ thống"><RadzenIcon Icon="manage_accounts" /><span class="ten-phan-he">Quản trị hệ thống</span></a></div>
+    <AuthorizeView>
+        <Authorized>
+            <section class="module-menu-group menu-tro-giup">
+                <span class="nhan-nhom-menu">@TuyChon.Dich("Hệ thống")</span>
+                <NavLink class="module-menu-main" href="/tro-giup"><RadzenIcon Icon="help_outline" /><span class="ten-phan-he">@TuyChon.Dich("Trợ giúp")</span></NavLink>
+            </section>
+        </Authorized>
+    </AuthorizeView>
+    <AuthorizeView Roles="Admin">
+        <section class="module-menu-group menu-quan-tri @(phanHe == "quan-tri" ? "dang-chon" : "")">
+            <NavLink class="module-menu-main" href="/quan-tri/tai-khoan"><RadzenIcon Icon="manage_accounts" /><span class="ten-phan-he">@TuyChon.Dich("Quản trị hệ thống")</span></NavLink>
+            <div class="menu-bay"><strong>@TuyChon.Dich("Quản trị hệ thống")</strong><RadzenLink Path="/quan-tri/tai-khoan" Text="@TuyChon.Dich("Tài khoản và phân quyền")" /></div>
         </section>
     </AuthorizeView>
 </div>
 
 @code {
+    private sealed record MucMenu(string Ten, string DuongDan);
+    private sealed record NhomMenu(string Ma, string Ten, string BieuTuong, string DuongDan, MucMenu[] CacMuc);
+    private readonly NhomMenu[] cacNhom = [
+        new("khoa", "Quản lý khoa", "account_balance", "/khoa", [new("Danh sách khoa", "/khoa"), new("Tổ chuyên môn", "/khoa/to"), new("Cán bộ, giảng viên", "/khoa/can-bo")]),
+        new("dao-tao", "Quản lý đào tạo", "menu_book", "/dao-tao", [new("Tổng quan đào tạo", "/dao-tao"), new("Chuyên ngành", "/dao-tao/chuyen-nganh"), new("Khóa và niên khóa", "/dao-tao/khoa-hoc")]),
+        new("hoc-vien", "Quản lý học viên", "school", "/quan-ly-hoc-vien", [new("Danh sách lớp", "/quan-ly-hoc-vien/lop"), new("Danh sách học viên", "/quan-ly-hoc-vien/hoc-vien")])
+    ];
     private bool menuDangMo;
-    private bool moKhoa;
-    private string phanHe = string.Empty;
-
-    protected override void OnInitialized()
-    {
-        CapNhatPhanHe();
-        DieuHuong.LocationChanged += KhiDoiTrang;
-    }
-
-    // Mở sẵn nhóm hiện tại để mục con dễ nhìn; nhóm khác vẫn có thể mở bằng mũi tên.
-    private void CapNhatPhanHe()
+    private string phanHe = "";
+    private readonly HashSet<string> nhomMo = [];
+    protected override void OnInitialized() { TuyChon.DaThayDoi += KhiDoiTuyChon; CapNhat(); DieuHuong.LocationChanged += KhiDoiTrang; }
+    private void CapNhat()
     {
         var duongDan = DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0];
-        phanHe = duongDan.StartsWith("khoa", StringComparison.OrdinalIgnoreCase) ? "khoa"
-            : duongDan.StartsWith("lop", StringComparison.OrdinalIgnoreCase) ? "lop"
-            : duongDan.StartsWith("hoc-vien", StringComparison.OrdinalIgnoreCase) ? "hoc-vien"
-            : duongDan.StartsWith("quan-tri", StringComparison.OrdinalIgnoreCase) ? "quan-tri"
-            : string.Empty;
-        moKhoa = phanHe == "khoa";
+        phanHe = duongDan.Split('/')[0] switch { "khoa" => "khoa", "dao-tao" => "dao-tao", "lop" or "hoc-vien" or "quan-ly-hoc-vien" => "hoc-vien", "quan-tri" => "quan-tri", _ => "" };
+        nhomMo.Clear();
+        if (phanHe != "") nhomMo.Add(phanHe);
     }
-
-    private void KhiDoiTrang(object? sender, LocationChangedEventArgs args)
-    {
-        menuDangMo = false;
-        CapNhatPhanHe();
-        _ = InvokeAsync(StateHasChanged);
-    }
-
-    // Nhóm đang xem được tô nền (xem .dang-chon trong app.css); mục con đang xem nhận thêm class "active" từ NavLink.
-    private string LopDangChon(string ma) => phanHe == ma ? "dang-chon" : string.Empty;
-
-    private void ToggleKhoa() => moKhoa = !moKhoa;
+    private void KhiDoiTrang(object? sender, LocationChangedEventArgs args) => _ = InvokeAsync(() => { menuDangMo = false; CapNhat(); StateHasChanged(); });
+    private void DoiNhom(string ma) { if (!nhomMo.Remove(ma)) nhomMo.Add(ma); }
     private void ToggleMenu() => menuDangMo = !menuDangMo;
-    public void Dispose() { DieuHuong.LocationChanged -= KhiDoiTrang; }
+    private void KhiDoiTuyChon() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() { DieuHuong.LocationChanged -= KhiDoiTrang; TuyChon.DaThayDoi -= KhiDoiTuyChon; }
 }

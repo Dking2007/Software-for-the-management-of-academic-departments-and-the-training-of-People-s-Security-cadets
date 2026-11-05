@@ -1,0 +1,108 @@
+namespace Nhom2_BTL.Services;
+
+// Chỉ là tùy chọn hiển thị của từng phiên, hoàn toàn không tham gia phân quyền.
+public sealed class TuyChonGiaoDien
+{
+    public string GiaoDien { get; private set; } = "sang";
+    public string NgonNgu { get; private set; } = "vi";
+    public event Action? DaThayDoi;
+    public void CapNhat(string? giaoDien, string? ngonNgu)
+    {
+        var mau = giaoDien == "toi" ? "toi" : "sang";
+        var tieng = ngonNgu == "en" ? "en" : "vi";
+        if (GiaoDien == mau && NgonNgu == tieng) return;
+        GiaoDien = mau; NgonNgu = tieng; DaThayDoi?.Invoke();
+    }
+    public string Dich(string chu) => NgonNgu == "en" ? BanDich.GetValueOrDefault(chu, chu) : chu;
+    private static readonly Dictionary<string, string> BanDich = new()
+    {
+        ["Quản lý khoa"] = "Faculty management",
+        ["Quản lý đào tạo"] = "Training management",
+        ["Quản lý học viên"] = "Student management",
+        ["Danh sách khoa"] = "Faculties",
+        ["Tổ chuyên môn"] = "Departments",
+        ["Cán bộ, giảng viên"] = "Staff and lecturers",
+        ["Danh sách lớp"] = "Classes",
+        ["Danh sách học viên"] = "Students",
+        ["Tổng quan đào tạo"] = "Training overview",
+        ["Chuyên ngành"] = "Specialization",
+        ["Khóa và niên khóa"] = "Cohorts and academic years",
+        ["Quản trị hệ thống"] = "System administration",
+        ["Tài khoản và phân quyền"] = "Accounts and permissions",
+        ["Nghiệp vụ"] = "Management",
+        ["Hệ thống"] = "System",
+        ["Trợ giúp"] = "Help",
+        ["Thông báo"] = "Notifications",
+        ["Cài đặt"] = "Settings",
+        ["Giao diện"] = "Appearance",
+        ["Ngôn ngữ"] = "Language",
+        ["Sáng"] = "Light",
+        ["Tối"] = "Dark",
+        ["Đóng"] = "Close",
+        ["Trang chủ"] = "Home",
+        ["Đăng xuất"] = "Sign out",
+        ["Đăng nhập"] = "Sign in",
+        ["Thêm khoa"] = "Add faculty",
+        ["Thêm tổ"] = "Add department",
+        ["Thêm lớp"] = "Add class",
+        ["Thêm cán bộ"] = "Add staff",
+        ["Thêm học viên"] = "Add student",
+        ["Thêm tài khoản"] = "Add account",
+        ["Bỏ bộ lọc"] = "Clear filters",
+        ["STT"] = "No.",
+        ["Mã khoa"] = "Faculty code",
+        ["Tên khoa"] = "Faculty name",
+        ["Trưởng khoa"] = "Dean",
+        ["Phó khoa"] = "Deputy dean",
+        ["Số tổ"] = "Departments",
+        ["Sĩ số cán bộ"] = "Staff count",
+        ["Thao tác"] = "Actions",
+        ["Mã tổ"] = "Department code",
+        ["Tên tổ"] = "Department name",
+        ["Khoa"] = "Faculty",
+        ["Tổ trưởng"] = "Head",
+        ["Tổ phó"] = "Deputy head",
+        ["Mã cán bộ"] = "Staff ID",
+        ["Họ và tên"] = "Full name",
+        ["Chức vụ"] = "Position",
+        ["Cấp bậc hàm"] = "Rank",
+        ["Học hàm, học vị"] = "Academic qualifications",
+        ["Chuyên môn"] = "Expertise",
+        ["Khoa, tổ"] = "Faculty / department",
+        ["Mã lớp"] = "Class code",
+        ["Hệ đào tạo"] = "Program type",
+        ["Khóa"] = "Cohort",
+        ["Sĩ số"] = "Enrollment",
+        ["GV chủ nhiệm"] = "Class advisor",
+        ["Niên khóa"] = "Academic years",
+        ["Mã học viên"] = "Student ID",
+        ["Lớp"] = "Class",
+        ["Ngày sinh"] = "Date of birth",
+        ["Mã tài khoản"] = "Account ID",
+        ["Tên đăng nhập"] = "Username",
+        ["Vai trò"] = "Role",
+        ["Phạm vi"] = "Scope",
+        ["Mật khẩu"] = "Password",
+        ["dòng / trang"] = "rows / page",
+        ["Quay lại danh sách"] = "Back to list",
+        ["Sửa"] = "Edit",
+        ["Xóa"] = "Delete",
+        ["Hủy"] = "Cancel",
+        ["Lưu"] = "Save",
+        ["Tổng quan"] = "Overview",
+        ["Khóa học"] = "Cohorts",
+        ["Lớp đào tạo"] = "Training classes",
+        ["Chi tiết lớp"] = "Class details",
+        ["Chi tiết khoa"] = "Faculty details",
+        ["Chi tiết tổ"] = "Department details",
+        ["Không tìm thấy đơn vị"] = "Unit not found",
+        ["Cán bộ trong khoa"] = "Faculty staff",
+        ["Giới thiệu"] = "Introduction",
+        ["Hướng dẫn sử dụng"] = "User guide",
+        ["Gửi phản hồi"] = "Feedback",
+        ["Tiêu đề"] = "Subject",
+        ["Nội dung"] = "Message",
+        ["Xem trước phản hồi"] = "Preview feedback",
+        ["Phản hồi minh họa"] = "Demo feedback",
+    };
+}

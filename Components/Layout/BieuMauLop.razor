@@ -11,6 +11,8 @@
             <RadzenFormField Text="Khóa" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="KhoaHoc" Data="@CacKhoaHoc" @bind-Value="banSao.KhoaHoc" Style="width:100%" /></RadzenFormField>
             <RadzenFormField Text="Chuyên ngành" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="ChuyenNganh" Data="@CacChuyenNganh" @bind-Value="banSao.ChuyenNganh" Style="width:100%" /></RadzenFormField>
             <RadzenText TextStyle="TextStyle.Caption">Sĩ số được tính từ danh sách học viên của lớp.</RadzenText>
+            <RadzenFormField Text="GV chủ nhiệm (cấp bậc hàm + họ tên)" Variant="Variant.Outlined"><RadzenTextBox Name="GiaoVienChuNhiem" @bind-Value="banSao.GiaoVienChuNhiem" MaxLength="120" Style="width:100%" /></RadzenFormField>
+            <RadzenText TextStyle="TextStyle.Caption">Niên khóa: @banSao.NienKhoa (4 năm, tự tính theo khóa học). Tên chủ nhiệm mẫu là dữ liệu tổng hợp.</RadzenText>
         </div>
         <RadzenRequiredValidator Component="MaLop" Text="Vui lòng nhập mã lớp." />
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem">

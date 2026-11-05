@@ -1,3 +1,4 @@
+@inject TuyChonGiaoDien TuyChon
 @* Thanh công cụ của trang danh sách: ô tìm kiếm, bộ lọc tùy chọn và dòng đếm số bản ghi (nằm bên phải thanh).
    Trang cha giữ từ khóa và logic lọc; component này chỉ hiển thị và báo lại khi người dùng nhập.
    Thuộc tính data-tim-kiem để wwwroot/tim-kiem.js chờ 300 ms sau khi ngừng gõ rồi mới gửi sự kiện change. *@
@@ -11,6 +12,7 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string TuKhoa { get; set; } = string.Empty;
     [Parameter] public EventCallback<ChangeEventArgs> KhiNhapTuKhoa { get; set; }
     [Parameter] public string? GoiY { get; set; }

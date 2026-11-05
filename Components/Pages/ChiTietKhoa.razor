@@ -1,0 +1,25 @@
+@page "/khoa/{MaKhoa}/to"
+@implements IDisposable
+@attribute [Authorize]
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+<PageTitle>Chi tiết khoa | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+@if (donVi is null)
+{
+    <section class="empty-state"><h1>Không tìm thấy đơn vị</h1><p>Mã trên đường dẫn không tồn tại, đã bị xóa hoặc không thuộc đơn vị đang xem.</p><RadzenLink Path="/khoa" Text="Quay lại danh sách" /></section>
+}
+else
+{
+    <ThongTinDonVi Nhan="Chi tiết khoa" TieuDe="@donVi.TenKhoa" QuayLai="/khoa" CacTruong="@ThongTin" />
+    <RadzenTabs @key="MaKhoa"><Tabs><RadzenTabsItem Text="Tổ chuyên môn"><ToChuyenMon MaKhoaPhamVi="@MaKhoa" /></RadzenTabsItem><RadzenTabsItem Text="Cán bộ trong khoa"><CanBoGiangVien MaKhoaPhamVi="@MaKhoa" /></RadzenTabsItem></Tabs></RadzenTabs>
+}
+@code {
+    [Parameter] public string MaKhoa { get; set; } = "";
+    private Nhom2_BTL.Models.Khoa? donVi;
+    private Dictionary<string, string> ThongTin => donVi is null ? [] : new() { ["Mã khoa"] = donVi.MaKhoa, ["Số tổ"] = DuLieu.LayDanhSachTo().Count(t => t.MaKhoa == MaKhoa).ToString(), ["Sĩ số cán bộ"] = donVi.SiSo.ToString(), ["Mô tả"] = donVi.MoTa };
+    protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    protected override void OnParametersSet() => TaiDuLieu();
+    private void TaiDuLieu() => donVi = DuLieu.LayDanhSachKhoa().FirstOrDefault(k => k.MaKhoa == MaKhoa);
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+}

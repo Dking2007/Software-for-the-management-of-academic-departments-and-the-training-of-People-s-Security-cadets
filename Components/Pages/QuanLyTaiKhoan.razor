@@ -1,3 +1,4 @@
+@inject TuyChonGiaoDien TuyChon
 @page "/quan-tri/tai-khoan"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @inject Radzen.DialogService HopThoai
@@ -5,9 +6,9 @@
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider XacThuc
 
 @* Trang quản trị tài khoản: bố cục giống các trang danh sách (đầu trang, thanh công cụ, bảng trong một khung). Chỉ đổi giao diện, quyền Admin vẫn do thuộc tính Authorize và DichVuTaiKhoan kiểm tra. *@
-<PageTitle>Quản lý tài khoản | Quản lý đào tạo</PageTitle>
+<PageTitle>Quản lý tài khoản | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
 <DauTrang TieuDe="Quản lý tài khoản và phân quyền" MoTa="Tài khoản đăng ký mới có quyền Guest. Đổi mật khẩu, quyền hoặc khóa tài khoản sẽ vô hiệu hóa phiên cũ.">
-    <ThaoTac><RadzenButton Text="Thêm tài khoản" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="Them" Disabled="dangLuu" /></ThaoTac>
+    <ThaoTac><RadzenButton Text="@TuyChon.Dich("Thêm tài khoản")" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="Them" Disabled="dangLuu" /></ThaoTac>
 </DauTrang>
 
 <div role="status">
@@ -23,19 +24,19 @@
         <h2 id="tieu-de-bieu-mau-tk">@(maSua is null ? "Thêm tài khoản" : "Sửa tài khoản")</h2>
         @if (maSua is not null) { <p class="ghi-chu-bieu-mau">Mã cố định: @maSua</p> }
         <div class="form-grid">
-            <div><label for="ten-tk">Tên đăng nhập</label><input id="ten-tk" class="form-control" @bind="ten" maxlength="64" autocomplete="off" /></div>
-            <div><label for="mk-tk">@(maSua is null ? "Mật khẩu ban đầu" : "Mật khẩu mới (để trống nếu giữ nguyên)")</label><input id="mk-tk" class="form-control" type="password" @bind="matKhau" autocomplete="new-password" /></div>
-            <div><label for="vai-tro">Vai trò</label><select id="vai-tro" class="form-select" @bind="vaiTro"><option value="Guest">Người xem</option><option value="Manager">Cán bộ quản lý</option><option value="Admin">Quản trị viên</option></select></div>
+            <div><label for="ten-tk">Tên đăng nhập</label><RadzenTextBox id="ten-tk" @bind-Value="ten" MaxLength="64" autocomplete="off" Style="width:100%" /></div>
+            <div><label for="mk-tk">@(maSua is null ? "Mật khẩu ban đầu" : "Mật khẩu mới (để trống nếu giữ nguyên)")</label><RadzenPassword id="mk-tk" @bind-Value="matKhau" autocomplete="new-password" Style="width:100%" /></div>
+            <div><label for="vai-tro">Vai trò</label><RadzenDropDown TValue="string" id="vai-tro" Data="@cacVaiTro" TextProperty="Ten" ValueProperty="Ma" @bind-Value="vaiTro" Style="width:100%" /></div>
             @if (vaiTro == "Manager")
             {
-                <div><label for="pham-vi">Phạm vi quản lý</label><select id="pham-vi" class="form-select" @bind="phamVi"><option value="">Chọn phạm vi</option><option value="Khoa">Quản lý Khoa</option><option value="Lop">Quản lý Lớp đào tạo</option></select></div>
+                <div><label for="pham-vi">Phạm vi quản lý</label><RadzenDropDown TValue="string" id="pham-vi" Data="@cacPhamVi" TextProperty="Ten" ValueProperty="Ma" @bind-Value="phamVi" Style="width:100%" /></div>
             }
             <p class="ghi-chu-bieu-mau toan-hang">Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt. Không thể xem mật khẩu hiện tại.</p>
-            <label class="chon-khoa toan-hang"><input type="checkbox" @bind="khoa" /> Khóa tài khoản</label>
+            <label class="chon-khoa toan-hang"><RadzenCheckBox TValue="bool" @bind-Value="khoa" /> Khóa tài khoản</label>
         </div>
         <div class="thao-tac-bieu-mau">
-            <RadzenButton Text="Hủy" Click="Huy" Disabled="dangLuu" ButtonStyle="ButtonStyle.Light" />
-            <RadzenButton Text="Lưu" Icon="save" Click="Luu" Disabled="dangLuu" ButtonStyle="ButtonStyle.Primary" />
+            <RadzenButton Text="@TuyChon.Dich("Hủy")" Click="Huy" Disabled="dangLuu" ButtonStyle="ButtonStyle.Light" />
+            <RadzenButton Text="@TuyChon.Dich("Lưu")" Icon="save" Click="Luu" Disabled="dangLuu" ButtonStyle="ButtonStyle.Primary" />
         </div>
     </section>
 }
@@ -51,44 +52,40 @@ else
         <div class="panel-toolbar">
             <div class="search-box">
                 <RadzenIcon Icon="search" aria-hidden="true" />
-                <input id="tim" class="form-control" @bind="tim" @bind:event="oninput" placeholder="Tìm mã hoặc tên tài khoản" aria-label="Tìm tài khoản" />
+                <input id="tim" class="form-control" @bind="tim" @bind:event="oninput" placeholder="Tìm mã hoặc tên tài khoản" aria-label="@TuyChon.Dich("Tìm tài khoản")" />
             </div>
-            <select id="loc-vai-tro" class="form-select loc-vai-tro" @bind="locVaiTro" aria-label="Lọc theo vai trò"><option value="">Tất cả vai trò</option><option value="Admin">Quản trị viên</option><option value="Manager">Cán bộ quản lý</option><option value="Guest">Người xem</option></select>
+            <RadzenDropDown TValue="string" id="loc-vai-tro" class="filter-dropdown" Data="@cacVaiTroLoc" TextProperty="Ten" ValueProperty="Ma" @bind-Value="locVaiTro" aria-label="@TuyChon.Dich("Lọc theo vai trò")" />
             <p class="ket-qua-tim-kiem" role="status">Hiển thị <strong>@ketQua.Count.ToString("N0") / @danhSach.Count.ToString("N0")</strong> tài khoản</p>
         </div>
-        <div class="bang-tai-khoan">
-            <table class="table align-middle">
-                <thead><tr><th>Mã tài khoản</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Phạm vi</th><th>Mật khẩu</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
-                <tbody>
-                    @foreach (var u in ketQua)
-                    {
-                        var laMau = KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u);
-                        <tr @key="u.Id">
-                            <td class="ma-tai-khoan"><span class="record-code">@u.Id</span></td>
-                            <td><strong>@u.UserName</strong></td>
-                            <td><span class="nhan-trang-thai hoat-dong">@TenVaiTro(u.VaiTro)</span></td>
-                            <td>@(u.PhamVi == "Khoa" ? "Quản lý Khoa" : u.PhamVi == "Lop" ? "Quản lý Lớp đào tạo" : "—")</td>
-                            <td>@if (laMau) { <span class="record-code">demo123</span> } else { <span class="phu-dong" title="Chỉ lưu bản băm; dùng Sửa để đặt mật khẩu mới">Không thể xem lại</span> }</td>
-                            <td><span class="nhan-trang-thai @(u.BiKhoa ? "tam-dung" : "hoat-dong")">@(u.BiKhoa ? "Đã khóa" : "Hoạt động")</span></td>
-                            <td>
-                                @if (laMau) { <span class="phu-dong text-end">Tài khoản mẫu cố định</span> }
-                                else
-                                {
-                                    <div class="actions-cell">
-                                        <RadzenButton Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa tài khoản {u.UserName}")" Click="@(() => Sua(u))" Disabled="dangLuu" />
-                                        <RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa tài khoản {u.UserName}")" Click="@(() => Xoa(u))" Disabled="dangLuu" />
-                                    </div>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            @if (ketQua.Count == 0) { <p class="bang-trong">Không có tài khoản phù hợp.</p> }
-        </div>
+        <RadzenDataGrid TItem="TaiKhoan" Data="@ketQua" AllowPaging="true" PageSize="10" PageSizeOptions="@(new int[] { 5, 10, 20, 30, 40 })" PageSizeText="@TuyChon.Dich("dòng / trang")" AllowSorting="true" AllowColumnResize="true" PagerHorizontalAlign="HorizontalAlign.Center" GridLines="DataGridGridLines.Horizontal" EmptyText="Không có tài khoản phù hợp." class="directory-grid">
+            <Columns>
+                <RadzenDataGridColumn TItem="TaiKhoan" Property="Id" Title="@TuyChon.Dich("Mã tài khoản")" Width="10rem"><Template Context="u"><span class="record-code">@u.Id</span></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaiKhoan" Property="UserName" Title="@TuyChon.Dich("Tên đăng nhập")" Width="10rem" />
+                <RadzenDataGridColumn TItem="TaiKhoan" Property="VaiTro" Title="@TuyChon.Dich("Vai trò")" TextAlign="TextAlign.Center" Width="10rem"><Template Context="u"><span class="nhan-trang-thai hoat-dong">@TenVaiTro(u.VaiTro)</span></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaiKhoan" Property="PhamVi" Title="@TuyChon.Dich("Phạm vi")" Width="10rem"><Template Context="u">@(u.PhamVi == "Khoa" ? "Quản lý Khoa" : u.PhamVi == "Lop" ? "Quản lý Lớp đào tạo" : "—")</Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaiKhoan" Title="@TuyChon.Dich("Mật khẩu")" Sortable="false" Width="10rem"><Template Context="u">@if (KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u)) { <span class="record-code">demo123</span> } else { <span class="phu-dong" title="@TuyChon.Dich("Chỉ lưu bản băm; dùng Sửa để đặt mật khẩu mới")">Không thể xem lại</span> }</Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaiKhoan" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="10rem">
+                    <Template Context="u">
+                        @if (KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u)) { <span class="phu-dong">Tài khoản mẫu cố định</span> }
+                        else
+                        {
+                            <div class="actions-cell">
+                                <RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa tài khoản {u.UserName}")" Click="@(() => Sua(u))" Disabled="dangLuu" />
+                                <RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa tài khoản {u.UserName}")" Click="@(() => Xoa(u))" Disabled="dangLuu" />
+                            </div>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
     </div>
 }
 @code {
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
+    private sealed record LuaChon(string Ma, string Ten);
+    private readonly LuaChon[] cacVaiTro = [new("Guest", "Người xem"), new("Manager", "Cán bộ quản lý"), new("Admin", "Quản trị viên")];
+    private readonly LuaChon[] cacVaiTroLoc = [new("", "Tất cả vai trò"), new("Guest", "Người xem"), new("Manager", "Cán bộ quản lý"), new("Admin", "Quản trị viên")];
+    private readonly LuaChon[] cacPhamVi = [new("", "Chọn phạm vi"), new("Khoa", "Quản lý Khoa"), new("Lop", "Quản lý Lớp đào tạo")];
     // Giá trị vai trò trong dữ liệu giữ nguyên (Admin/Manager/Guest); chỉ nhãn hiển thị là tiếng Việt.
     private static string TenVaiTro(string? vaiTro) => vaiTro switch { "Admin" => "Quản trị viên", "Manager" => "Cán bộ quản lý", "Guest" => "Người xem", _ => vaiTro ?? "" };
     private List<TaiKhoan>? danhSach;

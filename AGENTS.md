@@ -58,6 +58,7 @@ Quyền tối thiểu:
 
 ## 7. Quy tắc viết và giải thích mã
 
+- Toàn dự án dùng font không chân, ưu tiên `Segoe UI`; áp dụng cả nội dung và tiêu đề. Không dùng font có chân cho giao diện.
 - Ưu tiên tên biến, thuộc tính, phương thức và lớp bằng tiếng Việt có dấu hoặc không dấu khi thực tế, nhất quán và được C# hỗ trợ. Dùng tên mô tả rõ nghĩa, ví dụ `HocVien`, `DanhSachLop`, `TimKiemHocVienAsync`.
 - Tuân theo tên bắt buộc của framework, thư viện, giao thức, thuộc tính Razor, API và các quy ước .NET khi việc dịch tên gây lỗi hoặc làm mã khó tương tác. Giải thích ngoại lệ bằng tiếng Việt.
 - Dùng tên miền tiếng Việt rõ ràng trong mã ứng dụng; giữ nguyên tên dự án/namespace hiện có nếu cần để tránh phá cấu trúc.

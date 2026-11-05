@@ -1,0 +1,14 @@
+@inject TuyChonGiaoDien TuyChon
+<RadzenCard class="thong-tin-don-vi">
+    <div class="dau-thong-tin-don-vi"><div><span class="eyebrow">@TuyChon.Dich(Nhan)</span><h2>@TieuDe</h2></div><RadzenLink Path="@QuayLai" Text="@TuyChon.Dich("Quay lại danh sách")" Icon="arrow_back" /></div>
+    <dl class="tom-tat-don-vi">
+        @foreach (var truong in CacTruong) { <div><dt>@TuyChon.Dich(truong.Key)</dt><dd>@truong.Value</dd></div> }
+    </dl>
+</RadzenCard>
+@code {
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
+    [Parameter] public string Nhan { get; set; } = "";
+    [Parameter] public string TieuDe { get; set; } = "";
+    [Parameter] public string QuayLai { get; set; } = "/";
+    [Parameter] public Dictionary<string, string> CacTruong { get; set; } = [];
+}

@@ -1,8 +1,9 @@
 @page "/dang-nhap"
-<PageTitle>Đăng nhập | Quản lý đào tạo</PageTitle>
+<PageTitle>Đăng nhập | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
 <div class="noi-dung-the-dang-nhap">
-<h1 class="tieu-de-the">Đăng nhập</h1>
-<p class="mo-ta-the">Nhập tài khoản được cấp để tiếp tục.</p>
+<div class="dau-bieu-mau-dang-nhap">
+    <h1 class="tieu-de-the">Đăng nhập</h1>
+</div>
 <form class="bieu-mau-dang-nhap" data-bieu-mau-phien method="post" action="/phien/dang-nhap" data-enhance="false">
     <AntiforgeryToken />
     @if (Moi == "1") { <RadzenAlert AlertStyle="AlertStyle.Success">Đăng ký thành công. Bạn chỉ cần nhập mật khẩu để đăng nhập.</RadzenAlert> }

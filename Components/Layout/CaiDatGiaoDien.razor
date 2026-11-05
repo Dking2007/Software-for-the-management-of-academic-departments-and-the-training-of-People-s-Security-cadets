@@ -1,0 +1,41 @@
+@inject TuyChonGiaoDien TuyChon
+@inject IJSRuntime JavaScript
+
+<div class="cai-dat-giao-dien" @onkeydown="KhiNhanPhim">
+    <RadzenButton class="nut-cai-dat" Icon="settings" ButtonStyle="ButtonStyle.Light" Click="DoiTrangThai" title="@TuyChon.Dich("Cài đặt")" aria-label="@TuyChon.Dich("Cài đặt")" aria-expanded="@(dangMo ? "true" : "false")" aria-controls="hop-cai-dat" />
+    @if (dangMo)
+    {
+        <button class="phu-cai-dat" @onclick="Dong" aria-label="@TuyChon.Dich("Đóng")" tabindex="-1"></button>
+        <section class="hop-cai-dat" id="hop-cai-dat" aria-label="@TuyChon.Dich("Cài đặt")">
+            <header><strong>@TuyChon.Dich("Cài đặt")</strong><RadzenButton Icon="close" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="Dong" aria-label="@TuyChon.Dich("Đóng")" /></header>
+            <label for="chon-giao-dien">@TuyChon.Dich("Giao diện")</label>
+            <select id="chon-giao-dien" class="form-select" value="@TuyChon.GiaoDien" @onchange="DoiGiaoDien"><option value="sang">☀ @TuyChon.Dich("Sáng")</option><option value="toi">☾ @TuyChon.Dich("Tối")</option></select>
+            <label for="chon-ngon-ngu">@TuyChon.Dich("Ngôn ngữ")</label>
+            <select id="chon-ngon-ngu" class="form-select" value="@TuyChon.NgonNgu" @onchange="DoiNgonNgu"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
+            <small>@(TuyChon.NgonNgu == "en" ? "Applies to navigation and common labels. Data and authored content keep their original language." : "Áp dụng cho điều hướng và nhãn chung. Dữ liệu, nội dung do người dùng nhập giữ nguyên ngôn ngữ.")</small>
+        </section>
+    }
+</div>
+@code {
+    private bool dangMo;
+    private void DoiTrangThai() => dangMo = !dangMo;
+    private void Dong() => dangMo = false;
+    private void KhiNhanPhim(KeyboardEventArgs e) { if (e.Key == "Escape") Dong(); }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try {
+            var daLuu = await JavaScript.InvokeAsync<TuyChonDaLuu>("tuyChonGiaoDien.doc");
+            TuyChon.CapNhat(daLuu.GiaoDien, daLuu.NgonNgu);
+            StateHasChanged();
+        } catch (JSDisconnectedException) { }
+    }
+    private Task DoiGiaoDien(ChangeEventArgs e) => Luu(e.Value?.ToString(), TuyChon.NgonNgu);
+    private Task DoiNgonNgu(ChangeEventArgs e) => Luu(TuyChon.GiaoDien, e.Value?.ToString());
+    private async Task Luu(string? giaoDien, string? ngonNgu)
+    {
+        TuyChon.CapNhat(giaoDien, ngonNgu);
+        await JavaScript.InvokeVoidAsync("tuyChonGiaoDien.luu", TuyChon.GiaoDien, TuyChon.NgonNgu);
+    }
+    public sealed class TuyChonDaLuu { public string GiaoDien { get; set; } = "sang"; public string NgonNgu { get; set; } = "vi"; }
+}

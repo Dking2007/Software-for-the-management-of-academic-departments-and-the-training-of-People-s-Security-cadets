@@ -3,7 +3,7 @@
 @using System.Globalization
 @inject DichVuQuanLyDuLieuDemo DuLieu
 
-@* Trang chủ: dải chào mừng, thẻ số liệu (lối vào từng phân hệ), hai biểu đồ cơ cấu và bảng thông báo.
+@* Trang chủ: dải chào mừng, thẻ số liệu (lối vào từng phân hệ) và hai biểu đồ cơ cấu.
    Mọi con số lấy từ dữ liệu mẫu trong bộ nhớ nên sẽ đổi khi dữ liệu được đặt lại. *@
 <PageTitle>Trang chủ | Quản lý đào tạo</PageTitle>
 
@@ -86,7 +86,7 @@
     </div>
 }
 
-<BangThongBao />
+
 
 @code {
     private sealed record MucSoLieu(string Ten, string BieuTuong, string DuongDan, int? GiaTri, string MoTa);

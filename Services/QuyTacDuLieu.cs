@@ -6,6 +6,15 @@ namespace Nhom2_BTL.Services;
 /// <summary>Quy tắc dùng chung cho dữ liệu khởi tạo, kiểm tra nghiệp vụ và giao diện.</summary>
 public static class QuyTacDuLieu
 {
+    public static string TinhNienKhoa(string heDaoTao, string khoaHoc)
+    {
+        var mau = heDaoTao == "Chính quy" ? @"^D([0-9]+)$" : heDaoTao == "Văn bằng 2" ? @"^K([0-9]+)$" : "(?!)";
+        var ketQua = Regex.Match(khoaHoc ?? "", mau);
+        if (!ketQua.Success || !int.TryParse(ketQua.Groups[1].Value, out var khoa)) return "—";
+        var namNhapHoc = 2026L + khoa - (heDaoTao == "Chính quy" ? 58 : 6);
+        return namNhapHoc is >= 1900 and <= 9995 ? $"{namNhapHoc}–{namNhapHoc + 4}" : "—";
+    }
+
     // Khớp tên ở cuối họ tên: "Anh" không khớp "Thanh" hoặc "Anh Thư".
     // Giữ phân biệt dấu tiếng Việt, bỏ khác biệt hoa/thường và khoảng trắng thừa.
     public static bool TenKhopTuKhoa(string hoTen, string tuKhoa)
