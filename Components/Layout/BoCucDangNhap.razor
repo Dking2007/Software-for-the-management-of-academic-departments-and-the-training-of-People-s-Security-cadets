@@ -1,15 +1,24 @@
 @inherits LayoutComponentBase
 
-<main class="trang-dang-nhap">
-    <section class="hop-dang-nhap" aria-labelledby="tieu-de-dang-nhap">
-        <header class="nhan-dien-dang-nhap">
-            <img class="logo-dang-nhap" src="images/logo-hoc-vien-an-ninh.png" alt="Logo Học viện An ninh nhân dân" />
-            <h1 id="tieu-de-dang-nhap" tabindex="-1">
-                <span class="ten-hoc-vien">Học viện An ninh nhân dân</span>
-                <span class="ten-he-thong">Hệ thống quản lý đào tạo</span>
-            </h1>
-        </header>
-        @Body
-    </section>
-</main>
+@* Bố cục đăng nhập và đăng ký: thẻ biểu mẫu ở giữa trên nền xanh toàn màn hình.
+   Tiêu đề h1 của trang (Đăng nhập / Đăng ký) nằm trong @Body để trình đọc màn hình và FocusOnNavigate dùng đúng tiêu đề. *@
+<div class="trang-dang-nhap">
+    <div class="gioi-thieu-dang-nhap" aria-hidden="true">
+        <span class="vong-trang-tri vong-mot" aria-hidden="true"></span>
+        <span class="vong-trang-tri vong-hai" aria-hidden="true"></span>
+        <span class="vong-trang-tri vong-ba" aria-hidden="true"></span>
+    </div>
 
+    <main class="cot-dang-nhap">
+        <div class="khung-dang-nhap">
+            <section class="hop-dang-nhap">
+                <header class="thuong-hieu-dang-nhap">
+                    <img class="logo-dang-nhap" src="images/logo-hoc-vien-an-ninh.png" alt="Logo Học viện An ninh nhân dân" />
+                    <span class="ten-hoc-vien">HỌC VIỆN AN NINH NHÂN DÂN</span>
+                    <span class="ten-he-thong">Hệ thống quản lý Khoa/Lớp đào tạo</span>
+                </header>
+                @Body
+            </section>
+        </div>
+    </main>
+</div>

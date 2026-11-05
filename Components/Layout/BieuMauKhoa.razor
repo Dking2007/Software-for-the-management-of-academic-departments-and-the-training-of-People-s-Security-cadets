@@ -18,8 +18,10 @@
         </RadzenFormField>
         @if (DangSua)
         {
-            <RadzenCheckBox TValue="bool" @bind-Value="banSao.DangHoatDong" Name="DangHoatDong" />
-            <RadzenLabel Text="Đơn vị đang hoạt động" Component="DangHoatDong" />
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap=".5rem">
+                <RadzenCheckBox TValue="bool" @bind-Value="banSao.DangHoatDong" Name="DangHoatDong" />
+                <RadzenLabel Text="Đơn vị đang hoạt động" Component="DangHoatDong" />
+            </RadzenStack>
         }
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem">
             <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" />

@@ -54,6 +54,7 @@ boMayUngDung.Services.AddAuthorization(cauHinh =>
     cauHinh.AddPolicy(nameof(VaiTroDemo.Admin), chinhSach => chinhSach.RequireRole(nameof(VaiTroDemo.Admin))));
 boMayUngDung.Services.AddCascadingAuthenticationState();
 boMayUngDung.Services.AddRadzenComponents();
+boMayUngDung.Services.AddScoped<TuyChonGiaoDien>();
 boMayUngDung.Services.AddSingleton<KhoVeDangNhapDemo>();
 boMayUngDung.Services.AddScoped<NhaCungCapTrangThaiXacThucDemo>();
 boMayUngDung.Services.AddScoped<AuthenticationStateProvider>(dichVu => dichVu.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());

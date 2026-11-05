@@ -13,6 +13,7 @@ using System.Text.Json;
 
 // Bộ kiểm tra chạy trên kho riêng, không gọi server và không sửa dữ liệu của phiên đang mở.
 var dv = new ServiceCollection();
+dv.AddScoped<TuyChonGiaoDien>();
 dv.AddLogging(); dv.AddRadzenComponents(); dv.AddSingleton<NavigationManager, DieuHuongKiemThu>(); dv.AddSingleton<IJSRuntime, JavaScriptKhongTuongTac>();
 dv.AddAuthorizationCore(o => o.AddPolicy("Admin", p => p.RequireRole("Admin")));
 dv.AddSingleton<KhoDuLieuDemo>(); dv.AddSingleton<KhoVeDangNhapDemo>();

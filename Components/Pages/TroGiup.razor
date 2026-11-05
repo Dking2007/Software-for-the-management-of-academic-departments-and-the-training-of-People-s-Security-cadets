@@ -1,0 +1,61 @@
+@page "/tro-giup"
+@attribute [Authorize]
+@inject TuyChonGiaoDien TuyChon
+
+<PageTitle>@TuyChon.Dich("Trợ giúp") | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Trợ giúp" MoTa="@(TiengAnh ? "Getting started and demo feedback." : "Giới thiệu, hướng dẫn nhanh và phản hồi về hệ thống.")" />
+<div class="luoi-tro-giup">
+    <div class="noi-dung-tro-giup">
+        <RadzenCard>
+            <h2><RadzenIcon Icon="info" />@TuyChon.Dich("Giới thiệu")</h2>
+            <p>@(TiengAnh ? "The Faculty/Training Class Management System brings together faculty, training and student management in one workspace." : "Hệ thống quản lý Khoa/Lớp đào tạo tập hợp ba mảng: Quản lý khoa, Quản lý đào tạo và Quản lý học viên.")</p>
+            <p>@(TiengAnh ? "This is a learning demo. Sample records are synthetic; in-memory changes can be lost when the application restarts." : "Đây là ứng dụng minh họa học tập. Hồ sơ mẫu là dữ liệu tổng hợp; thay đổi trong bộ nhớ có thể mất khi ứng dụng khởi động lại.")</p>
+        </RadzenCard>
+        <RadzenCard>
+            <h2><RadzenIcon Icon="menu_book" />@TuyChon.Dich("Hướng dẫn sử dụng")</h2>
+            <ol class="cac-buoc-huong-dan">
+                <li><strong>@TuyChon.Dich("Quản lý khoa")</strong><p>@(TiengAnh ? "Open a faculty name to see its departments and staff. Open a department name to see its staff list." : "Bấm tên khoa để xem tổ và cán bộ trong khoa. Bấm tên tổ để xem danh sách cán bộ thuộc tổ.")</p></li>
+                <li><strong>@TuyChon.Dich("Quản lý học viên")</strong><p>@(TiengAnh ? "Open Classes, then select a class code to see its information and students. Search and filters narrow the current list." : "Mở Danh sách lớp, bấm mã lớp để xem thông tin và học viên của lớp. Dùng ô tìm kiếm và bộ lọc để thu hẹp danh sách.")</p></li>
+                <li><strong>@TuyChon.Dich("Quản lý đào tạo")</strong><p>@(TiengAnh ? "View training summaries, specializations and academic years calculated from current class records." : "Xem tổng quan, chuyên ngành và niên khóa được tổng hợp từ danh sách lớp hiện hành.")</p></li>
+                <li><strong>@(TiengAnh ? "Tables and editing" : "Bảng và thao tác dữ liệu")</strong><p>@(TiengAnh ? "Choose rows per page below each table. Scroll horizontally for more columns; actions stay on the right. Editing requires the appropriate role." : "Chọn số dòng/trang ở cuối bảng. Cuộn ngang để xem thêm cột; nút thao tác được giữ ở bên phải. Chỉ tài khoản có quyền mới được thêm, sửa, xóa.")</p></li>
+                <li><strong>@TuyChon.Dich("Thông báo") / @TuyChon.Dich("Cài đặt")</strong><p>@(TiengAnh ? "Use the bell to open notifications. Use the gear to change appearance and the language of common interface labels." : "Bấm chuông để xem thông báo. Bấm bánh răng để chọn sáng/tối và ngôn ngữ của các nhãn giao diện chung.")</p></li>
+            </ol>
+        </RadzenCard>
+    </div>
+    <RadzenCard class="phan-hoi-tro-giup">
+        <h2><RadzenIcon Icon="feedback" />@TuyChon.Dich("Gửi phản hồi")</h2>
+        <p class="ghi-chu-phan-hoi">@(TiengAnh ? "Demo form only: feedback is not sent or saved. Preview your message below." : "Biểu mẫu minh họa: phản hồi chưa được gửi hoặc lưu. Bạn có thể xem trước nội dung bên dưới.")</p>
+        <EditForm Model="banNhap" OnValidSubmit="XemTruoc">
+            <DataAnnotationsValidator />
+            <label for="phan-hoi-tieu-de">@TuyChon.Dich("Tiêu đề")</label>
+            <InputText id="phan-hoi-tieu-de" class="form-control" @bind-Value="banNhap.TieuDe" maxlength="120" />
+            <ValidationMessage For="@(() => banNhap.TieuDe)" />
+            <label for="phan-hoi-noi-dung">@TuyChon.Dich("Nội dung")</label>
+            <InputTextArea id="phan-hoi-noi-dung" class="form-control" @bind-Value="banNhap.NoiDung" rows="6" maxlength="2000" />
+            <ValidationMessage For="@(() => banNhap.NoiDung)" />
+            <RadzenButton Text="@TuyChon.Dich("Xem trước phản hồi")" Icon="preview" ButtonType="ButtonType.Submit" />
+        </EditForm>
+        @if (xemTruoc is not null)
+        {
+            <section class="xem-truoc-phan-hoi" role="status">
+                <strong>@TuyChon.Dich("Phản hồi minh họa"): @xemTruoc.TieuDe</strong>
+                <p>@xemTruoc.NoiDung</p>
+                <small>@(TiengAnh ? "Preview created. Nothing has been sent to the administrator." : "Đã tạo bản xem trước. Chưa gửi nội dung đến quản trị viên.")</small>
+            </section>
+        }
+    </RadzenCard>
+</div>
+@code {
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
+    private bool TiengAnh => TuyChon.NgonNgu == "en";
+    private readonly BanNhapPhanHoi banNhap = new();
+    private BanNhapPhanHoi? xemTruoc;
+    private void XemTruoc() => xemTruoc = new() { TieuDe = banNhap.TieuDe.Trim(), NoiDung = banNhap.NoiDung.Trim() };
+    public sealed class BanNhapPhanHoi
+    {
+        [Required(ErrorMessage = "Vui lòng nhập tiêu đề / Subject is required.")]
+        [StringLength(120)] public string TieuDe { get; set; } = "";
+        [Required(ErrorMessage = "Vui lòng nhập nội dung / Message is required.")]
+        [StringLength(2000)] public string NoiDung { get; set; } = "";
+    }
+}

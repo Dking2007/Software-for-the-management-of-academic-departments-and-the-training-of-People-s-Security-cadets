@@ -8,7 +8,7 @@
         {
             <AuthorizeView>
                 <Authorized>
-                    <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"><NotAuthorized Context="quyenTrang"><p>Bạn không có quyền truy cập trang này.</p></NotAuthorized></AuthorizeRouteView>
+                    <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"><NotAuthorized Context="quyenTrang"><section class="empty-state"><RadzenIcon Icon="lock" class="empty-state-icon" /><h1>Không đủ quyền truy cập</h1><p>Tài khoản hiện tại không được phép mở trang này. Hãy quay về trang chủ hoặc đăng nhập bằng tài khoản có quyền phù hợp.</p><RadzenLink Text="Về trang chủ" Icon="home" Path="/" class="btn btn-primary" /></section></NotAuthorized></AuthorizeRouteView>
                 </Authorized>
                 <NotAuthorized>
                     <ChuyenDenDangNhap />

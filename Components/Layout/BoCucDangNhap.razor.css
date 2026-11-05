@@ -1,67 +1,75 @@
+/* Nền xanh toàn màn hình; thẻ sáng ở giữa giúp biểu mẫu dễ đọc. */
 .trang-dang-nhap {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
-    display: grid;
-    place-items: center;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 2rem 1rem;
-    background:
-        radial-gradient(ellipse at 12% 15%, rgba(160, 201, 166, .12), transparent 45%),
-        radial-gradient(ellipse at 90% 85%, rgba(160, 201, 166, .08), transparent 40%),
-        var(--xanh-la-dam);
+    background: var(--mau-chinh-dam);
 }
 
-/* Các vòng tròn chỉ trang trí nền, không chặn thao tác với biểu mẫu. */
-.trang-dang-nhap::before,
-.trang-dang-nhap::after {
-    content: "";
+.gioi-thieu-dang-nhap {
     position: absolute;
+    inset: 0;
     z-index: -1;
-    width: clamp(20rem, 45vw, 44rem);
-    aspect-ratio: 1;
-    border: 1px solid rgba(255, 255, 255, .1);
-    border-radius: 50%;
-    box-shadow: 0 0 0 3rem rgba(255, 255, 255, .025),
-                0 0 0 6rem rgba(255, 255, 255, .02);
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 30%, rgba(45,107,73,.3), transparent 70%);
     pointer-events: none;
 }
 
-.trang-dang-nhap::before {
-    top: -12rem;
-    left: -10rem;
+/* Họa tiết chỉ để trang trí, không chặn thao tác. */
+.vong-trang-tri { position: absolute; border: 1px solid var(--vien-tren-nen-toi); border-radius: 50%; pointer-events: none; }
+.vong-mot { right: -16rem; bottom: -19rem; width: 51rem; height: 51rem; }
+.vong-hai { right: -11rem; bottom: -14rem; width: 41rem; height: 41rem; }
+.vong-ba { right: -6rem; bottom: -9rem; width: 31rem; height: 31rem; border-color: rgba(184,146,58,.3); }
+
+.thuong-hieu-dang-nhap { display: flex; flex-direction: column; align-items: center; gap: .625rem; margin-bottom: 1rem; text-align: center; }
+.logo-dang-nhap { width: 4rem; height: 4rem; box-sizing: content-box; padding: .375rem; border: 1px solid rgba(184,146,58,.22); border-radius: 50%; background: linear-gradient(145deg, #fff, #f4f7f3); box-shadow: 0 4px 16px rgba(27,75,52,.06); object-fit: contain; }
+.ten-hoc-vien { color: var(--mau-chinh); font-size: .8125rem; font-weight: 700; letter-spacing: .055em; line-height: 1.5; }
+.ten-he-thong { color: var(--mau-chinh); font-family: var(--font); font-size: clamp(.6875rem, 3.5vw, 1.125rem); font-weight: 700; letter-spacing: -.025em; line-height: 1.4; white-space: nowrap; }
+.ten-he-thong::after { content: ""; display: block; width: 2.5rem; height: 3px; margin: .625rem auto 0; border-radius: 2px; background: var(--mau-nhan); }
+
+.cot-dang-nhap {
+    box-sizing: border-box;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
 }
 
-.trang-dang-nhap::after {
-    right: -12rem;
-    bottom: -15rem;
-}
+.khung-dang-nhap { position: relative; width: 100%; max-width: 30rem; }
 
 .hop-dang-nhap {
-    width: min(100%, 28rem);
-    padding: 2.5rem;
-    border: 1px solid rgba(255, 255, 255, .65);
-    border-radius: 1.25rem;
-    background: #fff;
-    box-shadow: 0 24px 64px rgba(7, 30, 20, .24);
+    padding: 1.5rem 2rem;
+    border: 1px solid rgba(255,255,255,.3);
+    border-top: 3px solid var(--mau-nhan);
+    border-radius: var(--bo-goc-lon);
+    background: var(--nen-the);
+    box-shadow: 0 24px 64px rgba(0,0,0,.22);
 }
 
-.nhan-dien-dang-nhap { text-align: center; margin-bottom: 2rem; }
-.logo-dang-nhap { display: block; width: 5.5rem; height: 5.5rem; margin: 0 auto 1.25rem; object-fit: contain; }
-.nhan-dien-dang-nhap h1 { display: flex; flex-direction: column; gap: .65rem; margin: 0; line-height: 1.4; }
-.nhan-dien-dang-nhap h1:focus { outline: none; }
-.ten-hoc-vien { color: var(--xanh-la-dam); font-size: .95rem; font-weight: 700; letter-spacing: .045em; text-transform: uppercase; }
-.ten-he-thong { color: var(--mau-chu); font-size: 1.5rem; font-weight: 650; letter-spacing: -.035em; text-wrap: balance; }
-.hop-dang-nhap ::deep .form-label { margin-bottom: .5rem; color: #3f5546; font-size: .9rem; font-weight: 600; }
-.hop-dang-nhap ::deep .form-control { width: 100%; min-height: 3.15rem; border: 1px solid #d9e4da; border-radius: .65rem; background: #fff; font-size: .95rem; }
-.hop-dang-nhap ::deep .form-control:focus,
-.hop-dang-nhap ::deep .form-control:focus-within { border-color: var(--xanh-la-chinh); box-shadow: 0 0 0 .2rem rgba(60, 128, 88, .12); }
-.hop-dang-nhap ::deep .nut-dang-nhap { justify-content: center; min-height: 3.15rem; margin-top: .75rem; border-radius: .65rem; font-size: .95rem; font-weight: 600; }
-.hop-dang-nhap ::deep .nut-dang-nhap span { color: inherit; font-size: inherit; }
+.hop-dang-nhap ::deep .tieu-de-the { margin: 0 0 var(--kc-2); color: var(--mau-chinh); font-family: var(--font); font-size: var(--cc-22); font-weight: 600; line-height: 1.3; text-align: center; }
+.hop-dang-nhap ::deep .tieu-de-the:focus { outline: none; }
+.hop-dang-nhap ::deep .mo-ta-the { margin: 0 0 1.5rem; color: var(--chu-phu); font-size: .875rem; line-height: 1.5; text-align: center; }
+.hop-dang-nhap ::deep .dau-bieu-mau-dang-nhap { margin-bottom: 1rem; padding: .625rem 1rem; border: 1px solid #e2ebe4; border-radius: var(--bo-goc-the); background: linear-gradient(135deg, #f0f6f2, #fafbf9); }
+.hop-dang-nhap ::deep .dau-bieu-mau-dang-nhap .tieu-de-the { display: flex; align-items: center; justify-content: center; gap: .75rem; margin: 0; font-size: var(--cc-18); letter-spacing: -.015em; }
+.hop-dang-nhap ::deep .dau-bieu-mau-dang-nhap .tieu-de-the::before,
+.hop-dang-nhap ::deep .dau-bieu-mau-dang-nhap .tieu-de-the::after { content: ""; width: 1.75rem; height: 1px; background: #b8cdbf; }
+.hop-dang-nhap ::deep .form-control { width: 100%; min-height: 2.625rem; }
+.hop-dang-nhap ::deep .nut-dang-nhap { min-height: 2.625rem; }
+.hop-dang-nhap ::deep .bieu-mau-dang-nhap .nut-dang-nhap { margin-top: 1rem; }
 
-@media (max-width: 480px) {
-    .hop-dang-nhap { padding: 2rem 1.5rem; }
-    .ten-hoc-vien { font-size: .85rem; }
-    .ten-he-thong { font-size: 1.35rem; }
+@media (max-width: 760px) {
+    .hop-dang-nhap { padding: 1.25rem 1rem; }
+    .ten-hoc-vien { font-size: .75rem; letter-spacing: .025em; }
+}
+
+/* Màn hình thấp: giảm khoảng cách, vẫn cho cuộn khi có thông báo lỗi hoặc bàn phím ảo. */
+@media (max-height: 600px) {
+    .cot-dang-nhap { padding: .75rem 1rem; }
+    .hop-dang-nhap { padding-top: 1rem; padding-bottom: 1rem; }
+    .logo-dang-nhap { width: 3rem; height: 3rem; }
+    .thuong-hieu-dang-nhap { gap: .375rem; margin-bottom: .75rem; }
+    .hop-dang-nhap ::deep .bieu-mau-dang-nhap .mb-3 { margin-bottom: .625rem !important; }
 }

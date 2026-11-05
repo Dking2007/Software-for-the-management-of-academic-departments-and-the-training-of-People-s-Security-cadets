@@ -145,6 +145,17 @@ public sealed class KhoDuLieuDemo
                 });
             }
         }
+        // Ngẫu nhiên có hạt giống: tên giả đa dạng nhưng giữ ổn định sau mỗi lần chạy.
+        var ngauNhien = new Random(2026);
+        string[] capBac = ["Đại úy", "Thiếu tá", "Trung tá", "Thượng tá"];
+        var tenDaDung = new HashSet<string>();
+        foreach (var lop in danhSach)
+        {
+            string hoTen;
+            do { hoTen = QuyTacDuLieu.TaoHoTen(ngauNhien.Next(1, 5000), ngauNhien.Next(3) == 0 ? "Nữ" : "Nam"); }
+            while (!tenDaDung.Add(hoTen));
+            lop.GiaoVienChuNhiem = $"{capBac[ngauNhien.Next(capBac.Length)]} {hoTen}";
+        }
         return danhSach;
     }
 

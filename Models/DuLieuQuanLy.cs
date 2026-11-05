@@ -113,6 +113,12 @@ public sealed class CanBoGiangVien
 /// <summary>Lớp thuộc một hệ và khóa đào tạo theo sơ đồ người dùng cung cấp.</summary>
 public sealed class LopDaoTao
 {
+    [StringLength(120, ErrorMessage = "Giáo viên chủ nhiệm không quá 120 ký tự.")]
+    public string GiaoVienChuNhiem { get; set; } = string.Empty;
+
+    // Tính từ khóa học để niên khóa luôn đồng bộ khi thêm hoặc sửa lớp.
+    public string NienKhoa => Nhom2_BTL.Services.QuyTacDuLieu.TinhNienKhoa(HeDaoTao, KhoaHoc);
+
     [Required(ErrorMessage = "Vui lòng nhập mã lớp.")]
     [StringLength(16, ErrorMessage = "Mã lớp không quá 16 ký tự.")]
     public string MaLop { get; set; } = string.Empty;

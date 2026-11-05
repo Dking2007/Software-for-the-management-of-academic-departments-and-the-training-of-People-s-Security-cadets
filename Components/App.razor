@@ -7,10 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
-    @* Nạp kiểu nền và font biểu tượng Material Symbols đi kèm gói Radzen đang cài. *@
-    <RadzenTheme Theme="material" />
-    <link rel="stylesheet" href="app.css?v=20261103-bang-tin-2" />
-    <link rel="stylesheet" href="Nhom2-BTL.styles.css?v=20261103-hop-sua-thong-bao-4" />
+    @* Theme "standard" của Radzen phẳng và gọn hơn "material"; app.css ánh xạ màu và font của dự án lên theme này. *@
+    <RadzenTheme Theme="standard" />
+    <link id="chu-de-toi" rel="stylesheet" href="_content/Radzen.Blazor/css/standard-dark.css" media="not all" />
+    <script src="tuy-chon-giao-dien.js"></script>
+    <link rel="stylesheet" href="app.css?v=20261105-cai-dat" />
+    <link rel="stylesheet" href="Nhom2-BTL.styles.css?v=20261103-giai-doan-6" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>

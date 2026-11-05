@@ -194,6 +194,7 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
         // Giữ mã định danh ổn định để không làm mất quan hệ của các bản ghi phụ thuộc.
         doiTuong = doiTuong.TaoBanSao();
         doiTuong.MaLop = (doiTuong.MaLop ?? string.Empty).Trim().ToUpperInvariant();
+        doiTuong.GiaoVienChuNhiem = (doiTuong.GiaoVienChuNhiem ?? string.Empty).Trim();
         if (maCu is not null && doiTuong.MaLop != maCu) return new(false, "Không được đổi mã định danh khi sửa.");
         var loi = KiemTra(doiTuong); if (loi is not null) return new(false, loi);
         var ma = doiTuong.MaLop.Trim().ToUpperInvariant();

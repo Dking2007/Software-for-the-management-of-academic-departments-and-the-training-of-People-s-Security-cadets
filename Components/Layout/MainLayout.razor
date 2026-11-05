@@ -1,3 +1,5 @@
+@implements IDisposable
+@inject TuyChonGiaoDien TuyChon
 @inherits LayoutComponentBase
 
 @* Bố cục chính chứa thanh điều hướng, thông tin tài khoản và nội dung trang đã đăng nhập. *@
@@ -8,32 +10,57 @@
 
     <div class="main-area">
         <header class="top-row">
-            <RadzenButton class="nut-sidebar" Icon="@(sidebarThuGon ? "menu" : "menu_open")" ButtonStyle="ButtonStyle.Light" Click="@DoiTrangThaiSidebar" aria-label="@(sidebarThuGon ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng")" aria-expanded="@(!sidebarThuGon ? "true" : "false")" />
-            <div class="topbar-heading">
-                <div class="tieu-de-cong-thong-tin">Cổng thông tin quản lý khoa, lớp đào tạo Học viện An ninh nhân dân</div>
-
+            <div class="top-row-trai">
+                <RadzenButton class="nut-sidebar" Icon="@(sidebarThuGon ? "menu" : "menu_open")" ButtonStyle="ButtonStyle.Light" Click="@DoiTrangThaiSidebar" aria-label="@(sidebarThuGon ? "Mở rộng thanh điều hướng" : "Thu gọn thanh điều hướng")" aria-expanded="@(!sidebarThuGon ? "true" : "false")" />
+                @* Đường dẫn dựng từ địa chỉ hiện tại; mục cuối là trang đang xem nên không có liên kết. *@
+                <nav class="duong-dan" aria-label="@TuyChon.Dich("Vị trí hiện tại")">
+                    <RadzenBreadCrumb>
+                        @foreach (var muc in LayDuongDan())
+                        {
+                            <RadzenBreadCrumbItem Path="@muc.DuongDan" Text="@TuyChon.Dich(muc.Ten)" Icon="@muc.BieuTuong" />
+                        }
+                    </RadzenBreadCrumb>
+                </nav>
             </div>
-            @* Tên và vai trò lấy từ claim của phiên hiện tại; nút Radzen đăng xuất xóa phiên đó. *@
+            @* Tên và vai trò lấy từ claim của phiên hiện tại. Form đăng xuất giữ nguyên cơ chế token, chỉ đổi chỗ hiển thị vào menu thả xuống. *@
             <AuthorizeView>
                 <Authorized Context="nguoiDung">
-                    <div class="user-menu">
-                        <div class="user-avatar">@LayInitial(nguoiDung.User.Identity?.Name)</div>
-                        <div class="user-details">
-                            <span class="user-name">@nguoiDung.User.Identity?.Name</span>
-                            <span class="user-role">@LayTenVaiTro(nguoiDung.User)</span>
+                    <div class="cong-cu-tai-khoan">
+                        <RadzenLink class="nut-thong-bao" Path="/thong-bao" Icon="notifications" title="@TuyChon.Dich("Thông báo")" aria-label="@TuyChon.Dich("Thông báo")" />
+                        <CaiDatGiaoDien />
+                        <div class="menu-nguoi-dung" @onkeydown="PhimTrongMenu">
+                            <button type="button" class="nut-nguoi-dung" @onclick="DoiMenuNguoiDung" aria-haspopup="true" aria-expanded="@(menuNguoiDungMo ? "true" : "false")">
+                                <span class="user-avatar">@LayInitial(nguoiDung.User.Identity?.Name)</span>
+                                <span class="user-details">
+                                    <span class="user-name">@nguoiDung.User.Identity?.Name</span>
+                                    <span class="user-role">@LayTenVaiTro(nguoiDung.User)</span>
+                                </span>
+                                <RadzenIcon Icon="@(menuNguoiDungMo ? "expand_less" : "expand_more")" />
+                            </button>
+                            @if (menuNguoiDungMo)
+                            {
+                                @* Lớp phủ trong suốt: bấm ra ngoài thì đóng menu. *@
+                                <div class="phu-menu-nguoi-dung" @onclick="DongMenuNguoiDung"></div>
+                                <div class="hop-nguoi-dung" role="menu">
+                                    <div class="hop-nguoi-dung-ten">
+                                        <strong>@nguoiDung.User.Identity?.Name</strong>
+                                        <span>@LayTenVaiTro(nguoiDung.User)</span>
+                                    </div>
+                                    <form data-bieu-mau-phien method="post" action="/phien/dang-xuat" data-enhance="false"><AntiforgeryToken /><RadzenButton class="nut-dang-xuat" Icon="logout" Text="@TuyChon.Dich("Đăng xuất")" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Base" ButtonType="ButtonType.Submit" /></form>
+                                </div>
+                            }
                         </div>
-                        <form data-bieu-mau-phien method="post" action="/phien/dang-xuat" data-enhance="false"><AntiforgeryToken /><RadzenButton class="btn-logout" Icon="logout" Text="Đăng xuất" ButtonStyle="ButtonStyle.Danger" ButtonType="ButtonType.Submit" /></form>
                     </div>
                 </Authorized>
             </AuthorizeView>
         </header>
 
         <main class="content">
-            @Body
-            @* Trang chọn phân hệ chỉ giữ ba thẻ chính; chân trang nằm ở các màn hình quản lý. *@
+            <CascadingValue Name="NgonNguGiaoDien" Value="@TuyChon.NgonNgu">@Body</CascadingValue>
+            @* Trang chủ đã có nhãn dữ liệu mẫu ở đầu trang nên chân trang chỉ hiện ở các màn hình quản lý. *@
             @if (!LaTrangChu)
             {
-                <footer class="app-footer">© Học viện An ninh nhân dân <span>•</span> Hệ thống quản lý đào tạo</footer>
+                <footer class="app-footer">Bản demo học tập · dữ liệu và tài khoản giả lập, không dùng cho hệ thống thật</footer>
             }
         </main>
     </div>
@@ -42,20 +69,30 @@
 <div id="blazor-error-ui">
     @* Giữ bộ chọn CSS của Blazor nhưng dùng Radzen cho điều khiển trong thông báo lỗi. *@
     Đã xảy ra lỗi. <RadzenLink Path="" class="reload">Tải lại trang</RadzenLink>
-    <RadzenButton class="dismiss" Text="×" ButtonStyle="ButtonStyle.Light" aria-label="Đóng thông báo lỗi" />
+    <RadzenButton class="dismiss" Text="@TuyChon.Dich("×")" ButtonStyle="ButtonStyle.Light" aria-label="@TuyChon.Dich("Đóng thông báo lỗi")" />
 </div>
 
 @* Đăng ký các thành phần Radzen cần dịch vụ tương tác như hộp thoại và thông báo. *@
 <RadzenComponents />
 
 @code {
+    protected override void OnInitialized() => TuyChon.DaThayDoi += KhiDoiTuyChon;
+    private void KhiDoiTuyChon() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => TuyChon.DaThayDoi -= KhiDoiTuyChon;
+
     [Inject] private NhaCungCapTrangThaiXacThucDemo XacThuc { get; set; } = default!;
     [Inject] private NavigationManager DieuHuong { get; set; } = default!;
 
     private bool sidebarThuGon;
     private void DoiTrangThaiSidebar() => sidebarThuGon = !sidebarThuGon;
 
-    private bool LaTrangChu => string.IsNullOrEmpty(DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0]);
+    private bool menuNguoiDungMo;
+    private void DoiMenuNguoiDung() => menuNguoiDungMo = !menuNguoiDungMo;
+    private void DongMenuNguoiDung() => menuNguoiDungMo = false;
+    private void PhimTrongMenu(KeyboardEventArgs e) { if (e.Key == "Escape") menuNguoiDungMo = false; }
+
+    private string DuongDanHienTai => DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0].Trim('/');
+    private bool LaTrangChu => string.IsNullOrEmpty(DuongDanHienTai);
 
     private async Task DangXuat()
     {
@@ -64,13 +101,52 @@
         DieuHuong.NavigateTo("/dang-nhap", replace: true);
     }
 
-    // Đổi tên vai trò kỹ thuật trong claim thành nhãn tiếng Việt dễ đọc.
+    private sealed record MucDuongDan(string Ten, string? DuongDan = null, string? BieuTuong = null);
+
+    // Mỗi trang đã biết có một chuỗi mục; địa chỉ lạ (lỗi, không tồn tại) chỉ hiện "Trang chủ".
+    // Mục cuối luôn không có liên kết vì là trang đang xem.
+    private IEnumerable<MucDuongDan> LayDuongDan()
+    {
+        var chuoi = DuongDanHienTai.ToLowerInvariant() switch
+        {
+            "khoa" => new[] { new MucDuongDan("Quản lý khoa", "/khoa") },
+            "khoa/to" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Tổ chuyên môn") },
+            "khoa/can-bo" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Cán bộ, giảng viên") },
+            "tro-giup" => new[] { new MucDuongDan("Trợ giúp") },
+            "thong-bao" => new[] { new MucDuongDan("Thông báo") },
+            "lop" => new[] { new MucDuongDan("Lớp đào tạo", "/lop") },
+            "hoc-vien" => new[] { new MucDuongDan("Học viên", "/hoc-vien") },
+            "quan-tri/tai-khoan" => new[] { new MucDuongDan("Quản trị hệ thống"), new MucDuongDan("Tài khoản và phân quyền") },
+            _ => Array.Empty<MucDuongDan>()
+        };
+
+        var cacDoan = DuongDanHienTai.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (cacDoan.FirstOrDefault() == "quan-ly-hoc-vien" || DuongDanHienTai is "lop" or "hoc-vien")
+        {
+            chuoi = [new("Quản lý học viên", "/quan-ly-hoc-vien"), new((DuongDanHienTai == "hoc-vien" || DuongDanHienTai.EndsWith("/hoc-vien")) ? "Danh sách học viên" : "Danh sách lớp", "/quan-ly-hoc-vien/lop")];
+            if (cacDoan.Length == 3) chuoi = [new("Quản lý học viên", "/quan-ly-hoc-vien"), new("Danh sách lớp", "/quan-ly-hoc-vien/lop"), new(Uri.UnescapeDataString(cacDoan[2]))];
+        }
+        else if (cacDoan.FirstOrDefault() == "dao-tao")
+            chuoi = cacDoan.Length == 1 ? [new("Quản lý đào tạo")] : [new("Quản lý đào tạo", "/dao-tao"), new(cacDoan[1] == "chuyen-nganh" ? "Chuyên ngành" : "Khóa và niên khóa")];
+        else if (cacDoan.FirstOrDefault() == "khoa" && cacDoan.Length >= 3)
+        {
+            chuoi = [new("Quản lý khoa", "/khoa"), new(Uri.UnescapeDataString(cacDoan[1]), $"/khoa/{cacDoan[1]}/to"), new("Tổ chuyên môn")];
+            if (cacDoan.Length == 4) chuoi = [new("Quản lý khoa", "/khoa"), new(Uri.UnescapeDataString(cacDoan[1]), $"/khoa/{cacDoan[1]}/to"), new(Uri.UnescapeDataString(cacDoan[3]))];
+        }
+
+        // Gốc là Trang chủ; nếu là trang đang xem thì bỏ liên kết. Trang chỉ có một mục thì mục đó cũng là trang đang xem.
+        yield return new MucDuongDan("Trang chủ", chuoi.Length == 0 ? null : "/", "home");
+        for (var i = 0; i < chuoi.Length; i++)
+            yield return i == chuoi.Length - 1 ? chuoi[i] with { DuongDan = null } : chuoi[i];
+    }
+
+    // Đổi tên vai trò kỹ thuật trong claim thành nhãn tiếng Việt dễ đọc. Chỉ đổi nhãn hiển thị, claim giữ nguyên.
     private static string LayTenVaiTro(System.Security.Claims.ClaimsPrincipal nguoiDung)
         => nguoiDung.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value switch
         {
-            nameof(VaiTroDemo.Admin) => "Admin",
-            nameof(VaiTroDemo.Manager) => "Manager",
-            nameof(VaiTroDemo.Guest) => "Guest",
+            nameof(VaiTroDemo.Admin) => "Quản trị viên",
+            nameof(VaiTroDemo.Manager) => "Cán bộ quản lý",
+            nameof(VaiTroDemo.Guest) => "Người xem",
             _ => "Chưa xác định"
         };
 

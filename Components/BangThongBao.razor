@@ -6,10 +6,9 @@
 
 <section class="bang-thong-bao" aria-labelledby="tieu-de-bang-tin">
     <header class="dau-bang-tin">
-        <div><span class="nhan-tong-quan">CỔNG THÔNG TIN</span><h1 id="tieu-de-bang-tin">Bảng thông báo</h1></div>
+        <div><h2 id="tieu-de-bang-tin">Bảng thông báo</h2></div>
         @if (laAdmin) { <RadzenButton Text="Đăng thông báo" Icon="add" Click="Them" Disabled="dangBan" /> }
     </header>
-    <p class="ghi-chu-demo">Nội dung tổng hợp phục vụ học tập. Thông báo và ảnh lưu trong bộ nhớ, được đặt lại khi khởi động ứng dụng.</p>
     <div class="bo-loc-tin">
         <div><label for="tim-thong-bao">Tìm thông báo</label><input id="tim-thong-bao" class="form-control" placeholder="Tiêu đề, nội dung, tác giả hoặc tag…" @bind="tuKhoa" @bind:event="oninput" /></div>
         <div><label for="loc-tag-tin">Đối tượng hướng tới</label><select id="loc-tag-tin" class="form-select" @bind="tagLoc"><option value="">Tất cả thông báo</option><option value="chung">Không gắn tag</option><option value="lop:*">Lớp đào tạo…</option>@foreach (var tag in danhMucTags.Where(x => x.Ma.StartsWith("khoa:"))) { <option value="@tag.Ma">@tag.Ten</option> }</select></div>
@@ -168,7 +167,7 @@
     }
     private async Task Xoa(ThongBao bai)
     {
-        if (await HopThoai.Confirm($"Xóa thông báo “{bai.TieuDe}”?", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy" }) != true) return;
+        if (await HopThoai.Confirm($"Bạn sắp xóa thông báo “{bai.TieuDe}”. Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }) != true) return;
         dangBan = true; loi = thanhCong = "";
         try { await DichVu.XoaAsync(bai.Ma); if (banNhap?.Ma == bai.Ma) Huy(); TaiLai(); thanhCong = "Đã xóa thông báo."; }
         catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException) { loi = ex.Message; }

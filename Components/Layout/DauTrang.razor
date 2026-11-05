@@ -1,0 +1,25 @@
+@inject TuyChonGiaoDien TuyChon
+@* Đầu trang dùng chung: tiêu đề, mô tả ngắn và vùng nút thao tác (ví dụ "Thêm khoa") ở bên phải.
+   Vị trí trong hệ thống đã có breadcrumb ở header nên ở đây không lặp lại tên phân hệ. *@
+<div class="page-heading-row">
+    <div class="page-heading">
+        <h1>@TuyChon.Dich(TieuDe)</h1>
+        @if (!string.IsNullOrWhiteSpace(MoTa))
+        {
+            <p>@TuyChon.Dich(MoTa)</p>
+        }
+    </div>
+    @if (ThaoTac is not null)
+    {
+        <div class="thao-tac-dau-trang">@ThaoTac</div>
+    }
+</div>
+
+@code {
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
+    [Parameter, EditorRequired] public string TieuDe { get; set; } = string.Empty;
+    [Parameter] public string? MoTa { get; set; }
+
+    // Chỉ truyền nội dung khi người dùng có quyền thao tác; không truyền thì vùng này không hiện.
+    [Parameter] public RenderFragment? ThaoTac { get; set; }
+}

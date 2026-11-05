@@ -1,0 +1,58 @@
+using System.Reflection;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.DependencyInjection;
+using Nhom2_BTL.Services;
+using Nhom2_BTL.Models;
+using Trang = Nhom2_BTL.Components.Pages;
+
+// Kiểm thử bằng kho bộ nhớ riêng, không mở web và không dùng tài khoản/cơ sở dữ liệu thật.
+var services = new ServiceCollection();
+services.AddLogging(); services.AddAuthorizationCore(); services.AddSingleton<KhoDuLieuDemo>();
+services.AddSingleton<KhoVeDangNhapDemo>(); services.AddSingleton<NhaCungCapTrangThaiXacThucDemo>();
+services.AddSingleton<AuthenticationStateProvider>(s => s.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
+services.AddSingleton<DichVuPhanQuyenDemo>(); services.AddSingleton<DichVuQuanLyDuLieuDemo>();
+using var provider = services.BuildServiceProvider();
+var auth = provider.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>();
+auth.SetAuthenticationState(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Role, "Admin") }, "KiemThu")))));
+var data = provider.GetRequiredService<DichVuQuanLyDuLieuDemo>();
+const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+int so = 0;
+void KiemTra(bool dung, string ten) { if (!dung) throw new Exception("FAIL: " + ten); Console.WriteLine("PASS: " + ten); so++; }
+T Tao<T>(params (string Ten, object GiaTri)[] thamSo) where T : new()
+{
+    var trang = new T();
+    typeof(T).GetProperty("DuLieu", flags)!.SetValue(trang, data);
+    foreach (var (ten, giaTri) in thamSo) typeof(T).GetProperty(ten, flags)!.SetValue(trang, giaTri);
+    typeof(T).GetMethod("OnParametersSet", flags)!.Invoke(trang, null);
+    return trang;
+}
+IEnumerable<T> KetQua<T>(object trang) => (IEnumerable<T>)trang.GetType().GetProperty("DanhSachHienThi", flags)!.GetValue(trang)!;
+var lop = data.LayDanhSachLop().First();
+var hv = Tao<Trang.HocVien>(("MaLopPhamVi", lop.MaLop));
+KiemTra(KetQua<HocVien>(hv).Count() == lop.SiSo && KetQua<HocVien>(hv).All(h => h.MaLop == lop.MaLop), "Chi tiết lớp chỉ chứa học viên đúng lớp");
+typeof(Trang.HocVien).GetField("maLopLoc", flags)!.SetValue(hv, null);
+KiemTra(KetQua<HocVien>(hv).All(h => h.MaLop == lop.MaLop), "Bỏ lọc không thoát phạm vi lớp");
+var khongCo = Tao<Trang.HocVien>(("MaLopPhamVi", "KHONG-TON-TAI"));
+KiemTra(!KetQua<HocVien>(khongCo).Any(), "Mã lớp sai không trả toàn bộ học viên");
+var khoa = data.LayDanhSachKhoa().First();
+var to = data.LayDanhSachTo().First(t => t.MaKhoa == khoa.MaKhoa);
+var dsTo = Tao<Trang.ToChuyenMon>(("MaKhoaPhamVi", khoa.MaKhoa));
+KiemTra(KetQua<ToChuyenMon>(dsTo).All(t => t.MaKhoa == khoa.MaKhoa), "Tổ được giới hạn đúng khoa");
+var cb = Tao<Trang.CanBoGiangVien>(("MaKhoaPhamVi", khoa.MaKhoa), ("MaToPhamVi", to.MaTo));
+KiemTra(KetQua<CanBoGiangVien>(cb).Any() && KetQua<CanBoGiangVien>(cb).All(c => c.MaTo == to.MaTo && c.MaKhoa == khoa.MaKhoa), "Cán bộ đúng cả khoa và tổ");
+var toKhac = data.LayDanhSachTo().First(t => t.MaKhoa != khoa.MaKhoa);
+var trangSai = Tao<Trang.ChiTietTo>(("MaKhoa", khoa.MaKhoa), ("MaTo", toKhac.MaTo));
+KiemTra(typeof(Trang.ChiTietTo).GetField("donVi", flags)!.GetValue(trangSai) is null, "Từ chối cặp khoa/tổ không khớp");
+var doiLop = Tao<Trang.ChiTietLop>(("MaLop", lop.MaLop));
+typeof(Trang.ChiTietLop).GetProperty("MaLop")!.SetValue(doiLop, "KHONG-TON-TAI");
+typeof(Trang.ChiTietLop).GetMethod("OnParametersSet", flags)!.Invoke(doiLop, null);
+KiemTra(typeof(Trang.ChiTietLop).GetField("donVi", flags)!.GetValue(doiLop) is null, "Đổi tham số không giữ lại chi tiết lớp cũ");
+var chuyenLop = Tao<Trang.HocVien>(("MaLopPhamVi", lop.MaLop));
+var lopKhac = data.LayDanhSachLop().First(l => l.MaLop != lop.MaLop);
+typeof(Trang.HocVien).GetProperty("MaLopPhamVi")!.SetValue(chuyenLop, lopKhac.MaLop);
+typeof(Trang.HocVien).GetMethod("OnParametersSet", flags)!.Invoke(chuyenLop, null);
+KiemTra(KetQua<HocVien>(chuyenLop).All(h => h.MaLop == lopKhac.MaLop), "Đổi tham số tải đúng học viên lớp mới");
+KiemTra(data.LayDanhSachLop().Sum(l => l.SiSo) == data.LayDanhSachHocVien().Count, "Tổng sĩ số phục vụ đào tạo khớp danh sách học viên");
+Console.WriteLine($"Hoàn tất {so} kiểm tra.");

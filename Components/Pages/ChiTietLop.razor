@@ -1,0 +1,25 @@
+@page "/quan-ly-hoc-vien/lop/{MaLop}"
+@implements IDisposable
+@attribute [Authorize]
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+<PageTitle>Chi tiết lớp | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+@if (donVi is null)
+{
+    <section class="empty-state"><h1>Không tìm thấy đơn vị</h1><p>Mã trên đường dẫn không tồn tại, đã bị xóa hoặc không thuộc đơn vị đang xem.</p><RadzenLink Path="/quan-ly-hoc-vien/lop" Text="Quay lại danh sách" /></section>
+}
+else
+{
+    <ThongTinDonVi Nhan="Chi tiết lớp" TieuDe="@donVi.MaLop" QuayLai="/quan-ly-hoc-vien/lop" CacTruong="@ThongTin" />
+    <HocVien MaLopPhamVi="@MaLop" @key="MaLop" />
+}
+@code {
+    [Parameter] public string MaLop { get; set; } = "";
+    private Nhom2_BTL.Models.LopDaoTao? donVi;
+    private Dictionary<string, string> ThongTin => donVi is null ? [] : new() { ["Mã lớp"] = donVi.MaLop, ["Hệ đào tạo"] = donVi.HeDaoTao, ["Khóa"] = donVi.KhoaHoc, ["Niên khóa"] = donVi.NienKhoa, ["Chuyên ngành"] = donVi.ChuyenNganh, ["GV chủ nhiệm"] = donVi.GiaoVienChuNhiem, ["Sĩ số"] = donVi.SiSo.ToString() };
+    protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    protected override void OnParametersSet() => TaiDuLieu();
+    private void TaiDuLieu() => donVi = DuLieu.LayDanhSachLop().FirstOrDefault(l => l.MaLop == MaLop);
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+}
