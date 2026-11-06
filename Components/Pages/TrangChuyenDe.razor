@@ -1,0 +1,110 @@
+@page "/dao-tao/chuyen-de"
+@attribute [Authorize]
+@implements IDisposable
+@inject DichVuDaoTao DaoTao
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject DialogService HoiThoai
+@inject DichVuTruongTuyChinh TruongTuyChinh
+@inject NotificationService ThongBao
+
+<PageTitle>Chuyên đề | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Chuyên đề" MoTa="Danh mục chuyên đề, khoa phụ trách và số giáo viên đủ điều kiện dạy.">
+    <ThaoTac>@if (duocSuaChuyenDe) { <RadzenButton Icon="upload_file" Text="Nhập Excel" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" /><RadzenButton Icon="add" Text="Thêm chuyên đề" ButtonStyle="ButtonStyle.Primary" Click="Them" /> }</ThaoTac>
+</DauTrang>
+
+<RadzenCard class="directory-panel">
+    <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="@((ChangeEventArgs e) => { tuKhoa = e.Value?.ToString() ?? ""; })" GoiY="Tìm mã hoặc tên chuyên đề" NhanTimKiem="Tìm chuyên đề" SoHienThi="@HienThi.Count()" TongSo="@(danhSach?.Count ?? 0)">
+        <CacBoLoc>
+            <RadzenDropDown TValue="string" Data="@cacKhoa" TextProperty="TenKhoa" ValueProperty="MaKhoa" @bind-Value="maKhoaLoc" AllowClear="true" Placeholder="Tất cả các khoa" class="filter-dropdown" />
+        </CacBoLoc>
+    </ThanhCongCu>
+    @if (danhSach is null)
+    {
+        <div class="khung-xuong-bang">@for (var i = 0; i < 6; i++) { <div class="khung-xuong dong-xuong"></div> }</div>
+    }
+    else
+    {
+        <RadzenDataGrid TItem="DichVuDaoTao.DongChuyenDe" Data="@HienThi" AllowPaging="true" PageSize="10" PageSizeOptions="@(new int[] { 5, 10, 20, 30, 40 })" PageSizeText="dòng / trang" AllowSorting="true" GridLines="DataGridGridLines.Horizontal" PagerHorizontalAlign="HorizontalAlign.Center" EmptyText="Không có chuyên đề phù hợp." class="directory-grid">
+            <Columns>
+                <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Property="ChuyenDe.MaChuyenDe" Title="Mã" Width="6rem"><Template Context="d"><span class="record-code">@d.ChuyenDe.MaChuyenDe</span></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Property="ChuyenDe.TenChuyenDe" Title="Tên chuyên đề" Width="18rem"><Template Context="d"><strong>@d.ChuyenDe.TenChuyenDe</strong></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Property="TenKhoa" Title="Khoa phụ trách" Width="16rem" />
+                <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Property="ChuyenDe.SoTiet" Title="Số tiết" TextAlign="TextAlign.Center" Width="5rem" />
+                <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Property="SoGiaoVien" Title="GV đủ điều kiện" TextAlign="TextAlign.Center" Width="8rem">
+                    <Template Context="d"><button type="button" class="nut-so-luong @(d.SoGiaoVien == 0 ? "canh-bao" : "")" @onclick="() => MoGiaoVien(d)" title="@(duocSuaChuyenMon ? "Xem và chọn giáo viên đủ điều kiện" : "Xem giáo viên đủ điều kiện")"><RadzenIcon Icon="groups" />@d.SoGiaoVien</button></Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Property="SoBuoi" Title="Buổi trong lịch" TextAlign="TextAlign.Center" Width="7rem" />
+            @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.ChuyenDe.MaChuyenDe)</span></Template></RadzenDataGridColumn> }
+                @if (duocSuaChuyenDe)
+                {
+                    <RadzenDataGridColumn TItem="DichVuDaoTao.DongChuyenDe" Title="Thao tác" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="6rem">
+                        <Template Context="d"><div class="actions-cell">
+                            <RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa chuyên đề {d.ChuyenDe.MaChuyenDe}")" Click="() => Sua(d)" />
+                            <RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa chuyên đề {d.ChuyenDe.MaChuyenDe}")" Click="() => Xoa(d)" />
+                        </div></Template>
+                    </RadzenDataGridColumn>
+                }
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>
+
+@code {
+    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
+    private List<DichVuDaoTao.DongChuyenDe>? danhSach;
+    private IReadOnlyList<Nhom2_BTL.Models.Khoa> cacKhoa = [];
+    private string tuKhoa = "";
+    private string? maKhoaLoc;
+    private bool duocSuaChuyenDe, duocSuaChuyenMon;
+
+    private IEnumerable<DichVuDaoTao.DongChuyenDe> HienThi => (danhSach ?? []).Where(d =>
+        (maKhoaLoc is null || d.ChuyenDe.MaKhoa == maKhoaLoc) &&
+        (tuKhoa.Trim() == "" || DichVuTimKiem.BoDau(d.ChuyenDe.TenChuyenDe + " " + d.ChuyenDe.MaChuyenDe).Contains(DichVuTimKiem.BoDau(tuKhoa))));
+
+    protected override async Task OnInitializedAsync()
+    { moRong = await TruongTuyChinh.LayBangAsync("ChuyenDe");
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        duocSuaChuyenDe = nd.CoQuyenVung("DaoTao");
+        duocSuaChuyenMon = nd.CoQuyenVung("Khoa");
+        cacKhoa = DuLieu.LayDanhSachKhoa();
+        await TaiLai();
+        DuLieu.DuLieuDaThayDoi += KhiDoi;
+    }
+    private async Task TaiLai() { moRong = await TruongTuyChinh.LayBangAsync("ChuyenDe"); danhSach = await DaoTao.LayChuyenDeAsync(); }
+    private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
+
+private async Task NhapExcel()
+{
+    var kq = await HoiThoai.OpenAsync<NhapExcelChung>("Nhập {0} từ Excel".Replace("{0}", DichVuNhapExcel.TenLoai(LoaiNhap.ChuyenDe)), new Dictionary<string, object> { [nameof(NhapExcelChung.Loai)] = LoaiNhap.ChuyenDe }, new DialogOptions { Width = "980px", CloseDialogOnOverlayClick = false });
+    if (kq is KetQuaThaoTac daLuu) { await TaiLai(); ThongBao.Notify(NotificationSeverity.Success, "Hoàn tất", daLuu.ThongBao); }
+}
+    private async Task Them() => await MoBieuMau(new ChuyenDe { MaKhoa = cacKhoa.FirstOrDefault()?.MaKhoa ?? "" }, null);
+    private async Task Sua(DichVuDaoTao.DongChuyenDe d) => await MoBieuMau(d.ChuyenDe.TaoBanSao(), d.ChuyenDe.MaChuyenDe);
+    private async Task MoBieuMau(ChuyenDe cd, string? maCu)
+    {
+        var kq = await HoiThoai.OpenAsync<BieuMauChuyenDe>(maCu is null ? "Thêm chuyên đề" : "Sửa chuyên đề",
+            new() { [nameof(BieuMauChuyenDe.DuLieuBanDau)] = cd, [nameof(BieuMauChuyenDe.MaCu)] = maCu!, [nameof(BieuMauChuyenDe.CacKhoa)] = cacKhoa },
+            new DialogOptions { Width = "620px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac k) await BaoKetQua(k);
+    }
+    private async Task Xoa(DichVuDaoTao.DongChuyenDe d)
+    {
+        var tomTat = d.SoBuoi > 0 ? $"Chuyên đề đang có {d.SoBuoi} buổi trong lịch nên sẽ không xoá được." : "Thao tác không thể hoàn tác.";
+        if (await HoiThoai.Confirm($"Xoá chuyên đề {d.ChuyenDe.TenChuyenDe}? {tomTat}", "Xác nhận xoá", new ConfirmOptions { OkButtonText = "Xoá", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }) == true)
+            await BaoKetQua(await DaoTao.XoaChuyenDeAsync(d.ChuyenDe.MaChuyenDe));
+    }
+    private async Task MoGiaoVien(DichVuDaoTao.DongChuyenDe d)
+    {
+        var kq = await HoiThoai.OpenAsync<ChonGiaoVienDuDieuKien>($"Giáo viên đủ điều kiện dạy: {d.ChuyenDe.TenChuyenDe}",
+            new() { [nameof(ChonGiaoVienDuDieuKien.ChuyenDe)] = d.ChuyenDe, [nameof(ChonGiaoVienDuDieuKien.DuocSua)] = duocSuaChuyenMon },
+            new DialogOptions { Width = "720px" });
+        if (kq is KetQuaThaoTac k) await BaoKetQua(k);
+    }
+    private async Task BaoKetQua(KetQuaThaoTac k)
+    {
+        ThongBao.Notify(new NotificationMessage { Severity = k.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = k.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Detail = k.ThongBao, Duration = 6000 });
+        await TaiLai();
+    }
+}

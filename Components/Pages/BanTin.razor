@@ -1,0 +1,211 @@
+@page "/ban-tin"
+@page "/ban-tin/{Id:int}"
+@attribute [Authorize]
+@implements IDisposable
+@inject DichVuBanTin BanTinDv
+@inject DichVuDaoTao DaoTao
+@inject DichVuThongBao ThongBaoDv
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject KhoDuLieuDemo Kho
+@inject DialogService HoiThoai
+@inject NotificationService ThongBao
+@inject NavigationManager DieuHuong
+
+@* Bản tin Học viện: bố cục kiểu báo điện tử (tham khảo cách trình bày của các báo như cand.vn: đầu báo, tin mới chạy chữ,
+   tin lớn + cột tin nổi bật, khối chuyên mục, cột "Đọc nhiều"). Toàn bộ bài viết là nội dung giả lập. *@
+<PageTitle>@(baiMo?.TieuDe ?? "Bản tin Học viện") | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+
+<div class="bt-trang">
+    <header class="bt-dau-bao">
+        <div class="bt-dau-bao-tren">
+            <span>@NgayHomNay</span>
+            <span class="bt-ten-bao"><RadzenIcon Icon="newspaper" />BẢN TIN HỌC VIỆN</span>
+            <span class="bt-cong-cu">
+                @if (laAdmin) { <RadzenButton Text="Viết bài" Icon="edit_note" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="() => MoBieuMau(new TinTuc())" /> }
+            </span>
+        </div>
+        <nav class="bt-chuyen-muc" aria-label="Chuyên mục">
+            <a href="/ban-tin" class="@(chuyenMuc is null && baiMo is null ? "dang-chon" : "")" @onclick="VeTrangNhat"><RadzenIcon Icon="home" />Trang nhất</a>
+            @foreach (var cm in TinTuc.CacChuyenMuc)
+            {
+                <button type="button" class="@(chuyenMuc == cm ? "dang-chon" : "")" @onclick="() => ChonChuyenMuc(cm)">@cm</button>
+            }
+            <div class="bt-o-tim"><RadzenIcon Icon="search" /><input data-tim-kiem value="@tuKhoa" @onchange="Tim" placeholder="Tìm bài viết" aria-label="Tìm bài viết" /></div>
+        </nav>
+        @if (cacBai.Count > 0)
+        {
+            <div class="bt-tin-moi" aria-label="Tin mới">
+                <strong>TIN MỚI</strong>
+                <div class="bt-tin-moi-khung"><div class="bt-tin-moi-chay">
+                    @for (var lap = 0; lap < 2; lap++)
+                    {
+                        @foreach (var b in cacBai.Take(6)) { <a href="@($"/ban-tin/{b.Id}")" tabindex="@(lap == 0 ? 0 : -1)" aria-hidden="@(lap == 1 ? "true" : "false")"><span class="bt-cham"></span>@b.TieuDe</a> }
+                    }
+                </div></div>
+            </div>
+        }
+    </header>
+
+    @if (dangTai)
+    {
+        <div class="bt-luoi">@for (var i = 0; i < 3; i++) { <div class="khung-xuong" style="height:14rem"></div> }</div>
+    }
+    else
+    {
+        <div class="bt-luoi">
+            <main class="bt-chinh">
+                @if (baiMo is { } bai)
+                {
+                    <article class="bt-bai">
+                        <nav class="bt-duong-dan"><a href="/ban-tin">Bản tin</a><span>›</span><button type="button" @onclick="() => ChonChuyenMuc(bai.ChuyenMuc)">@bai.ChuyenMuc</button></nav>
+                        <h1>@bai.TieuDe</h1>
+                        <div class="bt-meta"><span><RadzenIcon Icon="person" />@bai.TacGia</span><span><RadzenIcon Icon="schedule" />@GioDang(bai.DangLuc)</span><span><RadzenIcon Icon="visibility" />@bai.LuotXem.ToString("N0") lượt xem</span></div>
+                        <p class="bt-sapo">@bai.Sapo</p>
+                        <AnhTin Bai="bai" Lon="true" />
+                        <div class="bt-noi-dung">@foreach (var doan in bai.NoiDung.Split('\n', StringSplitOptions.RemoveEmptyEntries)) { <p>@doan</p> }</div>
+                        @if (laAdmin)
+                        {
+                            <div class="hanh-dong-tin"><RadzenButton Text="Sửa bài" Icon="edit" ButtonStyle="ButtonStyle.Light" Click="() => MoBieuMau(bai.TaoBanSao())" /><RadzenButton Text="Xoá bài" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="() => Xoa(bai)" /></div>
+                        }
+                    </article>
+                    var lienQuan = cacBai.Where(b => b.ChuyenMuc == bai.ChuyenMuc && b.Id != bai.Id).Take(4).ToList();
+                    @if (lienQuan.Count > 0)
+                    {
+                        <section class="bt-khoi"><h2 class="bt-tieu-de-khoi"><span>Cùng chuyên mục</span></h2>
+                            <div class="bt-luoi-the">@foreach (var b in lienQuan) { <a class="bt-the" href="@($"/ban-tin/{b.Id}")"><AnhTin Bai="b" /><strong>@b.TieuDe</strong><small>@GioDang(b.DangLuc)</small></a> }</div>
+                        </section>
+                    }
+                }
+                else if (chuyenMuc is not null || tuKhoa.Trim() != "")
+                {
+                    var ds = Loc().ToList();
+                    <section class="bt-khoi">
+                        <h2 class="bt-tieu-de-khoi"><span>@(chuyenMuc ?? $"Kết quả tìm “{tuKhoa}”")</span><small>@ds.Count bài</small></h2>
+                        @if (ds.Count == 0) { <p class="phu-dong">Chưa có bài viết phù hợp.</p> }
+                        <div class="bt-ds-ngang">
+                            @foreach (var b in ds)
+                            {
+                                <a class="bt-tin-ngang" href="@($"/ban-tin/{b.Id}")"><AnhTin Bai="b" /><span><strong>@b.TieuDe</strong><small>@b.ChuyenMuc · @GioDang(b.DangLuc)</small><em>@b.Sapo</em></span></a>
+                            }
+                        </div>
+                    </section>
+                }
+                else
+                {
+                    var noiBat = cacBai.Where(b => b.NoiBat).Take(4).ToList();
+                    if (noiBat.Count == 0) noiBat = cacBai.Take(4).ToList();
+                    @if (noiBat.Count > 0)
+                    {
+                        <section class="bt-tieu-diem">
+                            <a class="bt-tin-lon" href="@($"/ban-tin/{noiBat[0].Id}")">
+                                <AnhTin Bai="noiBat[0]" Lon="true" />
+                                <span class="bt-nhan-muc">@noiBat[0].ChuyenMuc</span>
+                                <h2>@noiBat[0].TieuDe</h2>
+                                <p>@noiBat[0].Sapo</p>
+                            </a>
+                            <div class="bt-cot-noi-bat">
+                                @foreach (var b in noiBat.Skip(1))
+                                {
+                                    <a class="bt-tin-nho" href="@($"/ban-tin/{b.Id}")"><AnhTin Bai="b" /><span><small>@b.ChuyenMuc</small><strong>@b.TieuDe</strong></span></a>
+                                }
+                            </div>
+                        </section>
+                    }
+                    @foreach (var cm in TinTuc.CacChuyenMuc)
+                    {
+                        var dsMuc = cacBai.Where(b => b.ChuyenMuc == cm).Take(4).ToList();
+                        if (dsMuc.Count == 0) continue;
+                        <section class="bt-khoi">
+                            <h2 class="bt-tieu-de-khoi"><span>@cm</span><button type="button" @onclick="() => ChonChuyenMuc(cm)">Xem thêm ›</button></h2>
+                            <div class="bt-khoi-muc">
+                                <a class="bt-tin-dau" href="@($"/ban-tin/{dsMuc[0].Id}")"><AnhTin Bai="dsMuc[0]" /><strong>@dsMuc[0].TieuDe</strong><em>@dsMuc[0].Sapo</em></a>
+                                <ul>@foreach (var b in dsMuc.Skip(1)) { <li><a href="@($"/ban-tin/{b.Id}")">@b.TieuDe</a><small>@GioDang(b.DangLuc)</small></li> }</ul>
+                            </div>
+                        </section>
+                    }
+                }
+            </main>
+
+            <aside class="bt-cot-phai">
+                <section class="bt-khoi-phai">
+                    <h2 class="bt-tieu-de-khoi"><span>Đọc nhiều</span></h2>
+                    <ol class="bt-doc-nhieu">@foreach (var b in cacBai.OrderByDescending(b => b.LuotXem).Take(5)) { <li><a href="@($"/ban-tin/{b.Id}")">@b.TieuDe</a><small>@b.LuotXem.ToString("N0") lượt xem</small></li> }</ol>
+                </section>
+                <section class="bt-khoi-phai">
+                    <h2 class="bt-tieu-de-khoi"><span>Văn bản mới</span><a href="/thong-bao">Tất cả ›</a></h2>
+                    <ul class="bt-van-ban">
+                        @foreach (var vb in vanBan)
+                        {
+                            <li><a href="@($"/thong-bao?ma={vb.Ma}")"><span class="tb-dong-nhan"><span class="tb-loai">@vb.LoaiVanBan</span>@if (vb.SoKyHieu != "") { <span class="tb-so">@vb.SoKyHieu</span> }@if (vb.MucDo != "Thường") { <span class="tb-muc-do @(vb.MucDo == "Khẩn" ? "khan" : "quan-trong")">@vb.MucDo</span> }</span><strong>@vb.TieuDe</strong></a></li>
+                        }
+                    </ul>
+                </section>
+                <section class="bt-khoi-phai bt-hom-nay">
+                    <h2 class="bt-tieu-de-khoi"><span>Hôm nay ở Học viện</span></h2>
+                    <a href="/dao-tao/lich"><RadzenIcon Icon="today" /><span><strong>@soBuoiHomNay</strong> buổi học</span></a>
+                    <a href="/dao-tao/lich"><RadzenIcon Icon="school" /><span><strong>@soLopHomNay</strong> lớp lên lớp</span></a>
+                </section>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    private List<TinTuc> cacBai = [];
+    private List<ThongBao> vanBan = [];
+    private TinTuc? baiMo;
+    private string? chuyenMuc;
+    private string tuKhoa = "";
+    private bool laAdmin, dangTai = true;
+    private int soBuoiHomNay, soLopHomNay;
+
+    private static string NgayHomNay { get { var s = DateTime.Now.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN")); return char.ToUpper(s[0]) + s[1..]; } }
+    private static string GioDang(DateTimeOffset t) { var d = t.ToOffset(TimeSpan.FromHours(7)); var cach = DateTimeOffset.Now - t; return cach.TotalMinutes < 60 ? $"{Math.Max(1, (int)cach.TotalMinutes)} phút trước" : cach.TotalHours < 24 ? $"{(int)cach.TotalHours} giờ trước" : d.ToString("HH:mm dd/MM/yyyy"); }
+
+    protected override async Task OnInitializedAsync()
+    {
+        laAdmin = (await PhanQuyen.LayNguoiDungAsync()).LaAdmin;
+        await TaiLai();
+        vanBan = (await ThongBaoDv.LayDanhSachChoToiAsync()).Take(4).ToList();
+        Kho.DuLieuDaThayDoi += KhiDoi;
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        chuyenMuc = null;
+        baiMo = Id is int id ? await BanTinDv.MoBaiAsync(id) : null;
+        dangTai = false;
+    }
+    private async Task TaiLai()
+    {
+        cacBai = await BanTinDv.LayDanhSachAsync();
+        var homNay = await DaoTao.LayLichAsync(DateTime.Today, DateTime.Today);
+        soBuoiHomNay = homNay.Count;
+        soLopHomNay = homNay.Select(b => b.Buoi.MaLop).Distinct().Count();
+    }
+    private IEnumerable<TinTuc> Loc() => cacBai.Where(b => (chuyenMuc is null || b.ChuyenMuc == chuyenMuc)
+        && (tuKhoa.Trim() == "" || DichVuTimKiem.BoDau($"{b.TieuDe} {b.Sapo}").Contains(DichVuTimKiem.BoDau(tuKhoa))));
+    private void VeTrangNhat() { chuyenMuc = null; tuKhoa = string.Empty; }
+    private void ChonChuyenMuc(string cm) { chuyenMuc = cm; tuKhoa = ""; if (baiMo is not null) { baiMo = null; DieuHuong.NavigateTo("/ban-tin"); chuyenMuc = cm; } }
+    private void Tim(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; if (baiMo is not null) { baiMo = null; DieuHuong.NavigateTo("/ban-tin"); } }
+    private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    public void Dispose() => Kho.DuLieuDaThayDoi -= KhiDoi;
+
+    private async Task MoBieuMau(TinTuc bai)
+    {
+        var kq = await HoiThoai.OpenAsync<BieuMauTinTuc>(bai.Id == 0 ? "Viết bài mới" : "Sửa bài", new() { [nameof(BieuMauTinTuc.DuLieuBanDau)] = bai }, new DialogOptions { Width = "820px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac k)
+        {
+            ThongBao.Notify(NotificationSeverity.Success, "Hoàn tất", k.ThongBao);
+            await TaiLai();
+            if (baiMo is not null) baiMo = cacBai.FirstOrDefault(b => b.Id == baiMo.Id);
+        }
+    }
+    private async Task Xoa(TinTuc bai)
+    {
+        if (await HoiThoai.Confirm($"Xoá bài “{bai.TieuDe}”?", "Xác nhận xoá", new ConfirmOptions { OkButtonText = "Xoá", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }) != true) return;
+        var kq = await BanTinDv.XoaAsync(bai.Id);
+        ThongBao.Notify(kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, kq.ThanhCong ? "Hoàn tất" : "Không thực hiện được", kq.ThongBao);
+        if (kq.ThanhCong) DieuHuong.NavigateTo("/ban-tin");
+    }
+}

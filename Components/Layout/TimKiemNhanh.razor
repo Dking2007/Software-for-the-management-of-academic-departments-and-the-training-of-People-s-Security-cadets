@@ -1,0 +1,79 @@
+@inject DichVuTimKiem TimKiem
+@inject NavigationManager DieuHuong
+
+@* Tìm kiếm nhanh: nút trên thanh trên, phím tắt Ctrl+K (wwwroot/hieu-ung.js bấm hộ nút này).
+   Kết quả lấy từ các mặt cắt đã lọc quyền nên mỗi vai trò chỉ thấy đúng phần được phép. *@
+<button type="button" class="nut-tim-nhanh" data-mo-tim-kiem @onclick="Mo" aria-haspopup="dialog" aria-label="Tìm kiếm nhanh (Ctrl+K)">
+    <RadzenIcon Icon="search" /><span class="chu-tim-nhanh">Tìm kiếm…</span><kbd>Ctrl K</kbd>
+</button>
+
+@if (dangMo)
+{
+    <div class="phu-tim-nhanh" @onclick="Dong"></div>
+    <div class="hop-tim-nhanh" role="dialog" aria-modal="true" aria-label="Tìm kiếm nhanh" @onkeydown="Phim">
+        <div class="o-tim-nhanh">
+            <RadzenIcon Icon="search" />
+            <input data-o-tim-nhanh data-tim-kiem value="@tuKhoa" @onchange="Nhap" placeholder="Gõ tên khoa, lớp, cán bộ, học viên, chuyên đề, phòng hoặc trang…" aria-label="Từ khoá tìm kiếm" autocomplete="off" />
+            <kbd>Esc</kbd>
+        </div>
+        <div class="ket-qua-tim-nhanh" role="listbox">
+            @if (tuKhoa.Trim().Length < 2)
+            {
+                <p class="goi-y-tim-nhanh">Gõ ít nhất 2 ký tự. Không cần dấu: "nguyen van" vẫn khớp "Nguyễn Văn".</p>
+            }
+            else if (dangTim)
+            {
+                @for (var i = 0; i < 4; i++) { <div class="khung-xuong dong-xuong"></div> }
+            }
+            else if (ketQua.Count == 0)
+            {
+                <p class="goi-y-tim-nhanh">Không tìm thấy kết quả phù hợp trong phạm vi bạn được xem.</p>
+            }
+            else
+            {
+                @foreach (var nhom in ketQua.GroupBy(k => k.Loai))
+                {
+                    <div class="nhom-tim-nhanh">@nhom.Key</div>
+                    @foreach (var k in nhom)
+                    {
+                        var viTri = ketQua.IndexOf(k);
+                        <button type="button" role="option" aria-selected="@(viTri == dangChon ? "true" : "false")" class="muc-tim-nhanh @(viTri == dangChon ? "dang-chon" : "")" @onclick="() => Chon(k)" @onmouseenter="() => dangChon = viTri">
+                            <RadzenIcon Icon="@k.BieuTuong" />
+                            <span class="chu-muc-tim"><strong>@k.Ten</strong><small>@k.Phu</small></span>
+                            <RadzenIcon Icon="arrow_forward" class="mui-ten-tim" />
+                        </button>
+                    }
+                }
+            }
+        </div>
+        <div class="chan-tim-nhanh"><span><kbd>↑</kbd><kbd>↓</kbd> chọn</span><span><kbd>Enter</kbd> mở</span><span><kbd>Esc</kbd> đóng</span></div>
+    </div>
+}
+
+@code {
+    private bool dangMo, dangTim;
+    private string tuKhoa = "";
+    private int dangChon;
+    private List<DichVuTimKiem.KetQuaTim> ketQua = [];
+
+    private void Mo() { dangMo = true; tuKhoa = ""; ketQua = []; dangChon = 0; }
+    private void Dong() => dangMo = false;
+
+    private async Task Nhap(ChangeEventArgs e)
+    {
+        tuKhoa = e.Value?.ToString() ?? "";
+        dangTim = true; StateHasChanged();
+        ketQua = await TimKiem.TimAsync(tuKhoa);
+        dangChon = 0; dangTim = false;
+    }
+
+    private void Chon(DichVuTimKiem.KetQuaTim k) { dangMo = false; DieuHuong.NavigateTo(k.DuongDan); }
+
+    private void Phim(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") dangMo = false;
+        else if (e.Key == "ArrowDown" && ketQua.Count > 0) dangChon = (dangChon + 1) % ketQua.Count;
+        else if (e.Key == "ArrowUp" && ketQua.Count > 0) dangChon = (dangChon - 1 + ketQua.Count) % ketQua.Count;
+        else if (e.Key == "Enter" && dangChon < ketQua.Count) Chon(ketQua[dangChon]);
+    }
+}

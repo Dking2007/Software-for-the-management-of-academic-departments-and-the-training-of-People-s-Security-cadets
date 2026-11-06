@@ -7,10 +7,12 @@
 <RadzenFormField Text="Mã tổ" Variant="Variant.Outlined"><RadzenTextBox Name="MaTo" @bind-Value="banSao.MaTo" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
 <RadzenFormField Text="Tên tổ" Variant="Variant.Outlined"><RadzenTextBox Name="TenTo" @bind-Value="banSao.TenTo" Style="width:100%" /></RadzenFormField>
 <RadzenFormField Text="Khoa trực thuộc" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="MaKhoa" Data="@DanhSachKhoa" TextProperty="TenKhoa" ValueProperty="MaKhoa" @bind-Value="banSao.MaKhoa" Placeholder="Chọn khoa" Style="width:100%" /></RadzenFormField>
+<TruongMoRongBieuMau @ref="moRong" Loai="ToChuyenMon" Ma="@(DangSua ? DuLieuBanDau.MaTo : null)" />
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem"><RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" /><RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu tổ" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" /></RadzenStack>
 </RadzenStack>@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
 </RadzenTemplateForm>
 @code {
+    private TruongMoRongBieuMau? moRong;
 [Parameter] public ToChuyenMon DuLieuBanDau { get; set; } = new();
 [Parameter] public IReadOnlyList<Khoa> DanhSachKhoa { get; set; } = [];
 [Parameter] public bool DangSua { get; set; }
@@ -25,8 +27,9 @@ protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
         dangLuu = true; loi = null;
         try
         {
+            if (moRong?.KiemTra() is { } loiMoRong) { loi = loiMoRong; return; }
             var ketQua = await DuLieu.LuuToAsync(banSao, DangSua ? DuLieuBanDau.MaTo : null);
-            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            if (ketQua.ThanhCong) { if (moRong is not null) await moRong.LuuAsync(ketQua.MaBanGhi ?? banSao.MaTo.Trim().ToUpperInvariant()); HoiThoai.Close(ketQua); }
             else loi = ketQua.ThongBao;
         }
         finally { dangLuu = false; }

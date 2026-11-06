@@ -5,15 +5,27 @@
 @using System.Globalization
 @using HocVienModel = Nhom2_BTL.Models.HocVien
 @inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuExcel Excel
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DialogService HoiThoai
+@inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
 
 @* Bảng hiển thị các trường hồ sơ học viên và sắp xếp số thứ tự theo họ tên tiếng Việt. *@
 @if (MaLopPhamVi is null) { <PageTitle>Học viên | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle> }
 <DauTrang TieuDe="Danh sách học viên" MoTa="Tra cứu hồ sơ toàn bộ học viên tại Học viện.">
-    <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="person_add" Text="@TuyChon.Dich("Thêm học viên")" ButtonStyle="ButtonStyle.Primary" Click="ThemHocVien" /> }</ThaoTac>
+    <ThaoTac>@if (!chiXemTongHop) { <NutXuatExcel TaoTep="@(async () => (byte[]?)await Excel.XuatHocVienAsync(MaLopPhamVi))" TenTep="@(MaLopPhamVi is null ? "hoc-vien" : $"hoc-vien-{MaLopPhamVi}")" /> }@if (duocChinhSua) { <RadzenButton Icon="upload_file" Text="Nhập Excel" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" /><RadzenButton Icon="person_add" Text="@TuyChon.Dich("Thêm học viên")" ButtonStyle="ButtonStyle.Primary" Click="ThemHocVien" /> }</ThaoTac>
 </DauTrang>
+@if (chiXemTongHop)
+{
+    @* Hàng rào 2: Quản lý khoa và Quản lý đào tạo không xem danh sách từng học viên; dịch vụ trả rỗng, trang nói rõ lý do. *@
+    <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">Vai trò của bạn chỉ xem số liệu tổng hợp về học viên (sĩ số theo lớp, khoá, hệ ở Danh sách lớp và Trang chủ), không xem danh sách hay hồ sơ từng học viên.</RadzenAlert>
+}
+@if (MaLopPhamVi is null && !chiXemTongHop && cacLop.Count > 1)
+{
+    @* Đi từ ngoài vào trong: niên khoá → hệ → khoá → lớp; bảng học viên lọc theo cấp đã chọn. *@
+    <RadzenCard class="directory-panel"><BoChonCapLop CacLop="@cacLop" KhiDoi="DoiCap" /></RadzenCard>
+}
 <RadzenCard class="directory-panel">
     <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="@(duocChinhSua ? "Tìm tên chính xác hoặc mã học viên" : "Tìm tên học viên")" NhanTimKiem="Tìm học viên" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachHocVien.Count">
         <CacBoLoc>
@@ -25,16 +37,18 @@
         <Columns>
             <RadzenDataGridColumn TItem="HocVienModel" Title="@TuyChon.Dich("STT")" TextAlign="TextAlign.Center" Width="3rem" Sortable="false"><Template Context="hv">@SoThuTu(hv)</Template></RadzenDataGridColumn>
             @if (duocChinhSua) { <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.MaHocVien)" Title="@TuyChon.Dich("Mã học viên")" TextAlign="TextAlign.Center" Width="7rem"><Template Context="hv"><span class="record-code">@hv.MaHocVien</span></Template></RadzenDataGridColumn> }
-            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.KhoaSapXepTen)" Title="@TuyChon.Dich("Họ và tên")" Width="12rem"><Template Context="hv"><strong>@hv.HoTen</strong> <NhanBanGhi TaoLuc="hv.TaoLuc" CapNhatLuc="hv.CapNhatLuc" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.KhoaSapXepTen)" Title="@TuyChon.Dich("Họ và tên")" Width="12rem"><Template Context="hv"><strong><TheXemNhanh Loai="HocVien" Ma="@hv.MaHocVien">@hv.HoTen</TheXemNhanh></strong> <NhanBanGhi TaoLuc="hv.TaoLuc" CapNhatLuc="hv.CapNhatLuc" /></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.ChucVu)" Title="@TuyChon.Dich("Chức vụ")" TextAlign="TextAlign.Center" Width="6rem" />
             <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.MaLop)" Title="@TuyChon.Dich("Lớp")" TextAlign="TextAlign.Center" Width="6rem" />
-            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.NgaySinh)" Title="@TuyChon.Dich("Ngày sinh")" TextAlign="TextAlign.Center" FormatString="{0:dd/MM/yyyy}" Width="7.5rem" />
+            <RadzenDataGridColumn TItem="HocVienModel" Property="@nameof(HocVienModel.NgaySinh)" Title="@TuyChon.Dich("Ngày sinh")" TextAlign="TextAlign.Center" Width="7.5rem"><Template Context="hv">@(hv.NgaySinh == default ? "—" : hv.NgaySinh.ToString("dd/MM/yyyy"))</Template></RadzenDataGridColumn>
+            @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="HocVienModel" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.MaHocVien)</span></Template></RadzenDataGridColumn> }
             <RadzenDataGridColumn TItem="HocVienModel" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="@(duocChinhSua ? "8rem" : "4rem")"><Template Context="hv"><div class="actions-cell"><RadzenButton class="nut-xem-dong" Icon="visibility" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xem chi tiết hồ sơ")" aria-label="@TuyChon.Dich("Xem chi tiết hồ sơ")" Click="@(() => XemChiTiet(hv))" />@if (duocChinhSua) { <RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa học viên {hv.MaHocVien}")" Click="@(() => SuaHocVien(hv))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa học viên {hv.MaHocVien}")" Click="@(() => XoaHocVien(hv))" /> }</div></Template></RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
 
 @code {
+    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string? MaLopPhamVi { get; set; }
     protected override void OnParametersSet() => TaiDuLieu();
@@ -53,7 +67,7 @@
 
     // Hồ sơ được lọc theo quyền tại dịch vụ; hộp thoại này không có thao tác ghi.
 
-    private Task XemChiTiet(HocVienModel x) => HoiThoai.OpenAsync<ChiTietHoSo>("Chi tiết hồ sơ", new Dictionary<string, object> { [nameof(ChiTietHoSo.CacTruong)] = new Dictionary<string, string> { ["Mã"] = x.MaHocVien, ["Họ tên"] = x.HoTen, ["Chức vụ"] = x.ChucVu, ["Ngày sinh"] = x.NgaySinh.ToString("dd/MM/yyyy"), ["Quê quán"] = x.QueQuan, ["Số điện thoại"] = x.SoDienThoai, ["Email"] = x.Email ?? "", ["Lớp"] = x.MaLop, ["Giới tính"] = x.GioiTinh, ["Số CCCD"] = x.SoCCCD, ["Địa chỉ thường trú"] = x.DiaChiThuongTru, } }, new DialogOptions { Width = "650px" });
+    private Task XemChiTiet(HocVienModel x) => HoiThoai.OpenAsync<ChiTietHoSo>("Chi tiết hồ sơ", new Dictionary<string, object> { [nameof(ChiTietHoSo.CacTruong)] = new Dictionary<string, string> { ["Mã"] = x.MaHocVien, ["Họ tên"] = x.HoTen, ["Chức vụ"] = x.ChucVu, ["Ngày sinh"] = x.NgaySinh == default ? "" : x.NgaySinh.ToString("dd/MM/yyyy"), ["Quê quán"] = x.QueQuan, ["Số điện thoại"] = x.SoDienThoai, ["Email"] = x.Email ?? "", ["Lớp"] = x.MaLop, ["Giới tính"] = x.GioiTinh, ["Số CCCD"] = x.SoCCCD, ["Địa chỉ thường trú"] = x.DiaChiThuongTru, }, [nameof(ChiTietHoSo.DoiTuong)] = "Học viên" }, new DialogOptions { Width = "650px" });
 
     private RadzenDataGrid<HocVienModel>? bang;
 
@@ -77,13 +91,29 @@
 
     // Kết hợp bộ lọc lớp và từ khóa trên các trường thường dùng để tra cứu.
 
+    private BoChonCapLop.BoLoc boLocCap = new(null, null, null, null);
+    private HashSet<string>? lopTheoCap;
+    private async Task DoiCap(BoChonCapLop.BoLoc loc)
+    {
+        boLocCap = loc;
+        lopTheoCap = loc.Nam is null ? null : cacLop.Where(loc.Khop).Select(l => l.MaLop).ToHashSet();
+        if (bang is not null) await bang.FirstPage(true);
+    }
     private IEnumerable<HocVienModel> DanhSachHienThi => danhSachHocVien.Where(hv =>
 
+        (lopTheoCap is null || lopTheoCap.Contains(hv.MaLop)) &&
         (string.IsNullOrWhiteSpace(maLopLoc) || hv.MaLop == maLopLoc) &&
 
         (string.IsNullOrWhiteSpace(tuKhoa) || hv.MaHocVien.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || QuyTacDuLieu.TenKhopTuKhoa(hv.HoTen, tuKhoa)));
 
-    protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Lop"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+    private bool chiXemTongHop;
+    protected override async Task OnInitializedAsync()
+    { moRong = await TruongTuyChinh.LayBangAsync("HocVien");
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        duocChinhSua = nd.CoQuyenVung("Lop");
+        chiXemTongHop = nd.LaQuanLy("Khoa") || nd.LaQuanLy("DaoTao");
+        TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    }
 
     private void TaiDuLieu()
 
@@ -99,6 +129,11 @@
 
     private async Task BoLoc() { tuKhoa = string.Empty; maLopLoc = null; if (bang is not null) await bang.FirstPage(true); }
 
+    private async Task NhapExcel()
+    {
+        var kq = await HoiThoai.OpenAsync<NhapExcelHocVien>("Nhập học viên từ Excel", new Dictionary<string, object>(), new DialogOptions { Width = "980px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu);
+    }
     private async Task ThemHocVien()
 
     {
@@ -131,7 +166,7 @@
 
     private async Task ThongBaoKetQua(KetQuaThaoTac kq)
 
-    {
+    { moRong = await TruongTuyChinh.LayBangAsync("HocVien");
 
         ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao });
 

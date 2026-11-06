@@ -27,32 +27,75 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
 
     public IReadOnlyList<Khoa> LayDanhSachKhoa() { lock (kho.KhoaDongBo) return kho.DanhSachKhoa.Select(x => { var b = x.TaoBanSao(); b.SiSo = kho.DanhSachCanBo.Count(c => c.MaKhoa == x.MaKhoa); return b; }).ToList(); }
     public IReadOnlyList<ToChuyenMon> LayDanhSachTo() { lock (kho.KhoaDongBo) return kho.DanhSachTo.Select(x => { var b = x.TaoBanSao(); b.SiSo = kho.DanhSachCanBo.Count(c => c.MaTo == x.MaTo); return b; }).ToList(); }
+    /// <summary>
+    /// Mặt cắt cán bộ theo vai trò. Admin và Quản lý khoa thấy đủ; giảng viên thấy đủ hồ sơ của chính mình;
+    /// học viên chỉ thấy giảng viên dạy lớp mình. Các trường cá nhân (mã, SĐT, CCCD, email) bị xoá khỏi bản sao,
+    /// không chỉ ẩn trên giao diện (hàng rào 3, 4).
+    /// </summary>
     public IReadOnlyList<CanBoGiangVien> LayDanhSachCanBo()
     {
         // Kiểm tra một lần cho mỗi lần đọc, không truy vấn tài khoản cho từng hồ sơ.
-        var duocXem = phanQuyen.DuocXemThongTinMat("Khoa");
+        var nd = phanQuyen.LayNguoiDung();
+        var duocXem = nd.CoQuyenVung("Khoa");
+        var chiGom = nd.LaHocVien ? kho.GiangVienDayLop(LopCuaHocVien(nd.MaHocVien!)) : null;
         lock (kho.KhoaDongBo)
         {
             var tenKhoa = kho.DanhSachKhoa.ToDictionary(x => x.MaKhoa, x => x.TenKhoa);
             var tenTo = kho.DanhSachTo.ToDictionary(x => x.MaTo, x => x.TenTo);
-            return kho.DanhSachCanBo.Select(x => {
+            return kho.DanhSachCanBo.Where(x => chiGom is null || chiGom.Contains(x.MaCanBo)).Select(x => {
                 var b = x.TaoBanSao(); b.MaTraCuuNoiBo = x.MaCanBo;
                 b.TenKhoa = tenKhoa.GetValueOrDefault(b.MaKhoa, "Không xác định");
                 b.TenTo = tenTo.GetValueOrDefault(b.MaTo ?? "", "Không xác định");
-                if (!duocXem) { b.MaCanBo = ""; b.SoDienThoai = ""; b.SoCCCD = ""; b.Email = null; }
+                if (!duocXem && nd.MaCanBo != x.MaCanBo) { b.MaCanBo = ""; b.SoDienThoai = ""; b.SoCCCD = ""; b.Email = null; }
                 return b;
             }).ToList();
         }
     }
-    public IReadOnlyList<LopDaoTao> LayDanhSachLop() { lock (kho.KhoaDongBo) return kho.DanhSachLop.Select(x => { var banSao = x.TaoBanSao(); banSao.SiSo = kho.DanhSachHocVien.Count(h => h.MaLop == x.MaLop); return banSao; }).ToList(); }
+
+    private string LopCuaHocVien(string maHocVien) { lock (kho.KhoaDongBo) return kho.DanhSachHocVien.FirstOrDefault(h => h.MaHocVien == maHocVien)?.MaLop ?? ""; }
+
+    /// <summary>Lưu thay đổi xuống CSDL; nếu thất bại trả kết quả lỗi thay vì ném ngoại lệ lên giao diện.</summary>
+    private KetQuaThaoTac? LuuThatBai(NguoiDungHienTai nd)
+    {
+        try { kho.ThongBaoThayDoi(nd.Ten, nd.TenVaiTro); return null; }
+        catch (InvalidOperationException loi) { return new(false, loi.Message); }
+    }
+    /// <summary>Lớp: giảng viên chỉ thấy lớp mình dạy, học viên chỉ thấy lớp của mình; vai trò khác thấy danh sách lớp (mức tổng hợp).</summary>
+    public IReadOnlyList<LopDaoTao> LayDanhSachLop()
+    {
+        var nd = phanQuyen.LayNguoiDung();
+        IReadOnlySet<string>? chiGom = nd.LaGiangVien ? kho.LopGiangVienDay(nd.MaCanBo!) : nd.LaHocVien ? new HashSet<string> { LopCuaHocVien(nd.MaHocVien!) } : null;
+        lock (kho.KhoaDongBo) return kho.DanhSachLop.Where(x => chiGom is null || chiGom.Contains(x.MaLop)).Select(x => { var banSao = x.TaoBanSao(); banSao.SiSo = kho.DanhSachHocVien.Count(h => h.MaLop == x.MaLop); return banSao; }).ToList();
+    }
+
+    /// <summary>
+    /// Mặt cắt học viên theo vai trò (hàng rào 2, 4, 5):
+    /// Admin, Quản lý học viên: đủ. Quản lý khoa, Quản lý đào tạo: không thấy từng học viên (chỉ số liệu tổng hợp).
+    /// Giảng viên: học viên lớp mình dạy, bỏ SĐT/CCCD/địa chỉ/email. Học viên: hồ sơ của mình đủ, bạn cùng lớp chỉ họ tên và lớp.
+    /// Người xem (Guest) và khách: bỏ mọi trường định danh cá nhân.
+    /// </summary>
     public IReadOnlyList<HocVien> LayDanhSachHocVien()
     {
-        var duocXem = phanQuyen.DuocXemThongTinMat("Lop");
-        lock (kho.KhoaDongBo) return kho.DanhSachHocVien.Select(x => {
-            var b = x.TaoBanSao();
-            if (!duocXem) { b.MaHocVien = ""; b.SoDienThoai = ""; b.SoCCCD = ""; b.DiaChiThuongTru = ""; b.Email = null; }
-            return b;
-        }).ToList();
+        var nd = phanQuyen.LayNguoiDung();
+        if (nd.LaQuanLy("Khoa") || nd.LaQuanLy("DaoTao")) return [];
+        var duocXem = nd.CoQuyenVung("Lop");
+        var lopDay = nd.LaGiangVien ? kho.LopGiangVienDay(nd.MaCanBo!) : null;
+        var lopCuaToi = nd.LaHocVien ? LopCuaHocVien(nd.MaHocVien!) : null;
+        lock (kho.KhoaDongBo)
+        {
+            IEnumerable<HocVien> nguon = kho.DanhSachHocVien;
+            if (lopDay is not null) nguon = nguon.Where(h => lopDay.Contains(h.MaLop));
+            if (lopCuaToi is not null) nguon = nguon.Where(h => h.MaHocVien == nd.MaHocVien || (QuyTacDuLieu.HocVienXemBanCungLop && h.MaLop == lopCuaToi));
+            return nguon.Select(x =>
+            {
+                if (duocXem || x.MaHocVien == nd.MaHocVien) return x.TaoBanSao();
+                if (lopCuaToi is not null) return new HocVien { HoTen = x.HoTen, MaLop = x.MaLop, ChucVu = x.ChucVu, GioiTinh = x.GioiTinh, NgaySinh = default };
+                var b = x.TaoBanSao();
+                if (lopDay is null) b.MaHocVien = "";
+                b.SoDienThoai = ""; b.SoCCCD = ""; b.DiaChiThuongTru = ""; b.Email = null;
+                return b;
+            }).ToList();
+        }
     }
     public string LayTenKhoa(string? ma) { lock (kho.KhoaDongBo) return kho.DanhSachKhoa.FirstOrDefault(x => x.MaKhoa == ma)?.TenKhoa ?? "Không xác định"; }
     public string LayTenTo(string? ma) { lock (kho.KhoaDongBo) return kho.DanhSachTo.FirstOrDefault(x => x.MaTo == ma)?.TenTo ?? "Không xác định"; }
@@ -61,7 +104,7 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
 
     public async Task<KetQuaThaoTac> LuuKhoaAsync(Khoa doiTuong, string? maCu = null)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Khoa")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Khoa")) return TuChoi();
         // Giữ mã định danh ổn định để không làm mất quan hệ của các bản ghi phụ thuộc.
         doiTuong = doiTuong.TaoBanSao();
         doiTuong.MaKhoa = (doiTuong.MaKhoa ?? string.Empty).Trim().ToUpperInvariant();
@@ -75,26 +118,28 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
             if (maCu is null) { banSao.MaTruongKhoa = null; banSao.MaPhoKhoa = null; banSao.MaPhoKhoaThuHai = null; kho.DanhSachKhoa.Add(banSao); }
             else { var viTri = kho.DanhSachKhoa.FindIndex(x => x.MaKhoa.Equals(maCu, StringComparison.OrdinalIgnoreCase)); if (viTri < 0) return NotFound("khoa"); banSao.MaTruongKhoa = kho.DanhSachKhoa[viTri].MaTruongKhoa; banSao.MaPhoKhoa = kho.DanhSachKhoa[viTri].MaPhoKhoa; banSao.MaPhoKhoaThuHai = kho.DanhSachKhoa[viTri].MaPhoKhoaThuHai; kho.DanhSachKhoa[viTri] = banSao; }
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, maCu is null ? "Đã thêm khoa." : "Đã cập nhật khoa.");
     }
 
     public async Task<KetQuaThaoTac> XoaKhoaAsync(string ma)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Khoa")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Khoa")) return TuChoi();
         lock (kho.KhoaDongBo)
         {
-            if (kho.DanhSachTo.Any(x => x.MaKhoa == ma) || kho.DanhSachCanBo.Any(x => x.MaKhoa == ma)) return new(false, "Không thể xóa khoa còn tổ hoặc cán bộ liên kết.");
+            if (kho.DanhSachTo.Any(x => x.MaKhoa == ma) || kho.DanhSachCanBo.Any(x => x.MaKhoa == ma))
+                return new(false, $"Khoa còn {kho.DanhSachTo.Count(x => x.MaKhoa == ma)} tổ và {kho.DanhSachCanBo.Count(x => x.MaKhoa == ma)} cán bộ. Không thể xoá; hãy chuyển hoặc xoá các tổ và cán bộ trước.");
+            if (kho.LyDoKhongXoa("Khoa", ma) is { } lyDoKhoa) return new(false, lyDoKhoa);
             var doiTuong = kho.DanhSachKhoa.FirstOrDefault(x => x.MaKhoa == ma); if (doiTuong is null) return NotFound("khoa");
             kho.DanhSachKhoa.Remove(doiTuong);
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, "Đã xóa khoa.");
     }
 
     public async Task<KetQuaThaoTac> LuuToAsync(ToChuyenMon doiTuong, string? maCu = null)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Khoa")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Khoa")) return TuChoi();
         // Giữ mã định danh ổn định để không làm mất quan hệ của các bản ghi phụ thuộc.
         doiTuong = doiTuong.TaoBanSao();
         doiTuong.MaTo = (doiTuong.MaTo ?? string.Empty).Trim().ToUpperInvariant();
@@ -115,26 +160,26 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
             if (maCu is null) { banSao.MaToTruong = null; banSao.MaToPho = null; kho.DanhSachTo.Add(banSao); }
             else { var viTri = kho.DanhSachTo.FindIndex(x => x.MaTo.Equals(maCu, StringComparison.OrdinalIgnoreCase)); if (viTri < 0) return NotFound("tổ"); banSao.MaToTruong = kho.DanhSachTo[viTri].MaToTruong; banSao.MaToPho = kho.DanhSachTo[viTri].MaToPho; kho.DanhSachTo[viTri] = banSao; }
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, maCu is null ? "Đã thêm tổ." : "Đã cập nhật tổ.");
     }
 
     public async Task<KetQuaThaoTac> XoaToAsync(string ma)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Khoa")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Khoa")) return TuChoi();
         lock (kho.KhoaDongBo)
         {
             if (kho.DanhSachCanBo.Any(x => x.MaTo == ma)) return new(false, "Không thể xóa tổ còn cán bộ liên kết.");
             var doiTuong = kho.DanhSachTo.FirstOrDefault(x => x.MaTo == ma); if (doiTuong is null) return NotFound("tổ");
             kho.DanhSachTo.Remove(doiTuong);
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, "Đã xóa tổ.");
     }
 
     public async Task<KetQuaThaoTac> LuuCanBoAsync(CanBoGiangVien doiTuong, string? maCu = null)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Khoa")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Khoa")) return TuChoi();
         // Giữ mã định danh ổn định để không làm mất quan hệ của các bản ghi phụ thuộc.
         doiTuong = doiTuong.TaoBanSao();
         doiTuong.SoCCCD = (doiTuong.SoCCCD ?? "").Trim();
@@ -169,28 +214,29 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
             else { var viTri = kho.DanhSachCanBo.FindIndex(x => x.MaCanBo.Equals(maCu, StringComparison.OrdinalIgnoreCase)); if (viTri < 0) return NotFound("cán bộ"); XoaLienKetLanhDao(maCu); kho.DanhSachCanBo[viTri] = banSao; }
             GanLanhDao(banSao);
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, maCu is null ? $"Đã thêm cán bộ vào {LayTenTo(doiTuong.MaTo)}, {LayTenKhoa(doiTuong.MaKhoa)}." : "Đã cập nhật thông tin và đơn vị công tác của cán bộ.", ma);
     }
 
     public async Task<KetQuaThaoTac> XoaCanBoAsync(string ma)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Khoa")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Khoa")) return TuChoi();
         lock (kho.KhoaDongBo)
         {
 
             var doiTuong = kho.DanhSachCanBo.FirstOrDefault(x => x.MaCanBo == ma); if (doiTuong is null) return NotFound("cán bộ");
+            if (kho.LyDoKhongXoa("CanBo", ma) is { } lyDoCanBo) return new(false, lyDoCanBo);
             // Khi xóa lãnh đạo, bỏ phân công và để trống vị trí; không tự chọn người thay thế.
             XoaLienKetLanhDao(ma);
             kho.DanhSachCanBo.Remove(doiTuong);
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, "Đã xóa cán bộ, giảng viên.");
     }
 
     public async Task<KetQuaThaoTac> LuuLopAsync(LopDaoTao doiTuong, string? maCu = null)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Lop")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Lop")) return TuChoi();
         // Giữ mã định danh ổn định để không làm mất quan hệ của các bản ghi phụ thuộc.
         doiTuong = doiTuong.TaoBanSao();
         doiTuong.MaLop = (doiTuong.MaLop ?? string.Empty).Trim().ToUpperInvariant();
@@ -211,26 +257,27 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
             if (maCu is null) kho.DanhSachLop.Add(banSao);
             else { var viTri = kho.DanhSachLop.FindIndex(x => x.MaLop.Equals(maCu, StringComparison.OrdinalIgnoreCase)); if (viTri < 0) return NotFound("lớp"); kho.DanhSachLop[viTri] = banSao; }
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, maCu is null ? "Đã thêm lớp." : "Đã cập nhật lớp.");
     }
 
     public async Task<KetQuaThaoTac> XoaLopAsync(string ma)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Lop")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Lop")) return TuChoi();
         lock (kho.KhoaDongBo)
         {
-            if (kho.DanhSachHocVien.Any(x => x.MaLop == ma)) return new(false, "Không thể xóa lớp đang có học viên liên kết.");
+            if (kho.DanhSachHocVien.Any(x => x.MaLop == ma)) return new(false, $"Lớp còn {kho.DanhSachHocVien.Count(x => x.MaLop == ma)} học viên. Không thể xoá; hãy chuyển học viên sang lớp khác trước.");
+            if (kho.LyDoKhongXoa("Lop", ma) is { } lyDoLop) return new(false, lyDoLop);
             var doiTuong = kho.DanhSachLop.FirstOrDefault(x => x.MaLop == ma); if (doiTuong is null) return NotFound("lớp");
             kho.DanhSachLop.Remove(doiTuong);
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, "Đã xóa lớp.");
     }
 
     public async Task<KetQuaThaoTac> LuuHocVienAsync(HocVien doiTuong, string? maCu = null)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Lop")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Lop")) return TuChoi();
         // Giữ mã định danh ổn định để không làm mất quan hệ của các bản ghi phụ thuộc.
         doiTuong = doiTuong.TaoBanSao();
         doiTuong.SoCCCD = (doiTuong.SoCCCD ?? "").Trim();
@@ -258,19 +305,20 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
             if (maCu is null) kho.DanhSachHocVien.Add(banSao);
             else { var viTri = kho.DanhSachHocVien.FindIndex(x => x.MaHocVien.Equals(maCu, StringComparison.OrdinalIgnoreCase)); if (viTri < 0) return NotFound("học viên"); kho.DanhSachHocVien[viTri] = banSao; }
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, maCu is null ? $"Đã thêm học viên vào lớp {doiTuong.MaLop}." : $"Đã cập nhật học viên tại lớp {doiTuong.MaLop}.", ma);
     }
 
     public async Task<KetQuaThaoTac> XoaHocVienAsync(string ma)
     {
-        if (!await phanQuyen.CoQuyenVungAsync("Lop")) return TuChoi();
+        var nd = await phanQuyen.LayNguoiDungAsync(); if (!nd.CoQuyenVung("Lop")) return TuChoi();
         lock (kho.KhoaDongBo)
         {
             var doiTuong = kho.DanhSachHocVien.FirstOrDefault(x => x.MaHocVien == ma); if (doiTuong is null) return NotFound("học viên");
+            if (kho.LyDoKhongXoa("HocVien", ma) is { } lyDoHv) return new(false, lyDoHv);
             kho.DanhSachHocVien.Remove(doiTuong);
         }
-        kho.ThongBaoThayDoi();
+        if (LuuThatBai(nd) is { } loiLuu) return loiLuu;
         return new(true, "Đã xóa học viên.");
     }
 

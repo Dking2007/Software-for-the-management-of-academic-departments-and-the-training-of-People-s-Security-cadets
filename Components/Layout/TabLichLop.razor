@@ -1,0 +1,37 @@
+@inject DichVuDaoTao DaoTao
+@inject DichVuPhanQuyenDemo PhanQuyen
+
+@* Lịch của một lớp: hai tuần trước đến ba tuần sau. *@
+<div class="thanh-lich">
+    <p class="ket-qua-tim-kiem"><strong>@(cacBuoi?.Count ?? 0)</strong> buổi từ @tu.ToString("dd/MM") đến @den.ToString("dd/MM/yyyy")</p>
+    <RadzenLink Path="@($"/dao-tao/lich?lop={Uri.EscapeDataString(MaLop)}")" Text="Mở lịch tuần đầy đủ" Icon="open_in_new" />
+</div>
+@if (cacBuoi is null)
+{
+    @for (var i = 0; i < 4; i++) { <div class="khung-xuong dong-xuong"></div> }
+}
+else if (cacBuoi.Count == 0)
+{
+    <section class="empty-state"><RadzenIcon Icon="event_busy" class="empty-state-icon" /><h2>Lớp chưa có lịch</h2><p>Quản lý đào tạo xếp lịch tại Quản lý đào tạo → Lịch đào tạo.</p></section>
+}
+else
+{
+    @foreach (var nhom in cacBuoi.GroupBy(b => b.Buoi.Ngay.Date))
+    {
+        <h3 class="dau-nhom-ngay @(nhom.Key == DateTime.Today ? "hom-nay" : "")">@QuyTacHocVu.TenThu(nhom.Key), @nhom.Key.ToString("dd/MM/yyyy")</h3>
+        <div class="danh-sach-buoi">@foreach (var b in nhom) { <TheBuoiHoc Buoi="b" DuocDiemDanh="DichVuHocVu.DuocGhiDiemDanh(nd, b.Buoi)" DangDong="true" /> }</div>
+    }
+}
+
+@code {
+    [Parameter] public string MaLop { get; set; } = "";
+    private List<BuoiHocHienThi>? cacBuoi;
+    private NguoiDungHienTai nd = NguoiDungHienTai.Khach;
+    private readonly DateTime tu = QuyTacHocVu.DauTuan(DateTime.Today).AddDays(-14);
+    private DateTime den => tu.AddDays(34);
+    protected override async Task OnParametersSetAsync()
+    {
+        nd = await PhanQuyen.LayNguoiDungAsync();
+        cacBuoi = await DaoTao.LayLichAsync(tu, den, MaLop);
+    }
+}

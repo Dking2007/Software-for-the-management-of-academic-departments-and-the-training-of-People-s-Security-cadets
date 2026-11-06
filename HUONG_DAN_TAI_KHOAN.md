@@ -1,15 +1,20 @@
 # Tài khoản và phân quyền
 
-Dữ liệu tài khoản lưu tại App_Data/tai-khoan.db và tồn tại sau khi dừng chương trình. Phiên đăng nhập mất khi khởi động lại. Dữ liệu khoa/lớp/học viên/cán bộ hiện vẫn là dữ liệu tổng hợp trong bộ nhớ.
+Dữ liệu tài khoản lưu tại App_Data/tai-khoan.db và tồn tại sau khi dừng chương trình. Phiên đăng nhập mất khi khởi động lại. Dữ liệu khoa/lớp/học viên/cán bộ là dữ liệu tổng hợp, lưu tại App_Data/du-lieu.db.
 
 ## Tài khoản mẫu (chỉ Development)
 
 | Tên đăng nhập | Mật khẩu mẫu | Vai trò | Phạm vi ghi |
 |---|---|---|---|
-| admin | demo123 | Admin | Tất cả, quản lý tài khoản |
+| admin | demo123 | Admin | Tất cả, tài khoản, nhật ký |
 | nguoixem | demo123 | Guest | Không |
-| quanlykhoa | demo123 | Manager | Khoa, tổ, cán bộ |
-| quanlyhocvien | demo123 | Manager | Lớp đào tạo, học viên |
+| quanlykhoa | demo123 | Manager (Khoa) | Khoa, tổ, cán bộ, chuyên môn giảng dạy |
+| quanlydaotao | demo123 | Manager (DaoTao) | Chuyên đề, lịch, phòng; cấp tài khoản giảng viên |
+| quanlyhocvien | demo123 | Manager (Lop) | Lớp, học viên, điểm danh, điểm; cấp tài khoản học viên |
+| giangvien | demo123 | GiangVien (CB006) | Điểm danh, nhập điểm lớp mình dạy |
+| hocvien | demo123 | HocVien (học viên đầu tiên lớp B1D55, năm thứ 4) | Tự điểm danh, lịch học, bảng điểm các năm học/học kỳ, lịch thi |
+
+Vai trò Giảng viên và Học viên lưu mã hồ sơ gắn kèm trong cột `PhamVi` (mã cán bộ / mã học viên); Manager lưu mảng `Khoa`, `DaoTao` hoặc `Lop`. Cấp tài khoản chỉ đi xuống: Quản lý đào tạo chỉ tạo/sửa/xoá tài khoản Giảng viên, Quản lý học viên chỉ tài khoản Học viên, Admin mọi vai trò.
 
 Khởi động tự đổi tên tài khoản mẫu guest thành nguoixem theo mã cố định, không đổi mật khẩu. Nếu trùng tên tài khoản khác, ứng dụng báo lỗi thay vì ghi đè. Các tài khoản mẫu không thể sửa/xóa/cấp lại mật khẩu qua trang quản trị; tài khoản tạo mới có đầy đủ thao tác. Tất cả tài khoản mẫu bị từ chối đăng nhập trong Production. Không dùng mật khẩu mẫu khi triển khai.
 

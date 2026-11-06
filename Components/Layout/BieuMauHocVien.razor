@@ -19,6 +19,7 @@
 <RadzenFormField Text="Chức vụ trong lớp" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="ChucVu" Data="@cacChucVu" @bind-Value="banSao.ChucVu" Style="width:100%" /></RadzenFormField>
 </div></fieldset>
 @if (DanhSachLop.FirstOrDefault(x => x.MaLop == banSao.MaLop) is { } lop) { <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">@lop.HeDaoTao · Khóa @lop.KhoaHoc · @lop.ChuyenNganh</RadzenAlert> }
+<TruongMoRongBieuMau @ref="moRong" Loai="HocVien" Ma="@(DangSua ? DuLieuBanDau.MaHocVien : null)" />
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem"><RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" /><RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu học viên" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" /></RadzenStack></RadzenStack>@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
 <RadzenRequiredValidator Component="MaHocVien" Text="Vui lòng nhập hoặc chọn mã học viên." />
 <RadzenRequiredValidator Component="HoTen" Text="Vui lòng nhập hoặc chọn họ tên." />
@@ -28,6 +29,7 @@
 <RadzenRequiredValidator Component="MaLop" Text="Vui lòng nhập hoặc chọn lớp đào tạo." />
 </RadzenTemplateForm>
 @code {
+    private TruongMoRongBieuMau? moRong;
 [Parameter] public HocVien DuLieuBanDau { get; set; } = new();
 [Parameter] public IReadOnlyList<LopDaoTao> DanhSachLop { get; set; } = [];
 [Parameter] public bool DangSua { get; set; }
@@ -44,8 +46,9 @@ protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
         dangLuu = true; loi = null;
         try
         {
+            if (moRong?.KiemTra() is { } loiMoRong) { loi = loiMoRong; return; }
             var ketQua = await DuLieu.LuuHocVienAsync(banSao, DangSua ? DuLieuBanDau.MaHocVien : null);
-            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            if (ketQua.ThanhCong) { if (moRong is not null) await moRong.LuuAsync(ketQua.MaBanGhi ?? banSao.MaHocVien.Trim().ToUpperInvariant()); HoiThoai.Close(ketQua); }
             else loi = ketQua.ThongBao;
         }
         finally { dangLuu = false; }

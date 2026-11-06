@@ -1,15 +1,20 @@
 @inject TuyChonGiaoDien TuyChon
 @page "/quan-tri/tai-khoan"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
+@inject DichVuQuanLyDuLieuDemo DuLieu
 @inject Radzen.DialogService HopThoai
 @inject DichVuTaiKhoan TaiKhoan
 @inject Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider XacThuc
 
 @* Trang quản trị tài khoản: bố cục giống các trang danh sách (đầu trang, thanh công cụ, bảng trong một khung). Chỉ đổi giao diện, quyền Admin vẫn do thuộc tính Authorize và DichVuTaiKhoan kiểm tra. *@
 <PageTitle>Quản lý tài khoản | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Quản lý tài khoản và phân quyền" MoTa="Tài khoản đăng ký mới có quyền Guest. Đổi mật khẩu, quyền hoặc khóa tài khoản sẽ vô hiệu hóa phiên cũ.">
-    <ThaoTac><RadzenButton Text="@TuyChon.Dich("Thêm tài khoản")" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="Them" Disabled="dangLuu" /></ThaoTac>
+<DauTrang TieuDe="Quản lý tài khoản và phân quyền" MoTa="@MoTaTrang">
+    <ThaoTac>@if (vaiTroDuoc.Count > 0) { <RadzenButton Text="@TuyChon.Dich("Thêm tài khoản")" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="Them" Disabled="dangLuu" /> }</ThaoTac>
 </DauTrang>
+@if (daTaiQuyen && vaiTroDuoc.Count == 0)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">Vai trò của bạn không cấp tài khoản. Chỉ Admin, Quản lý đào tạo (cấp tài khoản giảng viên) và Quản lý học viên (cấp tài khoản học viên) dùng trang này.</RadzenAlert>
+}
 
 <div role="status">
     @if (!string.IsNullOrEmpty(thongBao))
@@ -29,7 +34,15 @@
             <div><label for="vai-tro">Vai trò</label><RadzenDropDown TValue="string" id="vai-tro" Data="@cacVaiTro" TextProperty="Ten" ValueProperty="Ma" @bind-Value="vaiTro" Style="width:100%" /></div>
             @if (vaiTro == "Manager")
             {
-                <div><label for="pham-vi">Phạm vi quản lý</label><RadzenDropDown TValue="string" id="pham-vi" Data="@cacPhamVi" TextProperty="Ten" ValueProperty="Ma" @bind-Value="phamVi" Style="width:100%" /></div>
+                <div><label for="pham-vi">Mảng quản lý</label><RadzenDropDown TValue="string" id="pham-vi" Data="@cacPhamVi" TextProperty="Ten" ValueProperty="Ma" @bind-Value="phamVi" Style="width:100%" /></div>
+            }
+            else if (vaiTro == "GiangVien")
+            {
+                <div><label for="pham-vi-gv">Hồ sơ cán bộ gắn với tài khoản</label><RadzenDropDown TValue="string" id="pham-vi-gv" Data="@cacCanBo" TextProperty="Ten" ValueProperty="Ma" @bind-Value="phamVi" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Chọn cán bộ" Style="width:100%" /></div>
+            }
+            else if (vaiTro == "HocVien")
+            {
+                <div><label for="pham-vi-hv">Hồ sơ học viên gắn với tài khoản</label><RadzenDropDown TValue="string" id="pham-vi-hv" Data="@cacHocVien" TextProperty="Ten" ValueProperty="Ma" @bind-Value="phamVi" AllowFiltering="true" AllowVirtualization="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Gõ tên hoặc mã học viên" Style="width:100%" /></div>
             }
             <p class="ghi-chu-bieu-mau toan-hang">Mật khẩu phải có cả chữ và số. Không yêu cầu độ dài, chữ hoa hay ký tự đặc biệt. Không thể xem mật khẩu hiện tại.</p>
             <label class="chon-khoa toan-hang"><RadzenCheckBox TValue="bool" @bind-Value="khoa" /> Khóa tài khoản</label>
@@ -61,8 +74,8 @@ else
             <Columns>
                 <RadzenDataGridColumn TItem="TaiKhoan" Property="Id" Title="@TuyChon.Dich("Mã tài khoản")" Width="10rem"><Template Context="u"><span class="record-code">@u.Id</span></Template></RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="TaiKhoan" Property="UserName" Title="@TuyChon.Dich("Tên đăng nhập")" Width="10rem" />
-                <RadzenDataGridColumn TItem="TaiKhoan" Property="VaiTro" Title="@TuyChon.Dich("Vai trò")" TextAlign="TextAlign.Center" Width="10rem"><Template Context="u"><span class="nhan-trang-thai hoat-dong">@TenVaiTro(u.VaiTro)</span></Template></RadzenDataGridColumn>
-                <RadzenDataGridColumn TItem="TaiKhoan" Property="PhamVi" Title="@TuyChon.Dich("Phạm vi")" Width="10rem"><Template Context="u">@(u.PhamVi == "Khoa" ? "Quản lý Khoa" : u.PhamVi == "Lop" ? "Quản lý Lớp đào tạo" : "—")</Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaiKhoan" Property="VaiTro" Title="@TuyChon.Dich("Vai trò")" TextAlign="TextAlign.Center" Width="10rem"><Template Context="u"><span class="nhan-trang-thai hoat-dong">@NguoiDungHienTai.TenHienThi(u.VaiTro, u.PhamVi)</span>@if (u.BiKhoa) { <span class="nhan-trang-thai tam-dung">Đã khoá</span> }</Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaiKhoan" Property="PhamVi" Title="@TuyChon.Dich("Phạm vi")" Width="12rem"><Template Context="u">@TenPhamVi(u)</Template></RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="TaiKhoan" Title="@TuyChon.Dich("Mật khẩu")" Sortable="false" Width="10rem"><Template Context="u">@if (KhoiTaoTaiKhoanMau.LaTaiKhoanMau(u)) { <span class="record-code">demo123</span> } else { <span class="phu-dong" title="@TuyChon.Dich("Chỉ lưu bản băm; dùng Sửa để đặt mật khẩu mới")">Không thể xem lại</span> }</Template></RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="TaiKhoan" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="10rem">
                     <Template Context="u">
@@ -83,9 +96,22 @@ else
 @code {
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     private sealed record LuaChon(string Ma, string Ten);
-    private readonly LuaChon[] cacVaiTro = [new("Guest", "Người xem"), new("Manager", "Cán bộ quản lý"), new("Admin", "Quản trị viên")];
-    private readonly LuaChon[] cacVaiTroLoc = [new("", "Tất cả vai trò"), new("Guest", "Người xem"), new("Manager", "Cán bộ quản lý"), new("Admin", "Quản trị viên")];
-    private readonly LuaChon[] cacPhamVi = [new("", "Chọn phạm vi"), new("Khoa", "Quản lý Khoa"), new("Lop", "Quản lý Lớp đào tạo")];
+    private static readonly LuaChon[] TatCaVaiTro = [new("GiangVien", "Giảng viên"), new("HocVien", "Học viên"), new("Manager", "Cán bộ quản lý (manager)"), new("Guest", "Người xem"), new("Admin", "Quản trị viên")];
+    private IReadOnlyList<string> vaiTroDuoc = [];
+    private bool daTaiQuyen;
+    private LuaChon[] cacVaiTro => TatCaVaiTro.Where(v => vaiTroDuoc.Contains(v.Ma)).ToArray();
+    private LuaChon[] cacVaiTroLoc => [new("", "Tất cả vai trò"), .. cacVaiTro];
+    private readonly LuaChon[] cacPhamVi = [new("", "Chọn mảng"), new("Khoa", "Quản lý khoa"), new("DaoTao", "Quản lý đào tạo"), new("Lop", "Quản lý học viên")];
+    private List<LuaChon> cacCanBo = [], cacHocVien = [];
+    private string MoTaTrang => vaiTroDuoc.SequenceEqual(["GiangVien"]) ? "Quản lý đào tạo cấp tài khoản cho giảng viên. Mỗi tài khoản gắn với một hồ sơ cán bộ."
+        : vaiTroDuoc.SequenceEqual(["HocVien"]) ? "Quản lý học viên cấp tài khoản cho học viên. Mỗi tài khoản gắn với một hồ sơ học viên."
+        : "Cấp tài khoản chỉ đi xuống: Admin tạo manager; Quản lý đào tạo cấp giảng viên; Quản lý học viên cấp học viên. Đổi mật khẩu, quyền hoặc khoá sẽ vô hiệu hoá phiên cũ.";
+    private string TenPhamVi(TaiKhoan u) => u.VaiTro switch
+    {
+        "Manager" => NguoiDungHienTai.TenHienThi("Manager", u.PhamVi),
+        "GiangVien" or "HocVien" => cacCanBo.Concat(cacHocVien).FirstOrDefault(x => x.Ma == u.PhamVi)?.Ten ?? u.PhamVi,
+        _ => "—"
+    };
     // Giá trị vai trò trong dữ liệu giữ nguyên (Admin/Manager/Guest); chỉ nhãn hiển thị là tiếng Việt.
     private static string TenVaiTro(string? vaiTro) => vaiTro switch { "Admin" => "Quản trị viên", "Manager" => "Cán bộ quản lý", "Guest" => "Người xem", _ => vaiTro ?? "" };
     private List<TaiKhoan>? danhSach;
@@ -93,12 +119,19 @@ else
     private string? maSua;
     private bool dangLuu, dangSua, khoa;
     private IEnumerable<TaiKhoan> KetQua => (danhSach ?? []).Where(u => (u.Id.Contains(tim.Trim(), StringComparison.OrdinalIgnoreCase) || (u.UserName ?? "").Contains(tim.Trim(), StringComparison.OrdinalIgnoreCase)) && (locVaiTro == "" || u.VaiTro == locVaiTro));
-    protected override async Task OnInitializedAsync() => await TaiLai();
+    protected override async Task OnInitializedAsync()
+    {
+        vaiTroDuoc = DichVuTaiKhoan.VaiTroDuocQuanLy((await XacThuc.GetAuthenticationStateAsync()).User);
+        daTaiQuyen = true;
+        if (vaiTroDuoc.Contains("GiangVien")) cacCanBo = DuLieu.LayDanhSachCanBo().Select(c => new LuaChon(c.MaTraCuuNoiBo, $"{c.HoTen} ({c.MaTraCuuNoiBo}) · {c.TenKhoa}")).ToList();
+        if (vaiTroDuoc.Contains("HocVien")) cacHocVien = DuLieu.LayDanhSachHocVien().Where(h => h.MaHocVien != "").Select(h => new LuaChon(h.MaHocVien, $"{h.HoTen} ({h.MaHocVien}) · {h.MaLop}")).ToList();
+        if (vaiTroDuoc.Count > 0) await TaiLai(); else danhSach = [];
+    }
     private async Task TaiLai() {
         try { danhSach = await TaiKhoan.DanhSach((await XacThuc.GetAuthenticationStateAsync()).User); }
         catch { danhSach = []; thongBao = "Không tải được danh sách. Kiểm tra quyền và đăng nhập lại."; }
     }
-    private void Them() { maSua = null; ten = matKhau = phamVi = ""; vaiTro = "Guest"; khoa = false; dangSua = true; }
+    private void Them() { maSua = null; ten = matKhau = phamVi = ""; vaiTro = cacVaiTro.FirstOrDefault()?.Ma ?? "Guest"; khoa = false; dangSua = true; }
     private void Sua(TaiKhoan u) { maSua = u.Id; ten = u.UserName ?? ""; vaiTro = u.VaiTro; phamVi = u.PhamVi; khoa = u.BiKhoa; matKhau = ""; dangSua = true; }
     private void Huy() { matKhau = ""; dangSua = false; }
     private async Task Luu() {

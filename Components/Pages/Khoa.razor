@@ -6,6 +6,7 @@
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DialogService HoiThoai
+@inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
 
 @* Danh sách khoa hiển thị lãnh đạo và số tổ; hồ sơ tổ, cán bộ có mục riêng trong sidebar. *@
@@ -19,17 +20,19 @@
         <Columns>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("STT")" Width="3rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.MaKhoa)" Title="@TuyChon.Dich("Mã khoa")" Width="5.5rem"><Template Context="khoa"><span class="record-code">@khoa.MaKhoa</span></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.TenKhoa)" Title="@TuyChon.Dich("Tên khoa")" Width="19rem"><Template Context="khoa"><RadzenLink Path="@($"/khoa/{Uri.EscapeDataString(khoa.MaKhoa)}/to")" Text="@khoa.TenKhoa" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.TenKhoa)" Title="@TuyChon.Dich("Tên khoa")" Width="19rem"><Template Context="khoa"><TheXemNhanh Loai="Khoa" Ma="@khoa.MaKhoa"><RadzenLink Path="@($"/khoa/{Uri.EscapeDataString(khoa.MaKhoa)}/to")" Text="@khoa.TenKhoa" /></TheXemNhanh></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Trưởng khoa")" Width="11rem"><Template Context="khoa"><TenCanBo MaCanBo="@khoa.MaTruongKhoa" /></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Phó khoa")" Width="11rem"><Template Context="khoa"><div class="cac-pho-khoa"><TenCanBo MaCanBo="@khoa.MaPhoKhoa" /><TenCanBo MaCanBo="@khoa.MaPhoKhoaThuHai" /></div></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Số tổ")" TextAlign="TextAlign.Center" Width="4rem"><Template Context="khoa">@cacTo.Count(to => to.MaKhoa == khoa.MaKhoa)</Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.SiSo)" Title="@TuyChon.Dich("Sĩ số cán bộ")" TextAlign="TextAlign.Center" Width="7rem" />
+            @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="KhoaModel" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.MaKhoa)</span></Template></RadzenDataGridColumn> }
             @if (duocChinhSua) { <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="6rem"><Template Context="khoa"><div class="actions-cell"><RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa khoa {khoa.MaKhoa}")" Click="@(() => SuaKhoa(khoa))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa khoa {khoa.MaKhoa}")" Click="@(() => XoaKhoa(khoa))" /></div></Template></RadzenDataGridColumn> }
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
 
 @code {
+    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
     private async Task NhapTuKhoa(ChangeEventArgs e)
@@ -53,7 +56,7 @@
     private IEnumerable<KhoaModel> DanhSachHienThi => string.IsNullOrWhiteSpace(tuKhoa) ? danhSachKhoa : danhSachKhoa.Where(khoa =>
         khoa.MaKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || khoa.TenKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase));
 
-    protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+    protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("Khoa"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
     private void TaiDuLieu() { danhSachKhoa = DuLieu.LayDanhSachKhoa().ToList(); cacTo = DuLieu.LayDanhSachTo().ToList(); }
 
     private async Task ThemKhoa()
@@ -72,7 +75,7 @@
         if (xacNhan == true) await ThongBaoKetQua(await DuLieu.XoaKhoaAsync(khoa.MaKhoa));
     }
     private async Task ThongBaoKetQua(KetQuaThaoTac ketQua)
-    {
+    { moRong = await TruongTuyChinh.LayBangAsync("Khoa");
         ThongBao.Notify(new NotificationMessage { Severity = ketQua.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = ketQua.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = ketQua.ThongBao });
         TaiDuLieu(); await InvokeAsync(StateHasChanged);
     }

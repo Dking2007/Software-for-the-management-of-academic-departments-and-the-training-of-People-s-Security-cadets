@@ -1,0 +1,64 @@
+@inject DichVuTruongTuyChinh TruongTuyChinh
+
+@* Ô nhập cho các trường dữ liệu mở rộng của một đối tượng, đặt trong biểu mẫu thêm/sửa.
+   Biểu mẫu gọi KiemTra() trước khi lưu bản ghi gốc và LuuAsync(mã) sau khi lưu thành công. *@
+@if (bang.Truong.Count > 0)
+{
+    <fieldset class="nhom-bieu-mau truong-mo-rong">
+        <legend><RadzenIcon Icon="dashboard_customize" />Thông tin mở rộng</legend>
+        <div class="form-grid">
+            @foreach (var t in bang.Truong)
+            {
+                var id = t.Id;
+                <div class="o-mo-rong @(t.KieuDuLieu == "Văn bản" && t.MoTa.Length > 40 ? "toan-hang" : "")">
+                    <label for="@($"mr-{id}")">@t.Ten@if (t.BatBuoc) { <span class="bat-buoc">*</span> }@if (t.ChiChuSoHuu) { <RadzenIcon Icon="lock" title="Chỉ chủ sở hữu xem" class="mr-khoa" /> }</label>
+                    @switch (t.KieuDuLieu)
+                    {
+                        case "Số":
+                            <input id="@($"mr-{id}")" class="form-control" inputmode="decimal" value="@GiaTri(id)" @onchange="e => Dat(id, e.Value)" />
+                            break;
+                        case "Ngày":
+                            <input id="@($"mr-{id}")" type="date" class="form-control" value="@GiaTri(id)" @onchange="e => Dat(id, e.Value)" />
+                            break;
+                        case "Có/Không":
+                            <select id="@($"mr-{id}")" class="form-select" value="@GiaTri(id)" @onchange="e => Dat(id, e.Value)"><option value="">—</option><option value="true">Có</option><option value="false">Không</option></select>
+                            break;
+                        case "Danh sách":
+                            <select id="@($"mr-{id}")" class="form-select" value="@GiaTri(id)" @onchange="e => Dat(id, e.Value)"><option value="">— Chọn —</option>@foreach (var lc in t.CacLuaChon) { <option value="@lc">@lc</option> }</select>
+                            break;
+                        default:
+                            <input id="@($"mr-{id}")" class="form-control" maxlength="500" value="@GiaTri(id)" @onchange="e => Dat(id, e.Value)" />
+                            break;
+                    }
+                    @if (t.MoTa != "") { <small class="phu-dong">@t.MoTa</small> }
+                </div>
+            }
+        </div>
+    </fieldset>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Loai { get; set; } = "";
+    /// <summary>Mã đối tượng khi sửa; null khi thêm mới.</summary>
+    [Parameter] public string? Ma { get; set; }
+    private DichVuTruongTuyChinh.BangMoRong bang = DichVuTruongTuyChinh.BangMoRong.Rong;
+    private readonly Dictionary<int, string?> nhap = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        bang = await TruongTuyChinh.LayBangAsync(Loai);
+        foreach (var t in bang.Truong) nhap[t.Id] = bang.Lay(t, Ma);
+    }
+    private string GiaTri(int id) => nhap.GetValueOrDefault(id) ?? "";
+    private void Dat(int id, object? v) => nhap[id] = v?.ToString();
+
+    /// <summary>Lỗi đầu tiên (bắt buộc, sai kiểu) hoặc null nếu hợp lệ.</summary>
+    public string? KiemTra() => bang.Truong.Select(t => DichVuTruongTuyChinh.ChuanHoa(t, nhap.GetValueOrDefault(t.Id)).Loi).FirstOrDefault(l => l is not null);
+
+    public async Task<string?> LuuAsync(string ma)
+    {
+        if (bang.Truong.Count == 0) return null;
+        var kq = await TruongTuyChinh.LuuGiaTriAsync(Loai, ma, nhap);
+        return kq.ThanhCong ? null : kq.ThongBao;
+    }
+}

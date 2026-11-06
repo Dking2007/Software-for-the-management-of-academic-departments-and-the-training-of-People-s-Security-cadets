@@ -1,0 +1,38 @@
+@inject DialogService HoiThoai
+@inject DichVuDaoTao DaoTao
+
+<RadzenTemplateForm TItem="Phong" Data="@banSao" Submit="Luu">
+    <DataAnnotationsValidator />
+    <div class="form-grid">
+        <RadzenFormField Text="Mã phòng" Variant="Variant.Outlined"><RadzenTextBox @bind-Value="banSao.MaPhong" Disabled="@(MaCu is not null)" MaxLength="16" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Loại phòng" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@DichVuDaoTao.LoaiPhong" @bind-Value="banSao.LoaiPhong" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Tên phòng" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="banSao.TenPhong" MaxLength="80" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Sức chứa (chỗ)" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="banSao.SucChua" Min="1" Max="1000" Style="width:100%" /></RadzenFormField>
+        <label class="chon-khoa"><RadzenCheckBox TValue="bool" @bind-Value="banSao.DangBaoTri" /> Đang bảo trì (không xếp lịch)</label>
+    </div>
+    <ValidationSummary class="loi-bieu-mau" />
+    @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
+<TruongMoRongBieuMau @ref="moRong" Loai="Phong" Ma="@(MaCu)" />
+    <div class="thao-tac-bieu-mau">
+        <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" Disabled="dangLuu" />
+        <RadzenButton Text="Lưu phòng" Icon="save" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="dangLuu" BusyText="Đang lưu" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    private TruongMoRongBieuMau? moRong;
+    [Parameter] public Phong DuLieuBanDau { get; set; } = new();
+    [Parameter] public string? MaCu { get; set; }
+    private Phong banSao = new();
+    private string? loi;
+    private bool dangLuu;
+    protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
+    private async Task Luu()
+    {
+        if (dangLuu) return;
+        dangLuu = true; loi = null;
+        if (moRong?.KiemTra() is { } loiMoRong) { loi = loiMoRong; dangLuu = false; return; }
+        try { var kq = await DaoTao.LuuPhongAsync(banSao, MaCu); if (kq.ThanhCong) { if (moRong is not null) await moRong.LuuAsync(kq.MaBanGhi ?? banSao.MaPhong.Trim().ToUpperInvariant()); HoiThoai.Close(kq); } else loi = kq.ThongBao; }
+        finally { dangLuu = false; }
+    }
+}

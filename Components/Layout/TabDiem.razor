@@ -1,0 +1,111 @@
+@inject DichVuHocVu HocVu
+@inject DichVuExcel Excel
+@inject NotificationService ThongBao
+@inject DialogService HoiThoai
+
+@* Bảng điểm theo chuyên đề: chuyên cần (tính từ điểm danh), kiểm tra, tổng kết = 30% CC + 70% KT, xếp loại.
+   Thiếu điểm thì ghi rõ thiếu điểm nào. Học viên chỉ thấy dòng của mình. *@
+<div class="thanh-lich">
+    <RadzenDropDown TValue="string" Data="@cacChuyenDe" TextProperty="TenChuyenDe" ValueProperty="MaChuyenDe" @bind-Value="maChuyenDe" Change="@(_ => Tai())" Placeholder="Chọn chuyên đề" class="chon-buoi" />
+    @if (dong.Count > 0 && maChuyenDe is not null)
+    {
+        <NutXuatExcel TaoTep="@(() => Excel.XuatBangDiemAsync(MaLop, maChuyenDe, cacChuyenDe?.FirstOrDefault(c => c.MaChuyenDe == maChuyenDe)?.TenChuyenDe ?? maChuyenDe))" TenTep="@($"bang-diem-{MaLop}-{maChuyenDe}")" />
+    }
+    @if (duocSua && dong.Count > 0)
+    {
+        <RadzenButton Text="Nhập Excel" Icon="upload_file" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" />
+        <RadzenButton Text="@($"Lưu điểm{(SoThayDoi > 0 ? $" ({SoThayDoi})" : "")}")" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" Disabled="@(SoThayDoi == 0)" />
+    }
+</div>
+@if (cacChuyenDe is null)
+{
+    @for (var i = 0; i < 6; i++) { <div class="khung-xuong dong-xuong"></div> }
+}
+else if (cacChuyenDe.Count == 0)
+{
+    <section class="empty-state"><RadzenIcon Icon="grading" class="empty-state-icon" /><h2>Lớp chưa học chuyên đề nào</h2><p>Bảng điểm xuất hiện khi lớp có buổi học trong lịch.</p></section>
+}
+else if (loi is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert>
+}
+else
+{
+    @if (dong.Count > 1)
+    {
+        var coTk = dong.Where(d => d.TongKet is not null).ToList();
+        <div class="tom-tat-diem-danh">
+            <span class="o-tom-tat co-mat"><strong>@dong.Count(d => d.Dat == true)</strong>Đạt</span>
+            <span class="o-tom-tat vang-kp"><strong>@dong.Count(d => d.Dat == false)</strong>Không đạt</span>
+            <span class="o-tom-tat chua"><strong>@dong.Count(d => d.TongKet is null)</strong>Chưa đủ điểm</span>
+            <span class="o-tom-tat"><strong>@(coTk.Count == 0 ? "—" : coTk.Average(d => d.TongKet!.Value).ToString("0.0"))</strong>Điểm TB</span>
+            <span class="phu-dong">Tổng kết = 30% chuyên cần + 70% kiểm tra · từ 5,0 là đạt</span>
+        </div>
+    }
+    <div class="bang-cuon">
+        <table class="bang-diem">
+            <thead><tr><th>STT</th><th>Học viên</th><th>Chuyên cần</th><th>Kiểm tra</th><th>Tổng kết</th><th>Xếp loại</th><th>Ghi chú</th></tr></thead>
+            <tbody>
+                @for (var i = 0; i < dong.Count; i++)
+                {
+                    var d = dong[i];
+                    <tr class="@(DaDoi(d) ? "da-doi" : "")">
+                        <td class="so">@(i + 1)</td>
+                        <td><strong>@d.HoTen</strong><small class="phu-dong">@d.MaHocVien</small></td>
+                        <td class="so">@(d.ChuyenCan?.ToString("0.0") ?? "—")<small class="phu-dong">@d.SoBuoiDaDiemDanh buổi</small></td>
+                        <td class="so">
+                            @if (duocSua)
+                            {
+                                <RadzenNumeric TValue="double?" Value="@diemNhap.GetValueOrDefault(d.MaHocVien)" ValueChanged="@(v => diemNhap[d.MaHocVien] = v)" Min="0" Max="10" Step="0.1" Format="0.0" Placeholder="—" class="o-diem" aria-label="@($"Điểm kiểm tra của {d.HoTen}")" />
+                            }
+                            else { @(d.DiemKiemTra?.ToString("0.0") ?? "—") }
+                        </td>
+                        <td class="so"><strong>@(d.TongKet?.ToString("0.0") ?? "—")</strong></td>
+                        <td><span class="nhan-xep-loai @LopXepLoai(d.XepLoai)">@d.XepLoai</span></td>
+                        <td class="ghi-chu-diem">@d.LyDoThieu</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public string MaLop { get; set; } = "";
+    private List<ChuyenDe>? cacChuyenDe;
+    private string? maChuyenDe;
+    private List<DongBangDiem> dong = [];
+    private Dictionary<string, double?> diemNhap = [];
+    private bool duocSua, dangLuu;
+    private string? loi;
+    private bool DaDoi(DongBangDiem d) => duocSua && diemNhap.GetValueOrDefault(d.MaHocVien) != d.DiemKiemTra;
+    private int SoThayDoi => dong.Count(DaDoi);
+
+    private async Task NhapExcel()
+    {
+        var kq = await HoiThoai.OpenAsync<NhapExcelChung>($"Nhập điểm kiểm tra – lớp {MaLop}", new Dictionary<string, object> { [nameof(NhapExcelChung.Loai)] = LoaiNhap.Diem, [nameof(NhapExcelChung.MaLop)] = MaLop, [nameof(NhapExcelChung.MaChuyenDe)] = maChuyenDe! }, new DialogOptions { Width = "860px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac daLuu) { await Tai(); ThongBao.Notify(NotificationSeverity.Success, "Hoàn tất", daLuu.ThongBao); }
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        cacChuyenDe = await HocVu.LayChuyenDeCuaLopAsync(MaLop);
+        maChuyenDe ??= cacChuyenDe.FirstOrDefault()?.MaChuyenDe;
+        await Tai();
+    }
+    private async Task Tai()
+    {
+        if (maChuyenDe is null) return;
+        (dong, duocSua, loi) = await HocVu.LayBangDiemAsync(MaLop, maChuyenDe);
+        diemNhap = dong.ToDictionary(d => d.MaHocVien, d => d.DiemKiemTra);
+    }
+    private async Task Luu()
+    {
+        if (maChuyenDe is null) return;
+        dangLuu = true;
+        var kq = await HocVu.LuuDiemKiemTraAsync(MaLop, maChuyenDe, dong.Where(DaDoi).ToDictionary(d => d.MaHocVien, d => diemNhap.GetValueOrDefault(d.MaHocVien)));
+        dangLuu = false;
+        ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Đã lưu" : "Không lưu được", Detail = kq.ThongBao, Duration = 5000 });
+        if (kq.ThanhCong) await Tai();
+    }
+    public static string LopXepLoai(string x) => x switch { "Xuất sắc" => "xuat-sac", "Giỏi" => "gioi", "Khá" => "kha", "Đạt" => "dat", "Không đạt" => "khong-dat", _ => "chua" };
+}

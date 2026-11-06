@@ -1,0 +1,64 @@
+@page "/quan-tri/nhat-ky"
+@attribute [Authorize(Roles = "Admin")]
+@inject DichVuNhatKy NhatKy
+@inject DichVuExcel Excel
+
+<PageTitle>Nhật ký thao tác | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Nhật ký thao tác" MoTa="Mọi thao tác thêm, sửa, xoá và lượt xem dữ liệu cá nhân, kèm giá trị cũ → mới. Nhật ký chỉ được thêm; không ai sửa hay xoá được, kể cả Admin." />
+
+<RadzenCard class="directory-panel">
+    <div class="panel-toolbar">
+        <div class="search-box"><RadzenIcon Icon="search" /><input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="DoiTuKhoa" placeholder="Tìm người thực hiện, đối tượng, mã hoặc hành động" aria-label="Tìm trong nhật ký" /></div>
+        <RadzenDatePicker TValue="DateTime?" @bind-Value="tuNgay" Change="@(_ => Tai())" DateFormat="dd/MM/yyyy" Placeholder="Từ ngày" AllowClear="true" class="filter-dropdown" />
+        <RadzenDatePicker TValue="DateTime?" @bind-Value="denNgay" Change="@(_ => Tai())" DateFormat="dd/MM/yyyy" Placeholder="Đến ngày" AllowClear="true" class="filter-dropdown" />
+        @if (danhSach is { Count: > 0 }) { <NutXuatExcel TaoTep="@(async () => (byte[]?)await Excel.XuatNhatKyAsync(danhSach))" TenTep="nhat-ky" KichThuoc="ButtonSize.Small" /> }
+        <p class="ket-qua-tim-kiem">Hiển thị <strong>@(danhSach?.Count ?? 0)</strong> dòng gần nhất (tối đa 1.000)</p>
+    </div>
+    @if (danhSach is null)
+    {
+        @for (var i = 0; i < 8; i++) { <div class="khung-xuong dong-xuong"></div> }
+    }
+    else
+    {
+        <RadzenDataGrid TItem="NhatKy" Data="@danhSach" AllowPaging="true" PageSize="20" PageSizeOptions="@(new int[] { 10, 20, 40 })" PageSizeText="dòng / trang" GridLines="DataGridGridLines.Horizontal" PagerHorizontalAlign="HorizontalAlign.Center" EmptyText="Chưa có thao tác nào khớp bộ lọc." class="directory-grid" ExpandMode="DataGridExpandMode.Single">
+            <Template Context="x">
+                <div class="chi-tiet-nhat-ky">
+                    @{ var cu = Doc(x.GiaTriCu); var moi = Doc(x.GiaTriMoi); }
+                    @if (x.HanhDong == "Xem dữ liệu cá nhân") { <p>Đã hiện đủ các trường: <strong>@x.GiaTriMoi</strong></p> }
+                    else
+                    {
+                        <table class="bang-diem"><thead><tr><th>Trường</th><th>Giá trị cũ</th><th>Giá trị mới</th></tr></thead><tbody>
+                        @foreach (var k in cu.Keys.Union(moi.Keys))
+                        {
+                            <tr><td><code>@k</code></td><td class="gia-tri-cu">@cu.GetValueOrDefault(k)</td><td class="gia-tri-moi">@moi.GetValueOrDefault(k)</td></tr>
+                        }
+                        </tbody></table>
+                    }
+                </div>
+            </Template>
+            <Columns>
+                <RadzenDataGridColumn TItem="NhatKy" Property="ThoiDiem" Title="Thời điểm" Width="10rem"><Template Context="x">@x.ThoiDiem.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="NhatKy" Property="NguoiThucHien" Title="Người thực hiện" Width="9rem"><Template Context="x"><strong>@x.NguoiThucHien</strong><small class="phu-dong">@x.VaiTro</small></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="NhatKy" Property="HanhDong" Title="Hành động" Width="9rem"><Template Context="x"><span class="nhan-hanh-dong @LopHanhDong(x.HanhDong)">@x.HanhDong</span></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="NhatKy" Property="DoiTuong" Title="Đối tượng" Width="9rem" />
+                <RadzenDataGridColumn TItem="NhatKy" Property="MaDoiTuong" Title="Mã" Width="10rem"><Template Context="x"><span class="record-code">@x.MaDoiTuong</span></Template></RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>
+
+@code {
+    private List<NhatKy>? danhSach;
+    private string tuKhoa = "";
+    private DateTime? tuNgay, denNgay;
+    protected override Task OnInitializedAsync() => Tai();
+    private async Task Tai() => danhSach = await NhatKy.LayAsync(tuNgay, denNgay, tuKhoa);
+    private async Task DoiTuKhoa(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; await Tai(); }
+    private static Dictionary<string, string> Doc(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try { return System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject().ToDictionary(p => p.Key, p => p.Value?.ToString() ?? "∅"); }
+        catch { return new() { ["(nội dung)"] = json }; }
+    }
+    private static string LopHanhDong(string h) => h switch { "Thêm" => "them", "Sửa" => "sua", "Xoá" => "xoa", _ => "xem" };
+}

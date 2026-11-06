@@ -1,0 +1,27 @@
+@implements IDisposable
+@inject DichVuThongBao DichVu
+@inject KhoThongBaoDemo Kho
+
+@* Chuông thông báo trên thanh trên, có số văn bản chưa đọc; rung nhẹ khi số tăng. *@
+<a class="nut-thong-bao rz-link @(rung ? "co-moi" : "")" href="/thong-bao" title="@(soChuaDoc > 0 ? $"{soChuaDoc} văn bản chưa đọc" : "Văn bản, thông báo")" aria-label="@(soChuaDoc > 0 ? $"Văn bản, thông báo: {soChuaDoc} chưa đọc" : "Văn bản, thông báo")">
+    <RadzenIcon Icon="notifications" />
+    @if (soChuaDoc > 0) { <span class="huy-hieu-chuong">@(soChuaDoc > 99 ? "99+" : soChuaDoc.ToString())</span> }
+</a>
+
+@code {
+    private int soChuaDoc;
+    private bool rung;
+    protected override async Task OnInitializedAsync()
+    {
+        soChuaDoc = await DichVu.DemChuaDocAsync();
+        Kho.DaThayDoi += KhiDoi; Kho.DaDocThayDoi += KhiDoi;
+    }
+    private void KhiDoi() => _ = InvokeAsync(async () =>
+    {
+        var moi = await DichVu.DemChuaDocAsync();
+        rung = moi > soChuaDoc;
+        soChuaDoc = moi;
+        StateHasChanged();
+    });
+    public void Dispose() { Kho.DaThayDoi -= KhiDoi; Kho.DaDocThayDoi -= KhiDoi; }
+}

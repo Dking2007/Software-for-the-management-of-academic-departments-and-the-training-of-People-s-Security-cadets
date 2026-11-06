@@ -6,21 +6,32 @@ namespace Nhom2_BTL.Services;
 public static class KhoiTaoTaiKhoanMau
 {
     public static bool LaTaiKhoanMau(TaiKhoan u)
-        => u.Id is "demo-co-dinh-admin" or "demo-co-dinh-guest" or "demo-manager-khoa" or "demo-manager-lop";
+        => u.Id is "demo-co-dinh-admin" or "demo-co-dinh-guest" or "demo-manager-khoa" or "demo-manager-lop"
+            or "demo-manager-daotao" or "demo-giang-vien" or "demo-hoc-vien";
 
     public static bool LaTenDanhRieng(string ten)
         => ten.Trim().Equals("admin", StringComparison.OrdinalIgnoreCase)
         || ten.Trim().Equals("nguoixem", StringComparison.OrdinalIgnoreCase)
         || ten.Trim().Equals("quanlykhoa", StringComparison.OrdinalIgnoreCase)
-        || ten.Trim().Equals("quanlyhocvien", StringComparison.OrdinalIgnoreCase);
+        || ten.Trim().Equals("quanlyhocvien", StringComparison.OrdinalIgnoreCase)
+        || ten.Trim().Equals("quanlydaotao", StringComparison.OrdinalIgnoreCase)
+        || ten.Trim().Equals("giangvien", StringComparison.OrdinalIgnoreCase)
+        || ten.Trim().Equals("hocvien", StringComparison.OrdinalIgnoreCase);
 
-    public static async Task TaoAsync(UserManager<TaiKhoan> users)
+    /// <param name="maGiangVien">Mã cán bộ gắn với tài khoản mẫu "giangvien".</param>
+    /// <param name="maHocVien">Mã học viên gắn với tài khoản mẫu "hocvien".</param>
+    public static async Task TaoAsync(UserManager<TaiKhoan> users, string maGiangVien = KhoiTaoDaoTaoMau.MaGiangVienMau, string maHocVien = "HV00030")
     {
+        // Bỏ tài khoản "hocvien4" của bản trước: mỗi học viên chỉ một tài khoản (tài khoản "hocvien" đã có đủ các năm học).
+        if (await users.FindByIdAsync("demo-hoc-vien-4") is { } cu) await users.DeleteAsync(cu);
         foreach (var (id, ten, vaiTro, phamVi) in new[] {
             ("demo-co-dinh-admin", "admin", "Admin", ""),
             ("demo-co-dinh-guest", "nguoixem", "Guest", ""),
             ("demo-manager-khoa", "quanlykhoa", "Manager", "Khoa"),
-            ("demo-manager-lop", "quanlyhocvien", "Manager", "Lop") })
+            ("demo-manager-lop", "quanlyhocvien", "Manager", "Lop"),
+            ("demo-manager-daotao", "quanlydaotao", "Manager", "DaoTao"),
+            ("demo-giang-vien", "giangvien", "GiangVien", maGiangVien),
+            ("demo-hoc-vien", "hocvien", "HocVien", maHocVien) })
         {
             var theoMa = await users.FindByIdAsync(id);
             if (theoMa is not null && theoMa.UserName != ten)
@@ -39,6 +50,13 @@ public static class KhoiTaoTaiKhoanMau
                 // Không nâng quyền hoặc đổi mật khẩu của tài khoản người dùng trùng tên.
                 if (coSan.Id != id)
                     throw new InvalidOperationException($"Tên tài khoản mẫu '{ten}' đã được sử dụng. Không ghi đè tài khoản hiện có.");
+                // Tài khoản mẫu (đúng mã cố định) đổi hồ sơ gắn kèm khi dữ liệu mẫu đổi; phiên cũ mất hiệu lực.
+                if (coSan.PhamVi != phamVi && vaiTro is "GiangVien" or "HocVien")
+                {
+                    coSan.PhamVi = phamVi;
+                    await users.UpdateAsync(coSan);
+                    await users.UpdateSecurityStampAsync(coSan);
+                }
                 continue;
             }
 

@@ -5,30 +5,72 @@
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DialogService HoiThoai
+@inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
+@inject DichVuSoDoToChuc SoDo
 
 @* Danh sách tổ hiển thị quan hệ với khoa, tổ trưởng và tổ phó. *@
 @if (MaKhoaPhamVi is null) { <PageTitle>Tổ chuyên môn | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle> }
-<DauTrang TieuDe="Tổ chuyên môn" MoTa="Các tổ trực thuộc khoa và người phụ trách.">
+<DauTrang TieuDe="Tổ chuyên môn" MoTa="Các tổ trực thuộc từng khoa và người phụ trách. Chọn khoa để xem các tổ, bấm tên tổ để xem chi tiết.">
     <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="add" Text="@TuyChon.Dich("Thêm tổ")" ButtonStyle="ButtonStyle.Primary" Click="ThemTo" /> }</ThaoTac>
 </DauTrang>
+@if (MaKhoaPhamVi is null)
+{
+    <div class="thanh-lich">
+        <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị" style="margin-left:0">
+            <button type="button" class="@(cheDoThe ? "dang-chon" : "")" @onclick="() => cheDoThe = true"><RadzenIcon Icon="grid_view" />Theo khoa</button>
+            <button type="button" class="@(!cheDoThe ? "dang-chon" : "")" @onclick="() => cheDoThe = false"><RadzenIcon Icon="table_rows" />Bảng</button>
+        </div>
+        @if (cheDoThe)
+        {
+            <div class="search-box" style="max-width:26rem;flex:1"><RadzenIcon Icon="search" /><input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="NhapTuKhoa" placeholder="Tìm khoa, tổ hoặc tên tổ trưởng" aria-label="Tìm tổ" /></div>
+            <span class="ket-qua-tim-kiem"><strong>@CacKhoaHienThi.Count()</strong> khoa · <strong>@DanhSachHienThi.Count()</strong> tổ</span>
+        }
+    </div>
+}
+@if (MaKhoaPhamVi is null && cheDoThe)
+{
+    @* Mỗi khoa là một ô gọn; bấm để mở hộp thoại giới thiệu tổng quát (lãnh đạo, tổ, cán bộ). *@
+    <div class="luoi-o-khoa">
+        @foreach (var khoa in CacKhoaHienThi)
+        {
+            var cacTo = DanhSachHienThi.Where(t => t.MaKhoa == khoa.MaKhoa).ToList();
+            var cb = canBoTheoKhoa.GetValueOrDefault(khoa.MaKhoa, []);
+            var ts = cb.Count(c => c.HocVi == "Tiến sĩ"); var ths = cb.Count(c => c.HocVi == "Thạc sĩ");
+            <button type="button" class="o-khoa" aria-haspopup="dialog" @onclick="() => MoKhoa(khoa.MaKhoa)">
+                <span class="dau-o-khoa"><span class="record-code">@khoa.MaKhoa</span><RadzenIcon Icon="open_in_full" /></span>
+                <strong class="ten-o-khoa">@khoa.TenKhoa</strong>
+                <span class="phu-dong">Trưởng khoa: @DuLieu.LayTenCanBo(khoa.MaTruongKhoa)</span>
+                <span class="so-o-khoa"><span><b>@cacTo.Count</b> tổ</span><span><b>@khoa.SiSo</b> cán bộ</span><span><b>@ts</b> TS · <b>@ths</b> ThS</span></span>
+                <span class="thanh-hoc-vi" title="Cơ cấu học vị"><i style="width:@(cb.Count == 0 ? 0 : 100 * ts / cb.Count)%"></i><i class="ths" style="width:@(cb.Count == 0 ? 0 : 100 * ths / cb.Count)%"></i></span>
+                <span class="tags-tin">@foreach (var to in cacTo) { <span class="tag-tin">@to.TenTo · @to.SiSo CB</span> }</span>
+            </button>
+        }
+        @if (!CacKhoaHienThi.Any()) { <section class="empty-state"><h2>Không tìm thấy khoa hoặc tổ phù hợp</h2></section> }
+    </div>
+}
+else
+{
 <RadzenCard class="directory-panel">
     <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="Tìm tên tổ, mã tổ hoặc khoa" NhanTimKiem="Tìm tổ" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachTo.Count" />
     <RadzenDataGrid @ref="bang" GridLines="DataGridGridLines.Horizontal" TItem="ToModel" Data="@DanhSachHienThi" AllowPaging="true" PageSize="10" PageSizeOptions="@(new int[] { 5, 10, 20, 30, 40 })" PageSizeText="@TuyChon.Dich("dòng / trang")" AllowSorting="true" PagerHorizontalAlign="HorizontalAlign.Center" AllowColumnResize="true" EmptyText="Không tìm thấy tổ phù hợp." class="directory-grid">
         <Columns>
             <RadzenDataGridColumn TItem="ToModel" Title="@TuyChon.Dich("STT")" Width="3rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.MaTo)" Title="@TuyChon.Dich("Mã tổ")" Width="7rem"><Template Context="to"><span class="record-code">@to.MaTo</span></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.TenTo)" Title="@TuyChon.Dich("Tên tổ")" Width="6rem"><Template Context="to"><RadzenLink Path="@($"/khoa/{Uri.EscapeDataString(to.MaKhoa)}/to/{Uri.EscapeDataString(to.MaTo)}")" Text="@to.TenTo" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.TenTo)" Title="@TuyChon.Dich("Tên tổ")" Width="6rem"><Template Context="to"><TheXemNhanh Loai="To" Ma="@to.MaTo"><RadzenLink Path="@($"/khoa/{Uri.EscapeDataString(to.MaKhoa)}/to/{Uri.EscapeDataString(to.MaTo)}")" Text="@to.TenTo" /></TheXemNhanh></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="ToModel" Title="@TuyChon.Dich("Khoa")" Width="17rem"><Template Context="to">@DuLieu.LayTenKhoa(to.MaKhoa)</Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="ToModel" Title="@TuyChon.Dich("Tổ trưởng")" Width="12rem"><Template Context="to"><TenCanBo MaCanBo="@to.MaToTruong" /></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="ToModel" Title="@TuyChon.Dich("Tổ phó")" Width="12rem"><Template Context="to"><TenCanBo MaCanBo="@to.MaToPho" /></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="ToModel" Property="@nameof(ToModel.SiSo)" Title="@TuyChon.Dich("Sĩ số cán bộ")" TextAlign="TextAlign.Center" Width="7rem" />
+            @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="ToModel" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.MaTo)</span></Template></RadzenDataGridColumn> }
             @if (duocChinhSua) { <RadzenDataGridColumn TItem="ToModel" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="6rem"><Template Context="to"><div class="actions-cell"><RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa tổ {to.MaTo}")" Click="@(() => SuaTo(to))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa tổ {to.MaTo}")" Click="@(() => XoaTo(to))" /></div></Template></RadzenDataGridColumn> }
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
+}
 
 @code {
+    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string? MaKhoaPhamVi { get; set; }
     protected override void OnParametersSet() => TaiDuLieu();
@@ -36,7 +78,7 @@
     private async Task NhapTuKhoa(ChangeEventArgs e)
     {
         tuKhoa = e.Value?.ToString() ?? string.Empty;
-        if (bang is not null) await bang.FirstPage(true);
+        if (bang is not null && !cheDoThe) await bang.FirstPage(true);
     }
 
     private RadzenDataGrid<ToModel>? bang;
@@ -47,14 +89,35 @@
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 
 private List<ToModel> danhSachTo = [];
+private bool cheDoThe = true;
+private IReadOnlyList<Nhom2_BTL.Models.Khoa> danhSachKhoa = [];
+private Dictionary<string, List<Nhom2_BTL.Models.CanBoGiangVien>> canBoTheoTo = [];
+private Dictionary<string, List<Nhom2_BTL.Models.CanBoGiangVien>> canBoTheoKhoa = [];
+private async Task MoKhoa(string maKhoa)
+{
+    var cay = await SoDo.LayCayToChucAsync();
+    var nut = cay.Con.FirstOrDefault(k => k.Ma == maKhoa);
+    if (nut is null) return;
+    var cb = DuLieu.LayDanhSachCanBo().ToList();
+    await HoiThoai.OpenAsync<HopThoaiKhoa>(nut.Ten, new Dictionary<string, object> { [nameof(HopThoaiKhoa.Khoa)] = nut, [nameof(HopThoaiKhoa.CanBo)] = cb }, new DialogOptions { Width = "980px", Height = "82vh" });
+}
+// Khoa hiện khi khớp từ khoá hoặc có tổ khớp (tìm theo tên khoa, tên/mã tổ, tên tổ trưởng).
+private IEnumerable<Nhom2_BTL.Models.Khoa> CacKhoaHienThi => danhSachKhoa.Where(k => string.IsNullOrWhiteSpace(tuKhoa) || k.TenKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DanhSachHienThi.Any(t => t.MaKhoa == k.MaKhoa));
 private string tuKhoa = string.Empty;
 private bool duocChinhSua;
-private IEnumerable<ToModel> DanhSachHienThi => danhSachTo.Where(to => string.IsNullOrWhiteSpace(tuKhoa) || to.MaTo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || to.TenTo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DuLieu.LayTenKhoa(to.MaKhoa).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase));
-protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
-private void TaiDuLieu() => danhSachTo = DuLieu.LayDanhSachTo().Where(t => MaKhoaPhamVi is null || t.MaKhoa == MaKhoaPhamVi).ToList();
+private IEnumerable<ToModel> DanhSachHienThi => danhSachTo.Where(to => string.IsNullOrWhiteSpace(tuKhoa) || to.MaTo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || to.TenTo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DuLieu.LayTenKhoa(to.MaKhoa).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DuLieu.LayTenCanBo(to.MaToTruong).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase));
+protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("ToChuyenMon"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+private void TaiDuLieu()
+{
+    danhSachTo = DuLieu.LayDanhSachTo().Where(t => MaKhoaPhamVi is null || t.MaKhoa == MaKhoaPhamVi).ToList();
+    danhSachKhoa = DuLieu.LayDanhSachKhoa();
+    var cacCanBo = DuLieu.LayDanhSachCanBo();
+    canBoTheoTo = cacCanBo.GroupBy(c => c.MaTo ?? "").ToDictionary(g => g.Key, g => g.ToList());
+    canBoTheoKhoa = cacCanBo.GroupBy(c => c.MaKhoa).ToDictionary(g => g.Key, g => g.ToList());
+}
 private async Task ThemTo() { var kq = await HoiThoai.OpenAsync<BieuMauTo>("Thêm tổ", new Dictionary<string, object> { [nameof(BieuMauTo.DuLieuBanDau)] = new ToModel { MaKhoa = MaKhoaPhamVi ?? "" }, [nameof(BieuMauTo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa() }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
 private async Task SuaTo(ToModel to) { var kq = await HoiThoai.OpenAsync<BieuMauTo>("Sửa tổ", new Dictionary<string, object> { [nameof(BieuMauTo.DuLieuBanDau)] = to.TaoBanSao(), [nameof(BieuMauTo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauTo.DangSua)] = true }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
 private async Task XoaTo(ToModel to) { var ok = await HoiThoai.Confirm($"Bạn sắp xóa tổ {to.TenTo} ({to.MaTo}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaToAsync(to.MaTo)); }
-private async Task ThongBaoKetQua(KetQuaThaoTac kq) { ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
+private async Task ThongBaoKetQua(KetQuaThaoTac kq) { moRong = await TruongTuyChinh.LayBangAsync("ToChuyenMon"); ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 }
 

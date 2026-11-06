@@ -1,0 +1,43 @@
+@inject DialogService HoiThoai
+@inject DichVuDaoTao DaoTao
+
+<RadzenTemplateForm TItem="ChuyenDe" Data="@banSao" Submit="Luu">
+    <DataAnnotationsValidator />
+    <div class="form-grid">
+        <RadzenFormField Text="Mã chuyên đề" Variant="Variant.Outlined"><RadzenTextBox @bind-Value="banSao.MaChuyenDe" Disabled="@(MaCu is not null)" MaxLength="16" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Số tiết" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="banSao.SoTiet" Min="1" Max="300" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Tên chuyên đề" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="banSao.TenChuyenDe" MaxLength="150" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Khoa phụ trách" Variant="Variant.Outlined" class="toan-hang"><RadzenDropDown TValue="string" Data="@CacKhoa" TextProperty="TenKhoa" ValueProperty="MaKhoa" @bind-Value="banSao.MaKhoa" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Mô tả" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.MoTa" MaxLength="250" Rows="2" Style="width:100%" /></RadzenFormField>
+    </div>
+    <ValidationSummary class="loi-bieu-mau" />
+    @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
+<TruongMoRongBieuMau @ref="moRong" Loai="ChuyenDe" Ma="@(MaCu)" />
+    <div class="thao-tac-bieu-mau">
+        <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" Disabled="dangLuu" />
+        <RadzenButton Text="Lưu chuyên đề" Icon="save" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="dangLuu" BusyText="Đang lưu" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    private TruongMoRongBieuMau? moRong;
+    [Parameter] public ChuyenDe DuLieuBanDau { get; set; } = new();
+    [Parameter] public string? MaCu { get; set; }
+    [Parameter] public IReadOnlyList<Khoa> CacKhoa { get; set; } = [];
+    private ChuyenDe banSao = new();
+    private string? loi;
+    private bool dangLuu;
+    protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
+    private async Task Luu()
+    {
+        if (dangLuu) return;
+        dangLuu = true; loi = null;
+        try
+        {
+            if (moRong?.KiemTra() is { } loiMoRong) { loi = loiMoRong; return; }
+            var kq = await DaoTao.LuuChuyenDeAsync(banSao, MaCu);
+            if (kq.ThanhCong) { if (moRong is not null) await moRong.LuuAsync(kq.MaBanGhi ?? banSao.MaChuyenDe.Trim().ToUpperInvariant()); HoiThoai.Close(kq); } else loi = kq.ThongBao;
+        }
+        finally { dangLuu = false; }
+    }
+}

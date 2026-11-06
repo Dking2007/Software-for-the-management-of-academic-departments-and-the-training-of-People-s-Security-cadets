@@ -1,0 +1,119 @@
+@* Bảng điểm toàn khoá của một học viên: tổng quan tích luỹ (tiến độ khoá, TB hệ 10/hệ 4, học lực, số tiết),
+   biểu đồ TB theo học kỳ, rồi năm học → học kỳ → từng môn (số tiết, chuyên cần, kiểm tra/thi, tổng kết, điểm chữ, hệ 4). *@
+@if (HocKy.Count == 0)
+{
+    <p class="phu-dong">Chưa có kết quả học tập.</p>
+}
+else
+{
+    var coDiem = HocKy.SelectMany(h => h.MonHoc.Select(m => (h, m))).Where(x => x.m.TongKet is not null).ToList();
+    var tongTietCoDiem = coDiem.Sum(x => Tiet(x.h, x.m));
+    // TB tích luỹ có trọng số theo số tiết (môn chưa có số tiết tính trọng số 1).
+    double? tbTichLuy = coDiem.Count == 0 ? null : Math.Round(coDiem.Sum(x => x.m.TongKet!.Value * Math.Max(1, Tiet(x.h, x.m))) / coDiem.Sum(x => Math.Max(1, Tiet(x.h, x.m))), 2);
+    double? tbHe4 = coDiem.Count == 0 ? null : Math.Round(coDiem.Sum(x => QuyTacHocVu.QuyDoi(x.m.TongKet).He4 * Math.Max(1, Tiet(x.h, x.m))) / coDiem.Sum(x => Math.Max(1, Tiet(x.h, x.m))), 2);
+    var hkHienTai = HocKy.Max(h => h.ThuTu);
+    var soDat = coDiem.Count(x => x.m.TongKet >= 5);
+    var soKhongDat = coDiem.Count(x => x.m.TongKet < 5);
+    var soCho = HocKy.Sum(h => h.MonHoc.Count(m => m.TongKet is null));
+
+    <div class="bd-tong-quan">
+        <div class="bd-tien-do">
+            <span class="phu-dong">Tiến độ khoá học</span>
+            <strong>Học kỳ @(hkHienTai > 0 ? hkHienTai : HocKy.Count)<small>/8</small></strong>
+            <div class="bd-thanh"><span style="width:@((Math.Min(8, hkHienTai > 0 ? hkHienTai : HocKy.Count) * 12.5).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
+            <small class="phu-dong">@HocKy.Select(h => h.NamHoc).Distinct().Count() năm học · @HocKy.Count học kỳ có kết quả</small>
+        </div>
+        <div class="bd-o"><span class="phu-dong">TB tích luỹ (hệ 10)</span><strong>@(tbTichLuy?.ToString("0.00") ?? "—")</strong><small>Học lực: <b>@QuyTacHocVu.HocLuc(tbTichLuy)</b></small></div>
+        <div class="bd-o"><span class="phu-dong">TB tích luỹ (hệ 4)</span><strong>@(tbHe4?.ToString("0.00") ?? "—")</strong><small>Quy đổi theo điểm chữ</small></div>
+        <div class="bd-o"><span class="phu-dong">Khối lượng đạt</span><strong>@HocKy.Sum(h => h.TietDat).ToString("N0")<small> tiết</small></strong><small>@soDat môn đạt / @coDiem.Count môn có điểm</small></div>
+        <div class="bd-o @(soKhongDat > 0 ? "canh-bao" : "")"><span class="phu-dong">Chưa đạt · chờ điểm</span><strong>@soKhongDat<small> · @soCho</small></strong><small>@(soKhongDat > 0 ? "Cần đăng ký thi lại/học lại" : "Không có môn nợ")</small></div>
+    </div>
+
+    @* Biểu đồ TB học kỳ (cột đứng, thang 0–10, vạch 5,0 là mức đạt). *@
+    <div class="bd-bieu-do" role="img" aria-label="Điểm trung bình theo học kỳ">
+        <span class="bd-vach-dat" title="Mức đạt 5,0"></span>
+        @foreach (var hk in HocKy.OrderBy(h => h.NamHoc).ThenBy(h => h.HocKy))
+        {
+            var tb = hk.DiemTrungBinh;
+            <button type="button" class="bd-cot @(hk.HienTai ? "hien-tai" : "") @(tb is < 5 ? "thap" : "")" title="@($"{hk.NamHoc} · HK{hk.HocKy}: TB {tb?.ToString("0.00") ?? "chưa có"}")" @onclick="() => MoNam(hk.NamHoc)">
+                <span class="bd-gia-tri">@(tb?.ToString("0.0") ?? "—")</span>
+                <span class="bd-than" style="height:@(((tb ?? 0) * 10).ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                <span class="bd-nhan">HK@(hk.ThuTu > 0 ? hk.ThuTu : hk.HocKy)<small>@hk.NamHoc[2..4]–@hk.NamHoc[^2..]</small></span>
+            </button>
+        }
+    </div>
+
+    <div class="thanh-lich bd-loc">
+        <div class="tb-chuyen-muc">
+            <button type="button" class="@(loc == "" ? "dang-chon" : "")" @onclick="@(() => loc = "")">Tất cả môn</button>
+            <button type="button" class="@(loc == "khong-dat" ? "dang-chon" : "")" @onclick="@(() => loc = "khong-dat")">Chưa đạt <small>@soKhongDat</small></button>
+            <button type="button" class="@(loc == "cho" ? "dang-chon" : "")" @onclick="@(() => loc = "cho")">Chờ điểm <small>@soCho</small></button>
+            <button type="button" class="@(loc == "gioi" ? "dang-chon" : "")" @onclick="@(() => loc = "gioi")">Từ 8,0 trở lên</button>
+        </div>
+        <span class="nut-mo-thu">
+            <button type="button" class="nut-chip" @onclick="() => namMo = HocKy.Select(h => h.NamHoc).ToHashSet()"><RadzenIcon Icon="unfold_more" />Mở tất cả</button>
+            <button type="button" class="nut-chip" @onclick="() => namMo = []"><RadzenIcon Icon="unfold_less" />Thu gọn</button>
+        </span>
+    </div>
+
+    @foreach (var nam in HocKy.GroupBy(h => h.NamHoc))
+    {
+        var monNam = nam.SelectMany(h => h.MonHoc).Where(m => m.TongKet is not null).ToList();
+        var mo = (namMo ??= [HocKy[0].NamHoc]).Contains(nam.Key);
+        <section class="khoi-nam-hoc @(mo ? "dang-mo" : "")">
+            <button type="button" class="dau-khoi-nam" aria-expanded="@(mo ? "true" : "false")" @onclick="() => DoiNam(nam.Key)">
+                <RadzenIcon Icon="expand_more" class="mui-ten-nhom" />
+                <strong>Năm học @nam.Key</strong>
+                <span class="phu-dong">Năm thứ @NamThu(nam) · @nam.Count() học kỳ · @nam.Sum(h => h.MonHoc.Count) môn</span>
+                <span class="bd-tb-nam">TB năm <b>@(monNam.Count == 0 ? "—" : monNam.Average(m => m.TongKet!.Value).ToString("0.00"))</b></span>
+            </button>
+            @if (mo)
+            {
+                @foreach (var hk in nam.OrderByDescending(h => h.HocKy))
+                {
+                    var hienThi = hk.MonHoc.Where(Khop).ToList();
+                    <div class="khoi-hoc-ky">
+                        <h4>
+                            Học kỳ @(hk.HocKy == 1 ? "I" : "II")@if (hk.ThuTu > 0) { <span class="tag-tin">HK @hk.ThuTu/8 của khoá</span> }
+                            @if (hk.HienTai) { <span class="nhan-trang-thai canh-bao">Đang học</span> }
+                            <small>TB: <b>@(hk.DiemTrungBinh?.ToString("0.00") ?? "—")</b> · @QuyTacHocVu.XepLoai(hk.DiemTrungBinh) · Đạt @hk.MonHoc.Count(m => m.TongKet >= 5)/@hk.MonHoc.Count môn · @hk.TongTiet tiết</small>
+                        </h4>
+                        @if (hienThi.Count == 0) { <p class="phu-dong">Không có môn phù hợp bộ lọc.</p> }
+                        else
+                        {
+                        <div class="bang-cuon"><table class="bang-diem">
+                            <thead><tr><th>Môn / chuyên đề</th><th>Số tiết</th><th>Chuyên cần</th><th>Kiểm tra / thi</th><th>Tổng kết</th><th>Điểm chữ</th><th>Hệ 4</th><th>Xếp loại</th><th>Ngày thi</th><th>Ghi chú</th></tr></thead>
+                            <tbody>@foreach (var m in hienThi)
+                            {
+                                var (chu, he4) = QuyTacHocVu.QuyDoi(m.TongKet);
+                                <tr class="@(m.TongKet is < 5 ? "dong-loi" : "")"><td><strong>@m.TenChuyenDe</strong><small class="phu-dong">@m.MaChuyenDe</small></td>
+                                    <td class="so">@(Tiet(hk, m) is > 0 and var t ? t : "—")</td>
+                                    <td class="so">@(m.ChuyenCan?.ToString("0.0") ?? "—")</td>
+                                    <td class="so">@(m.DiemKiemTra?.ToString("0.0") ?? "—")</td>
+                                    <td class="so"><strong>@(m.TongKet?.ToString("0.0") ?? "—")</strong></td>
+                                    <td class="so"><span class="bd-chu chu-@(chu.Replace("+", "p"))">@chu</span></td>
+                                    <td class="so">@(m.TongKet is null ? "—" : he4.ToString("0.0"))</td>
+                                    <td><span class="nhan-xep-loai @TabDiem.LopXepLoai(m.XepLoai)">@m.XepLoai</span></td>
+                                    <td class="so">@(hk.NgayThi.GetValueOrDefault(m.MaChuyenDe)?.ToString("dd/MM/yyyy") ?? (hk.HienTai ? "Chưa xếp" : "—"))</td>
+                                    <td class="ghi-chu-diem">@m.LyDoThieu</td></tr>
+                            }</tbody>
+                        </table></div>
+                        }
+                    </div>
+                }
+            }
+        </section>
+    }
+    <p class="phu-dong bd-chu-thich">Tổng kết = 30% chuyên cần + 70% kiểm tra/thi, từ 5,0 là đạt. TB tích luỹ tính theo trọng số số tiết. Quy đổi: A ≥ 8,5 (4,0) · B+ ≥ 8,0 (3,5) · B ≥ 7,0 (3,0) · C+ ≥ 6,5 (2,5) · C ≥ 5,5 (2,0) · D+ ≥ 5,0 (1,5) · D ≥ 4,0 (1,0) · F.</p>
+}
+
+@code {
+    [Parameter] public List<DichVuHocVu.HocKyCaNhan> HocKy { get; set; } = [];
+    private HashSet<string>? namMo;
+    private string loc = "";
+    private static int Tiet(DichVuHocVu.HocKyCaNhan hk, DichVuHocVu.KetQuaCaNhan m) => hk.SoTiet?.GetValueOrDefault(m.MaChuyenDe) ?? 0;
+    private bool Khop(DichVuHocVu.KetQuaCaNhan m) => loc switch { "khong-dat" => m.TongKet is < 5, "cho" => m.TongKet is null, "gioi" => m.TongKet is >= 8, _ => true };
+    private void DoiNam(string nam) { namMo ??= []; if (!namMo.Remove(nam)) namMo.Add(nam); }
+    private void MoNam(string nam) { namMo ??= []; namMo.Add(nam); }
+    private static int NamThu(IGrouping<string, DichVuHocVu.HocKyCaNhan> nam) => nam.Max(h => h.ThuTu) is > 0 and var t ? (t + 1) / 2 : 0;
+}

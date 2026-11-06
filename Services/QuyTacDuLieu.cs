@@ -6,12 +6,16 @@ namespace Nhom2_BTL.Services;
 /// <summary>Quy tắc dùng chung cho dữ liệu khởi tạo, kiểm tra nghiệp vụ và giao diện.</summary>
 public static class QuyTacDuLieu
 {
+    /// <summary>Học viên có được thấy họ tên bạn cùng lớp không (câu hỏi còn mở; tạm đặt có, đổi bằng cấu hình "HocVienXemBanCungLop").</summary>
+    public static bool HocVienXemBanCungLop { get; set; } = true;
+
     public static string TinhNienKhoa(string heDaoTao, string khoaHoc)
     {
-        var mau = heDaoTao == "Chính quy" ? @"^D([0-9]+)$" : heDaoTao == "Văn bằng 2" ? @"^K([0-9]+)$" : "(?!)";
+        var dungKhoaD = heDaoTao is "Chính quy" or "Liên thông";
+        var mau = dungKhoaD ? @"^D([0-9]+)$" : heDaoTao == "Văn bằng 2" ? @"^K([0-9]+)$" : "(?!)";
         var ketQua = Regex.Match(khoaHoc ?? "", mau);
         if (!ketQua.Success || !int.TryParse(ketQua.Groups[1].Value, out var khoa)) return "—";
-        var namNhapHoc = 2026L + khoa - (heDaoTao == "Chính quy" ? 58 : 6);
+        var namNhapHoc = 2026L + khoa - (dungKhoaD ? 58 : 6);
         return namNhapHoc is >= 1900 and <= 9995 ? $"{namNhapHoc}–{namNhapHoc + 4}" : "—";
     }
 
@@ -45,16 +49,32 @@ public static class QuyTacDuLieu
     public static string ChuyenNganhChinhQuy(int so) => so switch
     { <= 3 => "Trinh sát an ninh", <= 7 => "Điều tra hình sự", 8 => "Quản lý xuất nhập cảnh", <= 12 => "ANM & PCTPCNC", _ => "Công nghệ thông tin" };
 
+    /// <summary>Chuyên ngành suy ra từ hệ và số lớp. Văn bằng 2: số lẻ Điều tra, số chẵn ANM &amp; PCTPCNC. Liên thông: chọn tay (trả rỗng).</summary>
+    public static string ChuyenNganhTheoSoLop(string he, int soLop)
+        => he == "Chính quy" ? ChuyenNganhChinhQuy(soLop) : he == "Liên thông" ? "" : soLop % 2 == 1 ? "Điều tra" : "ANM & PCTPCNC";
+
+    public static readonly string[] CacHeDaoTao = ["Chính quy", "Liên thông", "Văn bằng 2"];
+    public static readonly string[] ChuyenNganhChinhQuyDanhMuc = ["Trinh sát an ninh", "Điều tra hình sự", "Quản lý xuất nhập cảnh", "ANM & PCTPCNC", "Công nghệ thông tin"];
+
     // Hệ Văn bằng 2 giữ mã B<số>K<khóa>; số lớp không bị giới hạn cứng bằng bốn.
+    /// <summary>
+    /// Liên thông dùng chung quy ước mã lớp B{số}D{khoá} với chính quy; để không trùng mã, số lớp liên thông là 16–20
+    /// (chính quy 1–15). Chuyên ngành chọn trong danh mục chính quy.
+    /// </summary>
     public static bool LopHopLe(string ma, string he, string khoa, string chuyenNganh)
     {
+        if (he == "Liên thông")
+        {
+            var lt = Regex.Match(ma, @"^B(1[6-9]|20)(D5[3-8])$");
+            return lt.Success && lt.Groups[2].Value == khoa && ChuyenNganhChinhQuyDanhMuc.Contains(chuyenNganh);
+        }
         if (he == "Chính quy")
         {
             var m = Regex.Match(ma, @"^B([1-9]|1[0-5])(D5[3-8])$");
             return m.Success && m.Groups[2].Value == khoa && ChuyenNganhChinhQuy(int.Parse(m.Groups[1].Value)) == chuyenNganh;
         }
         var vb = Regex.Match(ma, @"^B([1-9][0-9]*)(K[3-6])$");
-        return he == "Văn bằng 2" && vb.Success && vb.Groups[2].Value == khoa && chuyenNganh is "Điều tra" or "ANM & PCTPCNC";
+        return he == "Văn bằng 2" && vb.Success && vb.Groups[2].Value == khoa && ChuyenNganhTheoSoLop(he, int.Parse(vb.Groups[1].Value)) == chuyenNganh;
     }
 
     // Hoán vị ổn định giúp đổi đều họ, đệm và tên, không phụ thuộc ngẫu nhiên mỗi lần chạy.

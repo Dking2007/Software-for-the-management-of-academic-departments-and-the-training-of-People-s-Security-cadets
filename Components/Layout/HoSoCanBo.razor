@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject DichVuQuanLyDuLieuDemo DuLieu
+@inject KhoDuLieuDemo Kho
 
 @if (canBo is null)
 {
@@ -7,7 +8,16 @@
 }
 else
 {
-    <ChiTietHoSo CacTruong="@CacTruong" />
+    <ChiTietHoSo CacTruong="@CacTruong" DoiTuong="Cán bộ" />
+    <ThongTinMoRong Loai="CanBo" Ma="@MaCanBo" Class="nhom-ho-so" />
+    @* Lịch sử bổ nhiệm thuộc nhóm "công tác": chỉ hiện khi mặt cắt có đủ dữ liệu (Admin, Quản lý khoa, chính cán bộ). *@
+    @if (canBo.MaCanBo != "" && Kho.LayBoNhiem(MaCanBo) is { Count: > 0 } boNhiem)
+    {
+        <section class="nhom-ho-so">
+            <h3><RadzenIcon Icon="workspace_premium" />Lịch sử bổ nhiệm</h3>
+            <ul class="danh-sach-gon">@foreach (var b in boNhiem) { <li><span><strong>@b.ChucVu · @(b.LoaiDonVi == "Khoa" ? DuLieu.LayTenKhoa(b.MaDonVi) : DuLieu.LayTenTo(b.MaDonVi) + " (" + b.MaDonVi + ")")</strong><span>Từ @b.TuNgay.ToString("dd/MM/yyyy")@(b.DenNgay is { } den ? " đến " + den.ToString("dd/MM/yyyy") : "")</span></span><span class="nhan-trang-thai @(b.ConHieuLuc ? "hoat-dong" : "tam-dung")">@(b.ConHieuLuc ? "Đương nhiệm" : "Đã thôi")</span></li> }</ul>
+        </section>
+    }
 }
 
 @code {

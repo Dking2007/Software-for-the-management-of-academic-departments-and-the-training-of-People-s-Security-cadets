@@ -1,0 +1,131 @@
+@page "/quan-tri/truong-du-lieu"
+@attribute [Authorize(Roles = "Admin,Manager")]
+@inject DichVuTruongTuyChinh TruongTuyChinh
+@inject NotificationService ThongBao
+@inject DialogService HoiThoai
+
+<PageTitle>Trường dữ liệu mở rộng | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Trường dữ liệu mở rộng" MoTa="Thêm thông tin mới cho một loại đối tượng mà không cần sửa phần mềm, ví dụ Khoa thêm “Sáp nhập”, “Ngày sáp nhập”. Trường mới tự xuất hiện trong biểu mẫu thêm/sửa, cột của bảng danh sách và trang chi tiết." />
+
+<div class="tdl-bo-cuc">
+    <nav class="tdl-loai" aria-label="Loại đối tượng">
+        @foreach (var l in cacLoai)
+        {
+            <button type="button" class="@(l.Ma == loai ? "dang-chon" : "")" @onclick="() => ChonLoai(l.Ma)">
+                <RadzenIcon Icon="@l.BieuTuong" /><span>@l.Ten</span><small>@(soTruong.GetValueOrDefault(l.Ma))</small>
+            </button>
+        }
+        @if (cacLoai.Count == 0) { <p class="phu-dong">Vai trò của bạn không quản lý loại đối tượng nào.</p> }
+    </nav>
+
+    @if (loai != "")
+    {
+        <section class="tdl-noi-dung">
+            <div class="thanh-lich">
+                <h2 class="tieu-de-khu-vuc" style="margin:0">Trường của @DichVuTruongTuyChinh.TenLoai(loai).ToLowerInvariant()</h2>
+                <span class="ket-qua-tim-kiem"><strong>@bang.Truong.Count</strong>/@DichVuTruongTuyChinh.SoTruongToiDa trường</span>
+                <RadzenButton Text="Thêm trường" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="Them" style="margin-left:auto" />
+                @if (loai == "Khoa" && !bang.Truong.Any(t => t.Ten == "Sáp nhập")) { <RadzenButton Text="Thêm mẫu “Sáp nhập”" Icon="auto_awesome" ButtonStyle="ButtonStyle.Light" Click="ThemMauSapNhap" /> }
+            </div>
+            @if (bang.Truong.Count == 0)
+            {
+                <section class="empty-state"><RadzenIcon Icon="dashboard_customize" class="empty-state-icon" /><h2>Chưa có trường mở rộng</h2><p>Bấm “Thêm trường” để bổ sung thông tin mới cho @DichVuTruongTuyChinh.TenLoai(loai).ToLowerInvariant().</p></section>
+            }
+            else
+            {
+                <div class="bang-cuon"><table class="bang-diem tdl-bang">
+                    <thead><tr><th>#</th><th>Tên trường</th><th>Kiểu</th><th>Lựa chọn / mô tả</th><th>Bắt buộc</th><th>Cột bảng</th><th>Chỉ chủ sở hữu</th><th>Đã nhập</th><th></th></tr></thead>
+                    <tbody>
+                        @for (var i = 0; i < bang.Truong.Count; i++)
+                        {
+                            var t = bang.Truong[i]; var so = i;
+                            <tr>
+                                <td class="so">@(i + 1)</td>
+                                <td><strong>@t.Ten</strong><small class="phu-dong">@t.NguoiTao · @t.TaoLuc.ToLocalTime().ToString("dd/MM/yyyy")</small></td>
+                                <td><span class="tag-tin">@t.KieuDuLieu</span></td>
+                                <td>@if (t.KieuDuLieu == "Danh sách") { <div class="tags-tin">@foreach (var lc in t.CacLuaChon) { <span class="tag-tin">@lc</span> }</div> }<small class="phu-dong">@t.MoTa</small></td>
+                                <td class="so">@(t.BatBuoc ? "✓" : "")</td>
+                                <td class="so">@(t.HienTrenBang ? "✓" : "")</td>
+                                <td class="so">@(t.ChiChuSoHuu ? "🔒" : "")</td>
+                                <td class="so">@bang.GiaTri.Count(g => g.Key.TruongId == t.Id)</td>
+                                <td class="actions-cell">
+                                    <button type="button" class="nut-nho" title="Lên" disabled="@(so == 0)" @onclick="() => DoiThuTu(t.Id, -1)"><RadzenIcon Icon="arrow_upward" /></button>
+                                    <button type="button" class="nut-nho" title="Xuống" disabled="@(so == bang.Truong.Count - 1)" @onclick="() => DoiThuTu(t.Id, 1)"><RadzenIcon Icon="arrow_downward" /></button>
+                                    <button type="button" class="nut-nho" title="Sửa" @onclick="() => Sua(t)"><RadzenIcon Icon="edit" /></button>
+                                    <button type="button" class="nut-nho nguy-hiem" title="Xoá" @onclick="() => Xoa(t)"><RadzenIcon Icon="delete" /></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table></div>
+            }
+
+            @if (banNhap is not null)
+            {
+                <RadzenCard class="tdl-bieu-mau">
+                    <h3>@(banNhap.Id == 0 ? "Thêm trường mới" : $"Sửa trường “{banNhap.Ten}”")</h3>
+                    <div class="form-grid">
+                        <RadzenFormField Text="Tên trường *" Variant="Variant.Outlined"><RadzenTextBox @bind-Value="banNhap.Ten" MaxLength="60" Style="width:100%" /></RadzenFormField>
+                        <RadzenFormField Text="Kiểu dữ liệu" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@Nhom2_BTL.Models.TruongTuyChinh.CacKieu" @bind-Value="banNhap.KieuDuLieu" Style="width:100%" /></RadzenFormField>
+                        @if (banNhap.KieuDuLieu == "Danh sách")
+                        {
+                            <RadzenFormField Text="Các lựa chọn (mỗi dòng một lựa chọn)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banNhap.LuaChon" Rows="3" Style="width:100%" /></RadzenFormField>
+                        }
+                        <RadzenFormField Text="Mô tả / gợi ý nhập" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="banNhap.MoTa" MaxLength="200" Style="width:100%" /></RadzenFormField>
+                    </div>
+                    <div class="tdl-tuy-chon">
+                        <label class="cd-bat-tat"><input type="checkbox" @bind="banNhap.BatBuoc" /><span><strong>Bắt buộc</strong><small>Phải nhập khi thêm/sửa</small></span></label>
+                        <label class="cd-bat-tat"><input type="checkbox" @bind="banNhap.HienTrenBang" /><span><strong>Hiện thành cột</strong><small>Trong bảng danh sách</small></span></label>
+                        <label class="cd-bat-tat"><input type="checkbox" @bind="banNhap.ChiChuSoHuu" /><span><strong>Chỉ chủ sở hữu xem</strong><small>Ẩn với vai trò khác</small></span></label>
+                    </div>
+                    <div class="thao-tac-bieu-mau">
+                        <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => banNhap = null" />
+                        <RadzenButton Text="Lưu trường" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" />
+                    </div>
+                </RadzenCard>
+            }
+            <p class="phu-dong tdl-ghi-chu">Trường mới không làm thay đổi bảng dữ liệu gốc: định nghĩa và giá trị lưu ở bảng riêng, mọi thay đổi được ghi nhật ký. Đổi kiểu dữ liệu chỉ được khi trường chưa có giá trị; xoá trường xoá luôn giá trị của trường.</p>
+        </section>
+    }
+</div>
+
+@code {
+    private List<DichVuTruongTuyChinh.LoaiDoiTuong> cacLoai = [];
+    private Dictionary<string, int> soTruong = [];
+    private string loai = "";
+    private DichVuTruongTuyChinh.BangMoRong bang = DichVuTruongTuyChinh.BangMoRong.Rong;
+    private TruongTuyChinh? banNhap;
+
+    protected override async Task OnInitializedAsync()
+    {
+        foreach (var l in DichVuTruongTuyChinh.CacLoai) if (await TruongTuyChinh.DuocQuanTriAsync(l.Ma)) cacLoai.Add(l);
+        foreach (var l in cacLoai) soTruong[l.Ma] = (await TruongTuyChinh.LayBangAsync(l.Ma)).Truong.Count;
+        if (cacLoai.Count > 0) await ChonLoai(cacLoai[0].Ma);
+    }
+    private async Task ChonLoai(string ma) { loai = ma; banNhap = null; bang = await TruongTuyChinh.LayBangAsync(ma); }
+    private async Task TaiLai() { bang = await TruongTuyChinh.LayBangAsync(loai); soTruong[loai] = bang.Truong.Count; }
+    private void Them() => banNhap = new TruongTuyChinh { LoaiDoiTuong = loai };
+    private void Sua(TruongTuyChinh t) => banNhap = new TruongTuyChinh { Id = t.Id, LoaiDoiTuong = t.LoaiDoiTuong, Ten = t.Ten, KieuDuLieu = t.KieuDuLieu, LuaChon = t.LuaChon, MoTa = t.MoTa, BatBuoc = t.BatBuoc, HienTrenBang = t.HienTrenBang, ChiChuSoHuu = t.ChiChuSoHuu };
+    private async Task Luu()
+    {
+        var kq = await TruongTuyChinh.LuuTruongAsync(banNhap!);
+        Bao(kq);
+        if (kq.ThanhCong) { banNhap = null; await TaiLai(); }
+    }
+    private async Task ThemMauSapNhap()
+    {
+        Bao(await TruongTuyChinh.LuuTruongAsync(new TruongTuyChinh { LoaiDoiTuong = "Khoa", Ten = "Sáp nhập", KieuDuLieu = "Danh sách", LuaChon = "Không\nDự kiến sáp nhập\nĐã sáp nhập", MoTa = "Tình trạng sáp nhập của khoa", HienTrenBang = true }));
+        await TruongTuyChinh.LuuTruongAsync(new TruongTuyChinh { LoaiDoiTuong = "Khoa", Ten = "Sáp nhập vào", KieuDuLieu = "Văn bản", MoTa = "Tên khoa/đơn vị tiếp nhận", HienTrenBang = true });
+        await TruongTuyChinh.LuuTruongAsync(new TruongTuyChinh { LoaiDoiTuong = "Khoa", Ten = "Ngày sáp nhập", KieuDuLieu = "Ngày", HienTrenBang = false });
+        await TaiLai();
+    }
+    private async Task DoiThuTu(int id, int huong) { await TruongTuyChinh.DoiThuTuAsync(id, huong); await TaiLai(); }
+    private async Task Xoa(TruongTuyChinh t)
+    {
+        var so = bang.GiaTri.Count(g => g.Key.TruongId == t.Id);
+        if (await HoiThoai.Confirm($"Xoá trường “{t.Ten}”{(so > 0 ? $" và {so} giá trị đã nhập" : "")}? Thao tác không hoàn tác được.", "Xác nhận xoá", new ConfirmOptions { OkButtonText = "Xoá", CancelButtonText = "Hủy" }) != true) return;
+        Bao(await TruongTuyChinh.XoaTruongAsync(t.Id));
+        await TaiLai();
+    }
+    private void Bao(KetQuaThaoTac kq) => ThongBao.Notify(kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, kq.ThanhCong ? "Hoàn tất" : "Không thực hiện được", kq.ThongBao);
+}

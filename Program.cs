@@ -58,17 +58,36 @@ boMayUngDung.Services.AddScoped<TuyChonGiaoDien>();
 boMayUngDung.Services.AddSingleton<KhoVeDangNhapDemo>();
 boMayUngDung.Services.AddScoped<NhaCungCapTrangThaiXacThucDemo>();
 boMayUngDung.Services.AddScoped<AuthenticationStateProvider>(dichVu => dichVu.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
-// Kho mẫu dùng singleton để dữ liệu được chia sẻ giữa các phiên cho tới khi khởi động lại ứng dụng.
+// Dữ liệu nghiệp vụ lưu bền trong SQLite riêng (App_Data/du-lieu.db), tách khỏi CSDL tài khoản.
+// Dùng factory vì Blazor Server không nên giữ một DbContext suốt cả phiên.
+boMayUngDung.Services.AddDbContextFactory<CoSoDuLieuNghiepVu>(o => o.UseSqlite($"Data Source={Path.Combine(thuMucTaiKhoan, "du-lieu.db")}"));
+// Kho singleton giữ bản đệm trong bộ nhớ để đọc nhanh; mọi thao tác ghi được lưu xuống CSDL.
 boMayUngDung.Services.AddSingleton<KhoDuLieuDemo>();
+// Thông báo lưu trong cùng CSDL nghiệp vụ (bảng ThongBao, ThongBaoDaDoc).
 boMayUngDung.Services.AddSingleton<KhoThongBaoDemo>();
 boMayUngDung.Services.AddScoped<DichVuThongBao>();
 boMayUngDung.Services.AddScoped<DichVuPhanQuyenDemo>();
 boMayUngDung.Services.AddScoped<DichVuQuanLyDuLieuDemo>();
+boMayUngDung.Services.AddScoped<DichVuDaoTao>();
+boMayUngDung.Services.AddScoped<DichVuHocVu>();
+boMayUngDung.Services.AddScoped<DichVuNhatKy>();
+boMayUngDung.Services.AddScoped<DichVuTimKiem>();
+boMayUngDung.Services.AddScoped<DichVuSoDoToChuc>();
+boMayUngDung.Services.AddScoped<DichVuTongQuan>();
+boMayUngDung.Services.AddScoped<DichVuExcel>();
+boMayUngDung.Services.AddScoped<DichVuNhapExcel>();
+boMayUngDung.Services.AddScoped<DichVuTruongTuyChinh>();
+boMayUngDung.Services.AddScoped<DichVuBanTin>();
+boMayUngDung.Services.AddScoped<DichVuChuongTrinh>();
+QuyTacDuLieu.HocVienXemBanCungLop = boMayUngDung.Configuration.GetValue("HocVienXemBanCungLop", true);
 
 // Hoàn tất cấu hình dịch vụ trước khi thiết lập các tuyến xử lý HTTP.
 var ungDung = boMayUngDung.Build();
 using (var scope = ungDung.Services.CreateScope())
 {
+    // Tạo/nạp CSDL nghiệp vụ ngay khi khởi động, không để người dùng đầu tiên phải chờ sinh dữ liệu mẫu.
+    var khoNghiepVu = scope.ServiceProvider.GetRequiredService<KhoDuLieuDemo>();
+    scope.ServiceProvider.GetRequiredService<KhoThongBaoDemo>();
     var dbTaiKhoan = scope.ServiceProvider.GetRequiredService<CoSoTaiKhoan>();
     await KhoiTaoCoSoTaiKhoan.TaoAsync(dbTaiKhoan);
     // Chuyển mã vai trò cũ trong database; các phiên mang claim cũ sẽ bị từ chối.
@@ -76,7 +95,14 @@ using (var scope = ungDung.Services.CreateScope())
         .ExecuteUpdateAsync(s => s.SetProperty(x => x.VaiTro, "Guest"));
     var users = scope.ServiceProvider.GetRequiredService<UserManager<TaiKhoan>>();
     if (ungDung.Environment.IsDevelopment())
-        await KhoiTaoTaiKhoanMau.TaoAsync(users);
+    {
+        // Tài khoản mẫu "hocvien" (duy nhất) gắn với học viên đầu tiên lớp năm thứ tư B1D55: có lịch học, điểm danh hiện hành
+        // và kết quả 6 học kỳ trước, đủ để xem học tập theo năm học, học kỳ.
+        string maHocVienMau;
+        lock (khoNghiepVu.KhoaDongBo) maHocVienMau = khoNghiepVu.DanhSachHocVien.FirstOrDefault(h => h.MaLop == KhoiTaoDaoTaoMau.LopNamCuoiMau)?.MaHocVien
+            ?? khoNghiepVu.DanhSachHocVien.FirstOrDefault(h => h.MaLop == "B1D58")?.MaHocVien ?? "HV00001";
+        await KhoiTaoTaiKhoanMau.TaoAsync(users, KhoiTaoDaoTaoMau.MaGiangVienMau, maHocVienMau);
+    }
     // Chỉ cấu hình trên máy chủ; không có trang web tự nhận quyền admin.
     var ten = ungDung.Configuration["KhoiTaoAdmin:TenDangNhap"];
     var mk = ungDung.Configuration["KhoiTaoAdmin:MatKhau"];
@@ -104,6 +130,9 @@ ungDung.UseAuthentication();
 ungDung.UseAuthorization();
 ungDung.UseAntiforgery();
 ungDung.UseRateLimiter();
+
+// Từ điển nhãn giao diện cho lớp dịch toàn trang (wwwroot/dich-trang.js). Chỉ là nhãn tĩnh, không chứa dữ liệu.
+ungDung.MapGet("/tu-dien/{ngon}", (string ngon) => Results.Json(TuDienGiaoDien.Lay(ngon)));
 
 // Cấp token theo cookie hiện tại, kể cả khi trang được mở bằng điều hướng tương tác.
 ungDung.MapGet("/phien/ma-bao-ve", (HttpContext http, IAntiforgery chongGiaMao) =>

@@ -2,23 +2,65 @@
 @implements IDisposable
 @attribute [Authorize]
 @inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject NavigationManager DieuHuong
 
-<PageTitle>Chi tiết lớp | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-@if (donVi is null)
+<PageTitle>@MaLop | Chi tiết lớp</PageTitle>
+@if (!daTai)
 {
-    <section class="empty-state"><h1>Không tìm thấy đơn vị</h1><p>Mã trên đường dẫn không tồn tại, đã bị xóa hoặc không thuộc đơn vị đang xem.</p><RadzenLink Path="/quan-ly-hoc-vien/lop" Text="Quay lại danh sách" /></section>
+    <div class="khung-xuong" style="height:8rem"></div>
+}
+else if (donVi is null)
+{
+    <section class="empty-state"><h1>Không tìm thấy lớp</h1><p>Mã trên đường dẫn không tồn tại, đã bị xoá hoặc không thuộc phạm vi bạn được xem.</p><RadzenLink Path="/quan-ly-hoc-vien/lop" Text="Quay lại danh sách" /></section>
 }
 else
 {
     <ThongTinDonVi Nhan="Chi tiết lớp" TieuDe="@donVi.MaLop" QuayLai="/quan-ly-hoc-vien/lop" CacTruong="@ThongTin" />
-    <HocVien MaLopPhamVi="@MaLop" @key="MaLop" />
+    @* Bốn tab trong trang lớp: học viên, lịch, điểm danh, điểm. Tab chỉ hiện với vai trò được dùng; dịch vụ vẫn kiểm quyền lại. *@
+    <RadzenTabs @bind-SelectedIndex="tabChon" class="tab-lop" @key="MaLop">
+        <Tabs>
+            @foreach (var t in cacTab)
+            {
+                <RadzenTabsItem Text="@t.Ten" Icon="@t.BieuTuong">
+                    @switch (t.Ma)
+                    {
+                        case "hoc-vien": <HocVien MaLopPhamVi="@MaLop" />; break;
+                        case "lich": <TabLichLop MaLop="@MaLop" />; break;
+                        case "diem-danh": <TabDiemDanh MaLop="@MaLop" BuoiChon="@Buoi" />; break;
+                        case "chuyen-can": <TabChuyenCan MaLop="@MaLop" />; break;
+                        case "diem": <TabDiem MaLop="@MaLop" />; break;
+                        case "so-dau-bai": <TabSoDauBai MaLop="@MaLop" />; break;
+                    }
+                </RadzenTabsItem>
+            }
+        </Tabs>
+    </RadzenTabs>
 }
 @code {
     [Parameter] public string MaLop { get; set; } = "";
-    private Nhom2_BTL.Models.LopDaoTao? donVi;
+    [SupplyParameterFromQuery(Name = "tab")] public string? Tab { get; set; }
+    [SupplyParameterFromQuery(Name = "buoi")] public int? Buoi { get; set; }
+    private sealed record TabLop(string Ma, string Ten, string BieuTuong);
+    private List<TabLop> cacTab = [];
+    private int tabChon;
+    private bool daTai;
+    private LopDaoTao? donVi;
     private Dictionary<string, string> ThongTin => donVi is null ? [] : new() { ["Mã lớp"] = donVi.MaLop, ["Hệ đào tạo"] = donVi.HeDaoTao, ["Khóa"] = donVi.KhoaHoc, ["Niên khóa"] = donVi.NienKhoa, ["Chuyên ngành"] = donVi.ChuyenNganh, ["GV chủ nhiệm"] = donVi.GiaoVienChuNhiem, ["Sĩ số"] = donVi.SiSo.ToString() };
     protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
-    protected override void OnParametersSet() => TaiDuLieu();
+    protected override async Task OnParametersSetAsync()
+    {
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        TaiDuLieu();
+        cacTab = [new("hoc-vien", nd.LaHocVien ? "Bạn cùng lớp" : "Học viên", "groups"), new("lich", "Lịch học", "calendar_month")];
+        // Lớp chỉ hiện với giảng viên khi họ dạy lớp này (dịch vụ đã lọc), nên vào được trang là có quyền điểm danh buổi của mình.
+        if (nd.CoQuyenVung("Lop") || nd.LaGiangVien) cacTab.Add(new("diem-danh", "Điểm danh", "how_to_reg"));
+        if (nd.CoQuyenVung("Lop") || nd.LaGiangVien) cacTab.Add(new("chuyen-can", "Chuyên cần", "event_repeat"));
+        if (nd.LaAdmin || nd.VaiTro == "Manager" || nd.LaGiangVien) cacTab.Add(new("so-dau-bai", "Sổ đầu bài", "menu_book"));
+        if (nd.CoQuyenVung("Lop") || nd.LaGiangVien || nd.LaHocVien) cacTab.Add(new("diem", nd.LaHocVien ? "Điểm của tôi" : "Điểm", "grading"));
+        tabChon = Math.Max(0, cacTab.FindIndex(t => t.Ma == Tab));
+        daTai = true;
+    }
     private void TaiDuLieu() => donVi = DuLieu.LayDanhSachLop().FirstOrDefault(l => l.MaLop == MaLop);
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;

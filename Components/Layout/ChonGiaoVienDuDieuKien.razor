@@ -1,0 +1,64 @@
+@inject DialogService HoiThoai
+@inject DichVuDaoTao DaoTao
+@inject DichVuQuanLyDuLieuDemo DuLieu
+
+@* Danh sách cán bộ đủ điều kiện dạy một chuyên đề (dữ liệu của mảng khoa).
+   Chỉ Admin và Quản lý khoa được chọn; vai trò khác chỉ xem. *@
+@if (dangTai)
+{
+    @for (var i = 0; i < 5; i++) { <div class="khung-xuong dong-xuong"></div> }
+}
+else
+{
+    <div class="panel-toolbar">
+        <div class="search-box"><RadzenIcon Icon="search" /><input class="form-control" @bind="tim" @bind:event="oninput" placeholder="Tìm tên cán bộ" aria-label="Tìm cán bộ" /></div>
+        <label class="chon-khoa"><RadzenCheckBox TValue="bool" @bind-Value="chiKhoaPhuTrach" /> Chỉ khoa phụ trách</label>
+        <p class="ket-qua-tim-kiem">Đã chọn <strong>@daChon.Count</strong> cán bộ</p>
+    </div>
+    <div class="danh-sach-chon">
+        @foreach (var c in HienThi)
+        {
+            <label class="muc-chon @(daChon.Contains(c.MaTraCuuNoiBo) ? "da-chon" : "")">
+                <input type="checkbox" checked="@daChon.Contains(c.MaTraCuuNoiBo)" disabled="@(!DuocSua)" @onchange="e => Doi(c.MaTraCuuNoiBo, (bool)e.Value!)" />
+                <span><strong>@c.CapBacHam @c.HoTen</strong><small>@c.ChucVu · @c.TenTo · @c.TenKhoa</small></span>
+                <span class="nhan-trang-thai tam-dung">@c.HocVi</span>
+            </label>
+        }
+        @if (!HienThi.Any()) { <p class="bang-trong">Không có cán bộ phù hợp.</p> }
+    </div>
+    @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+    <div class="thao-tac-bieu-mau">
+        <RadzenButton Text="@(DuocSua ? "Hủy" : "Đóng")" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" />
+        @if (DuocSua) { <RadzenButton Text="Lưu danh sách" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" /> }
+    </div>
+}
+
+@code {
+    [Parameter] public ChuyenDe ChuyenDe { get; set; } = new();
+    [Parameter] public bool DuocSua { get; set; }
+    private List<CanBoGiangVien> cacCanBo = [];
+    private HashSet<string> daChon = [];
+    private bool dangTai = true, dangLuu, chiKhoaPhuTrach = true;
+    private string tim = "";
+    private string? loi;
+
+    private IEnumerable<CanBoGiangVien> HienThi => cacCanBo
+        .Where(c => !chiKhoaPhuTrach || c.MaKhoa == ChuyenDe.MaKhoa || daChon.Contains(c.MaTraCuuNoiBo))
+        .Where(c => tim.Trim() == "" || DichVuTimKiem.BoDau(c.HoTen).Contains(DichVuTimKiem.BoDau(tim)))
+        .OrderByDescending(c => daChon.Contains(c.MaTraCuuNoiBo)).ThenBy(c => c.KhoaSapXepTen, StringComparer.Ordinal);
+
+    protected override async Task OnInitializedAsync()
+    {
+        cacCanBo = DuLieu.LayDanhSachCanBo().ToList();
+        daChon = (await DaoTao.LayGiaoVienDuDieuKienAsync(ChuyenDe.MaChuyenDe)).ToHashSet();
+        dangTai = false;
+    }
+    private void Doi(string ma, bool chon) { if (chon) daChon.Add(ma); else daChon.Remove(ma); }
+    private async Task Luu()
+    {
+        dangLuu = true; loi = null;
+        var kq = await DaoTao.DatGiaoVienDuDieuKienAsync(ChuyenDe.MaChuyenDe, daChon);
+        dangLuu = false;
+        if (kq.ThanhCong) HoiThoai.Close(kq); else loi = kq.ThongBao;
+    }
+}

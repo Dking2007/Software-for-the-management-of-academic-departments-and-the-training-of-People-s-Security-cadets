@@ -1,0 +1,93 @@
+@page "/khoa/cham-cong"
+@attribute [Authorize(Roles = "Admin,Manager")]
+@inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject NotificationService ThongBao
+
+@* Điểm danh đi làm: bảng công theo tuần, sắp theo khoa → tổ; mỗi ô là một ngày làm việc. *@
+<PageTitle>Điểm danh đi làm | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Điểm danh đi làm" MoTa="Bảng công theo tuần của từng khoa, từng tổ. Giảng viên tự điểm danh ở trang Giảng dạy của tôi; Quản lý khoa bấm vào ô để ghi bổ sung (công tác, nghỉ phép…)." />
+
+@if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+else
+{
+    <div class="thanh-lich">
+        <div class="dieu-khien-tuan">
+            <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="() => DoiTuan(-7)" aria-label="Tuần trước" />
+            <strong class="ten-tuan">Tuần @dauTuan.ToString("dd/MM") – @dauTuan.AddDays(5).ToString("dd/MM/yyyy")</strong>
+            <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => DoiTuan(7)" aria-label="Tuần sau" Disabled="@(dauTuan >= QuyTacHocVu.DauTuan(DateTime.Today))" />
+        </div>
+        <div class="chu-giai-cong">@foreach (var tt in ChamCong.CacTrangThai) { <span class="o-cong @LopTt(tt)">@KyHieu(tt)</span><small>@tt</small> }</div>
+    </div>
+    <div class="tb-chuyen-muc" style="margin-bottom:.75rem">
+        <button type="button" class="@(maKhoa is null ? "dang-chon" : "")" @onclick="() => ChonKhoa(null)">Tất cả khoa</button>
+        @foreach (var k in cacKhoa) { <button type="button" class="@(maKhoa == k.MaKhoa ? "dang-chon" : "")" @onclick="() => ChonKhoa(k.MaKhoa)">@k.MaKhoa</button> }
+    </div>
+
+    @foreach (var khoa in dong.GroupBy(d => d.CanBo.MaKhoa))
+    {
+        var tenKhoa = cacKhoa.FirstOrDefault(k => k.MaKhoa == khoa.Key)?.TenKhoa ?? khoa.Key;
+        var tong = khoa.Sum(d => d.Cong.Count); var coMat = khoa.Sum(d => d.Cong.Values.Count(c => c.TrangThai is "Có mặt" or "Đi muộn" or "Công tác"));
+        <details class="khoi-cong" open="@(maKhoa is not null || khoa.Key == dong.First().CanBo.MaKhoa)">
+            <summary>
+                <span class="record-code">@khoa.Key</span><strong>@tenKhoa</strong>
+                <span class="phu-dong">@khoa.Count() cán bộ · đi làm @(tong == 0 ? "—" : (100.0 * coMat / tong).ToString("0") + "%") · @khoa.Sum(d => d.Cong.Values.Count(c => c.TrangThai == "Đi muộn")) lượt muộn · @khoa.Sum(d => d.Cong.Values.Count(c => c.TrangThai is "Nghỉ phép" or "Vắng")) lượt nghỉ</span>
+                <span class="thanh-ti-le-nho" style="width:8rem"><span style="width:@(tong == 0 ? 0 : 100 * coMat / tong)%"></span></span>
+                <RadzenIcon Icon="expand_more" class="mui-ten-thu-gon" />
+            </summary>
+            <div class="bang-cuon">
+                <table class="bang-cong">
+                    <thead><tr><th>Cán bộ</th>@for (var i = 0; i < 6; i++) { var ngay = dauTuan.AddDays(i); <th class="@(ngay == DateTime.Today ? "hom-nay" : "")">@QuyTacHocVu.TenThu(ngay).Replace("Thứ ", "T.")<small>@ngay.ToString("dd/MM")</small></th> }<th>Đi làm</th></tr></thead>
+                    @foreach (var to in khoa.GroupBy(d => d.TenTo))
+                    {
+                        <tbody>
+                            <tr class="dong-to"><td colspan="8">@(to.Key == "" ? "Lãnh đạo khoa" : to.Key)</td></tr>
+                            @foreach (var d in to)
+                            {
+                                <tr>
+                                    <td><strong><TheXemNhanh Loai="CanBo" Ma="@d.CanBo.MaTraCuuNoiBo">@d.CanBo.CapBacHam @d.CanBo.HoTen</TheXemNhanh></strong><small class="phu-dong">@d.CanBo.ChucVu</small></td>
+                                    @for (var i = 0; i < 6; i++)
+                                    {
+                                        var ngay = dauTuan.AddDays(i);
+                                        var c = d.Cong.GetValueOrDefault(ngay);
+                                        <td class="@(ngay == DateTime.Today ? "hom-nay" : "")">
+                                            @if (ngay > DateTime.Today) { <span class="o-cong trong">·</span> }
+                                            else
+                                            {
+                                                <select class="o-cong @(c is null ? "chua" : LopTt(c.TrangThai))" title="@(c is null ? "Chưa điểm danh" : $"{c.TrangThai} · {c.ThoiDiem.ToLocalTime():HH:mm} · {c.NguoiGhi}")" @onchange="e => Ghi(d.CanBo.MaCanBo, ngay, e.Value?.ToString())">
+                                                    <option value="" selected="@(c is null)">–</option>
+                                                    @foreach (var tt in ChamCong.CacTrangThai) { <option value="@tt" selected="@(c?.TrangThai == tt)">@KyHieu(tt)</option> }
+                                                </select>
+                                            }
+                                        </td>
+                                    }
+                                    <td class="so"><strong>@d.Cong.Values.Count(x => x.TrangThai is "Có mặt" or "Đi muộn" or "Công tác")</strong>/@Enumerable.Range(0, 6).Count(i => dauTuan.AddDays(i) <= DateTime.Today)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    }
+                </table>
+            </div>
+        </details>
+    }
+}
+
+@code {
+    private DateTime dauTuan = QuyTacHocVu.DauTuan(DateTime.Today);
+    private string? maKhoa, loi;
+    private IReadOnlyList<Nhom2_BTL.Models.Khoa> cacKhoa = [];
+    private List<DichVuChuongTrinh.DongCongTuan> dong = [];
+    public static string LopTt(string tt) => tt switch { "Có mặt" => "co-mat", "Đi muộn" => "di-muon", "Công tác" => "cong-tac", "Nghỉ phép" => "vang-cp", _ => "vang-kp" };
+    public static string KyHieu(string tt) => tt switch { "Có mặt" => "✓", "Đi muộn" => "M", "Công tác" => "CT", "Nghỉ phép" => "P", _ => "V" };
+    protected override async Task OnInitializedAsync() { cacKhoa = DuLieu.LayDanhSachKhoa(); await Tai(); }
+    private async Task Tai() => (dong, loi) = await ChuongTrinh.LayBangCongTuanAsync(dauTuan, maKhoa);
+    private async Task DoiTuan(int soNgay) { dauTuan = dauTuan.AddDays(soNgay); await Tai(); }
+    private async Task ChonKhoa(string? ma) { maKhoa = ma; await Tai(); }
+    private async Task Ghi(string maCanBo, DateTime ngay, string? tt)
+    {
+        if (string.IsNullOrEmpty(tt)) return;
+        var kq = await ChuongTrinh.GhiChamCongAsync(maCanBo, ngay, tt);
+        if (!kq.ThanhCong) ThongBao.Notify(NotificationSeverity.Warning, "Không ghi được", kq.ThongBao);
+        await Tai();
+    }
+}

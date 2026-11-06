@@ -26,7 +26,8 @@
             <AuthorizeView>
                 <Authorized Context="nguoiDung">
                     <div class="cong-cu-tai-khoan">
-                        <RadzenLink class="nut-thong-bao" Path="/thong-bao" Icon="notifications" title="@TuyChon.Dich("Thông báo")" aria-label="@TuyChon.Dich("Thông báo")" />
+                        <TimKiemNhanh />
+                        <ChuongThongBao />
                         <CaiDatGiaoDien />
                         <div class="menu-nguoi-dung" @onkeydown="PhimTrongMenu">
                             <button type="button" class="nut-nguoi-dung" @onclick="DoiMenuNguoiDung" aria-haspopup="true" aria-expanded="@(menuNguoiDungMo ? "true" : "false")">
@@ -46,6 +47,7 @@
                                         <strong>@nguoiDung.User.Identity?.Name</strong>
                                         <span>@LayTenVaiTro(nguoiDung.User)</span>
                                     </div>
+                                    <a class="lien-ket-ho-so" href="/ho-so" @onclick="DongMenuNguoiDung"><RadzenIcon Icon="badge" />Hồ sơ cá nhân</a>
                                     <form data-bieu-mau-phien method="post" action="/phien/dang-xuat" data-enhance="false"><AntiforgeryToken /><RadzenButton class="nut-dang-xuat" Icon="logout" Text="@TuyChon.Dich("Đăng xuất")" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Base" ButtonType="ButtonType.Submit" /></form>
                                 </div>
                             }
@@ -112,11 +114,18 @@
             "khoa" => new[] { new MucDuongDan("Quản lý khoa", "/khoa") },
             "khoa/to" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Tổ chuyên môn") },
             "khoa/can-bo" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Cán bộ, giảng viên") },
+            "khoa/so-do" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Sơ đồ tổ chức") },
+            "khoa/cham-cong" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Điểm danh đi làm") },
+            "ho-so" => new[] { new MucDuongDan("Hồ sơ cá nhân") },
+            "ban-tin" => new[] { new MucDuongDan("Bản tin Học viện") },
             "tro-giup" => new[] { new MucDuongDan("Trợ giúp") },
-            "thong-bao" => new[] { new MucDuongDan("Thông báo") },
+            "thong-bao" => new[] { new MucDuongDan("Văn bản, thông báo") },
             "lop" => new[] { new MucDuongDan("Lớp đào tạo", "/lop") },
             "hoc-vien" => new[] { new MucDuongDan("Học viên", "/hoc-vien") },
             "quan-tri/tai-khoan" => new[] { new MucDuongDan("Quản trị hệ thống"), new MucDuongDan("Tài khoản và phân quyền") },
+            "quan-tri/nhat-ky" => new[] { new MucDuongDan("Quản trị hệ thống"), new MucDuongDan("Nhật ký thao tác") },
+            "giang-day" => new[] { new MucDuongDan("Giảng dạy của tôi") },
+            "cua-toi" => new[] { new MucDuongDan("Học tập của tôi") },
             _ => Array.Empty<MucDuongDan>()
         };
 
@@ -127,7 +136,9 @@
             if (cacDoan.Length == 3) chuoi = [new("Quản lý học viên", "/quan-ly-hoc-vien"), new("Danh sách lớp", "/quan-ly-hoc-vien/lop"), new(Uri.UnescapeDataString(cacDoan[2]))];
         }
         else if (cacDoan.FirstOrDefault() == "dao-tao")
-            chuoi = cacDoan.Length == 1 ? [new("Quản lý đào tạo")] : [new("Quản lý đào tạo", "/dao-tao"), new(cacDoan[1] == "chuyen-nganh" ? "Chuyên ngành" : "Khóa và niên khóa")];
+            chuoi = cacDoan.Length == 1 ? [new("Quản lý đào tạo")] : [new("Quản lý đào tạo", "/dao-tao"), new(cacDoan[1] switch { "chuyen-nganh" => "Chuyên ngành", "chuyen-de" => "Chuyên đề", "lich" => "Lịch đào tạo", "phong" => "Phòng học", "chuong-trinh" => "Chương trình & phân công", "thi" => "Xét tư cách & lịch thi", _ => "Khóa và niên khóa" })];
+        else if (cacDoan.FirstOrDefault() == "ban-tin" && cacDoan.Length == 2)
+            chuoi = [new("Bản tin Học viện", "/ban-tin"), new("Bài viết")];
         else if (cacDoan.FirstOrDefault() == "khoa" && cacDoan.Length >= 3)
         {
             chuoi = [new("Quản lý khoa", "/khoa"), new(Uri.UnescapeDataString(cacDoan[1]), $"/khoa/{cacDoan[1]}/to"), new("Tổ chuyên môn")];
@@ -142,13 +153,7 @@
 
     // Đổi tên vai trò kỹ thuật trong claim thành nhãn tiếng Việt dễ đọc. Chỉ đổi nhãn hiển thị, claim giữ nguyên.
     private static string LayTenVaiTro(System.Security.Claims.ClaimsPrincipal nguoiDung)
-        => nguoiDung.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value switch
-        {
-            nameof(VaiTroDemo.Admin) => "Quản trị viên",
-            nameof(VaiTroDemo.Manager) => "Cán bộ quản lý",
-            nameof(VaiTroDemo.Guest) => "Người xem",
-            _ => "Chưa xác định"
-        };
+        => NguoiDungHienTai.Tu(nguoiDung).TenVaiTro;
 
     // Lấy ký tự đầu làm chữ viết tắt; dùng dấu hỏi nếu tên chưa có giá trị.
     private static string LayInitial(string? ten)

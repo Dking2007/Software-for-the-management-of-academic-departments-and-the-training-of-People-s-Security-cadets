@@ -1,0 +1,88 @@
+@inject DialogService HoiThoai
+@inject DichVuDaoTao DaoTao
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuChuongTrinh ChuongTrinh
+
+@* Biểu mẫu xếp buổi học. Mỗi lần đổi trường, dịch vụ kiểm tra lại mọi quy tắc và trả về lý do
+   (trùng giờ giảng viên, trùng phòng, trùng lớp, vượt sức chứa, phòng bảo trì, chưa đủ điều kiện dạy, sai khung tiết). *@
+<div class="form-grid">
+    <RadzenFormField Text="Lớp" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@cacLop" @bind-Value="b.MaLop" Change="KiemTra" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Chuyên đề" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@cacChuyenDe" TextProperty="Ten" ValueProperty="Ma" @bind-Value="b.MaChuyenDe" Change="DoiChuyenDe" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Giảng viên" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@CacGiangVienHienThi" TextProperty="Ten" ValueProperty="Ma" @bind-Value="b.MaCanBo" Change="KiemTra" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Style="width:100%" /></RadzenFormField>
+    <label class="chon-khoa"><RadzenCheckBox TValue="bool" @bind-Value="hienTatCaGv" /> Hiện cả giảng viên chưa đủ điều kiện</label>
+    <RadzenFormField Text="Phòng" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@cacPhong" TextProperty="Ten" ValueProperty="Ma" @bind-Value="b.MaPhong" Change="KiemTra" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Ngày" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" @bind-Value="b.Ngay" DateFormat="dd/MM/yyyy" Change="KiemTra" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Tiết bắt đầu" Variant="Variant.Outlined"><RadzenDropDown TValue="int" Data="@cacTiet" TextProperty="Ten" ValueProperty="So" @bind-Value="b.TietBatDau" Change="KiemTra" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Số tiết" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="b.SoTiet" Min="1" Max="5" Change="KiemTra" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Ghi chú" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="b.GhiChu" MaxLength="200" Style="width:100%" /></RadzenFormField>
+</div>
+
+<div class="ket-qua-kiem-tra" role="status" aria-live="polite">
+    @if (dangKiemTra) { <span class="dang-kiem-tra"><RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall" /> Đang kiểm tra…</span> }
+    else if (loi.Count == 0 && daKiemTra) { <div class="hop-ok"><RadzenIcon Icon="check_circle" /> Hợp lệ: không trùng giảng viên, phòng hay lớp; phòng đủ chỗ. @QuyTacHocVu.KhungGio(b)</div> }
+    else if (loi.Count > 0)
+    {
+        <div class="hop-loi"><strong><RadzenIcon Icon="error" /> Chưa xếp được, vì:</strong><ul>@foreach (var l in loi) { <li>@l</li> }</ul></div>
+    }
+</div>
+
+<div class="thao-tac-bieu-mau">
+    <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" Disabled="dangLuu" />
+    <RadzenButton Text="@(b.Id == 0 ? "Xếp buổi học" : "Lưu thay đổi")" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" Disabled="@(loi.Count > 0 || dangKiemTra)" />
+</div>
+
+@code {
+    [Parameter] public BuoiHoc DuLieuBanDau { get; set; } = new();
+    public sealed record LuaChon(string Ma, string Ten);
+    public sealed record LuaChonTiet(int So, string Ten);
+    private BuoiHoc b = new();
+    private List<string> cacLop = [];
+    private List<LuaChon> cacChuyenDe = [], cacPhong = [], tatCaGv = [];
+    private HashSet<string> gvDuDieuKien = [];
+    private bool hienTatCaGv, dangKiemTra, daKiemTra, dangLuu;
+    private List<string> loi = [];
+    private readonly LuaChonTiet[] cacTiet = Enumerable.Range(1, 12).Select(t => new LuaChonTiet(t, $"Tiết {t} ({QuyTacHocVu.Buoi(t)}, {QuyTacHocVu.GioBatDauTiet(t):hh\\:mm})")).ToArray();
+    private IEnumerable<LuaChon> CacGiangVienHienThi => hienTatCaGv ? tatCaGv : tatCaGv.Where(g => gvDuDieuKien.Contains(g.Ma) || g.Ma == b.MaCanBo);
+
+    protected override async Task OnInitializedAsync()
+    {
+        b = DuLieuBanDau.TaoBanSao();
+        cacLop = DuLieu.LayDanhSachLop().Select(l => l.MaLop).ToList();
+        cacChuyenDe = (await DaoTao.LayChuyenDeAsync()).Select(c => new LuaChon(c.ChuyenDe.MaChuyenDe, $"{c.ChuyenDe.TenChuyenDe} ({c.ChuyenDe.MaChuyenDe})")).ToList();
+        cacPhong = (await DaoTao.LayPhongAsync()).Select(p => new LuaChon(p.MaPhong, $"{p.TenPhong} · {p.SucChua} chỗ{(p.DangBaoTri ? " · bảo trì" : "")}")).ToList();
+        tatCaGv = DaoTao.CacGiangVien().Select(g => new LuaChon(g.Ma, g.Ten)).ToList();
+        if (b.MaChuyenDe != "") gvDuDieuKien = (await DaoTao.LayGiaoVienDuDieuKienAsync(b.MaChuyenDe)).ToHashSet();
+        if (b.Id != 0) await KiemTra();
+    }
+
+    private async Task DoiChuyenDe()
+    {
+        gvDuDieuKien = (await DaoTao.LayGiaoVienDuDieuKienAsync(b.MaChuyenDe)).ToHashSet();
+        if (b.MaCanBo != "" && !gvDuDieuKien.Contains(b.MaCanBo)) b.MaCanBo = "";
+        // Có phân công giảng dạy cho lớp – chuyên đề thì điền sẵn giảng viên được phân công.
+        if (b.MaLop != "" && await ChuongTrinh.LayGiangVienPhanCongAsync(b.MaLop, b.MaChuyenDe) is { } gvPc) b.MaCanBo = gvPc;
+        await KiemTra();
+    }
+
+    private async Task KiemTra()
+    {
+        // Chỉ kiểm tra khi đã chọn đủ các trường bắt buộc; trước đó chưa báo lỗi để không làm phiền.
+        if (b.MaLop == "" || b.MaChuyenDe == "" || b.MaCanBo == "" || b.MaPhong == "") { loi = []; daKiemTra = false; return; }
+        dangKiemTra = true; StateHasChanged();
+        loi = await DaoTao.KiemTraBuoiHocAsync(b);
+        dangKiemTra = false; daKiemTra = true;
+    }
+
+    private async Task Luu()
+    {
+        if (dangLuu) return;
+        dangLuu = true;
+        try
+        {
+            var kq = await DaoTao.LuuBuoiHocAsync(b);
+            if (kq.ThanhCong) HoiThoai.Close(kq);
+            else loi = [kq.ThongBao];
+        }
+        finally { dangLuu = false; }
+    }
+}

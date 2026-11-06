@@ -1,0 +1,26 @@
+@inject IJSRuntime JS
+@inject NotificationService ThongBao
+
+@* Nút xuất Excel dùng chung. Tệp tạo ở máy chủ theo đúng mặt cắt quyền của người đang xem rồi tải về trình duyệt. *@
+<RadzenButton Text="@Nhan" Icon="download" ButtonStyle="ButtonStyle.Light" Size="@KichThuoc" Click="Xuat" IsBusy="dangXuat" BusyText="Đang tạo tệp…" title="Tải tệp Excel (.xlsx) đúng phạm vi dữ liệu bạn được xem" />
+
+@code {
+    [Parameter, EditorRequired] public Func<Task<byte[]?>> TaoTep { get; set; } = default!;
+    [Parameter, EditorRequired] public string TenTep { get; set; } = "du-lieu";
+    [Parameter] public string Nhan { get; set; } = "Xuất Excel";
+    [Parameter] public ButtonSize KichThuoc { get; set; } = ButtonSize.Medium;
+    private bool dangXuat;
+
+    private async Task Xuat()
+    {
+        dangXuat = true;
+        try
+        {
+            var tep = await TaoTep();
+            if (tep is null) { ThongBao.Notify(NotificationSeverity.Warning, "Không xuất được", "Bạn không có quyền xem dữ liệu này."); return; }
+            await JS.InvokeVoidAsync("taiTep", $"{TenTep}-{DateTime.Now:yyyyMMdd-HHmm}.xlsx", DichVuExcel.MimeXlsx, Convert.ToBase64String(tep));
+        }
+        catch (Exception ex) when (ex is not JSDisconnectedException) { ThongBao.Notify(NotificationSeverity.Error, "Không xuất được", "Có lỗi khi tạo tệp Excel. Vui lòng thử lại."); }
+        finally { dangXuat = false; }
+    }
+}

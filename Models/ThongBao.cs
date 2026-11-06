@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Nhom2_BTL.Models;
 
+/// <summary>
+/// Thông báo theo thể thức văn bản hành chính (ý tưởng từ repo LTMT): loại văn bản, số/ký hiệu,
+/// cơ quan ban hành, người ký, trích yếu, mức độ, hiệu lực hiển thị, ghim, nơi nhận (tags).
+/// </summary>
 public sealed class ThongBao
 {
     public Guid Ma { get; set; }
@@ -14,12 +18,39 @@ public sealed class ThongBao
     public DateTimeOffset? SuaLuc { get; set; }
     public List<string> Tags { get; set; } = [];
     public string? Anh { get; set; }
+
+    // ---- Thể thức văn bản hành chính ----
+    public string LoaiVanBan { get; set; } = "Thông báo";
+    [StringLength(40, ErrorMessage = "Số/ký hiệu không quá 40 ký tự.")]
+    public string SoKyHieu { get; set; } = "";
+    [StringLength(150, ErrorMessage = "Cơ quan ban hành không quá 150 ký tự.")]
+    public string CoQuanBanHanh { get; set; } = "Học viện An ninh nhân dân";
+    [StringLength(100, ErrorMessage = "Người ký không quá 100 ký tự.")]
+    public string NguoiKy { get; set; } = "";
+    [StringLength(300, ErrorMessage = "Trích yếu không quá 300 ký tự.")]
+    public string TrichYeu { get; set; } = "";
+    /// <summary>Thường / Quan trọng / Khẩn.</summary>
+    public string MucDo { get; set; } = "Thường";
+    /// <summary>Hết hạn thì tự ẩn với người xem (Admin vẫn thấy).</summary>
+    public DateTimeOffset? HieuLucDen { get; set; }
+    public bool Ghim { get; set; }
+
     public bool LaMoi(DateTimeOffset hienTai) => hienTai >= DangLuc && hienTai - DangLuc < TimeSpan.FromHours(24);
-    public ThongBao TaoBanSao() => new()
+    public bool HetHieuLuc(DateTimeOffset hienTai) => HieuLucDen is { } han && han < hienTai;
+    public ThongBao TaoBanSao()
     {
-        Ma = Ma, TieuDe = TieuDe, NoiDung = NoiDung, TacGia = TacGia,
-        DangLuc = DangLuc, SuaLuc = SuaLuc, Tags = [.. Tags], Anh = Anh
-    };
+        var b = (ThongBao)MemberwiseClone();
+        b.Tags = [.. Tags];
+        return b;
+    }
+}
+
+/// <summary>Ai đã mở trang chi tiết thông báo, lúc nào ("đã đọc" = đã mở, chưa phải xác nhận).</summary>
+public sealed class ThongBaoDaDoc
+{
+    public Guid MaThongBao { get; set; }
+    public string TenDangNhap { get; set; } = "";
+    public DateTimeOffset Luc { get; set; }
 }
 
 public sealed record TagThongBao(string Ma, string Ten);

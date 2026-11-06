@@ -1,0 +1,137 @@
+@page "/cua-toi"
+@attribute [Authorize(Roles = "HocVien")]
+@implements IDisposable
+@inject DichVuDaoTao DaoTao
+@inject DichVuHocVu HocVu
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject NotificationService ThongBao
+@inject DichVuChuongTrinh ChuongTrinh
+
+<PageTitle>Học tập của tôi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Học tập của tôi" MoTa="Lịch học, tự điểm danh trong khung giờ, kết quả học tập và lịch sử chuyên cần của bạn." />
+
+@if (toi is null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">Tài khoản chưa gắn với hồ sơ học viên hợp lệ. Liên hệ Quản lý học viên để kiểm tra.</RadzenAlert>
+}
+else
+{
+    <section class="the-ca-nhan">
+        <span class="user-avatar phieu-avatar">@toi.HoTen.Split(' ')[^1][0]</span>
+        <div><strong>@toi.HoTen</strong><span>@toi.ChucVu · Lớp <a href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(toi.MaLop)}")">@toi.MaLop</a></span><span class="record-code">@toi.MaHocVien</span></div>
+    </section>
+
+    @* Cổng tự điểm danh: mở trước giờ học 30 phút, đóng sau giờ bắt đầu 15 phút. Dịch vụ kiểm tra lại giờ và lớp. *@
+    <RadzenCard class="@($"the-muc the-tu-diem-danh {(buoiMo is not null ? "dang-mo" : "")}")">
+        <h2><RadzenIcon Icon="touch_app" />Tự điểm danh</h2>
+        @if (buoiMo is not null)
+        {
+            <p>Đang mở cho buổi <strong>@buoiMo.TenChuyenDe</strong>, tiết @buoiMo.Buoi.TietBatDau–@buoiMo.Buoi.TietKetThuc (@QuyTacHocVu.KhungGio(buoiMo.Buoi)) tại @buoiMo.TenPhong.
+               Cổng đóng lúc @QuyTacHocVu.CuaSoTuDiemDanh(buoiMo.Buoi).Dong.ToString("HH:mm").</p>
+            <RadzenButton Text="Điểm danh ngay" Icon="how_to_reg" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large" Click="TuDiemDanh" IsBusy="dangGui" />
+        }
+        else
+        {
+            <p class="phu-dong">Chưa có buổi nào đang mở cổng. @(buoiToi is not null ? $"Buổi kế tiếp: {buoiToi.TenChuyenDe}, {QuyTacHocVu.TenThu(buoiToi.Buoi.Ngay)} {buoiToi.Buoi.Ngay:dd/MM} lúc {QuyTacHocVu.GioBatDauTiet(buoiToi.Buoi.TietBatDau):hh\\:mm} (cổng mở {QuyTacHocVu.CuaSoTuDiemDanh(buoiToi.Buoi).Mo:HH:mm})." : "")</p>
+        }
+        @if (thongBaoDd is not null) { <RadzenAlert AlertStyle="@(thongBaoDd.ThanhCong ? AlertStyle.Success : AlertStyle.Warning)" AllowClose="false">@thongBaoDd.ThongBao</RadzenAlert> }
+    </RadzenCard>
+
+    <div class="luoi-ca-nhan">
+        <RadzenCard class="the-muc rong">
+            <h2><RadzenIcon Icon="grading" />Kết quả học tập theo năm học, học kỳ</h2>
+            <BangDiemToanKhoa HocKy="@bangDiem" />
+        </RadzenCard>
+
+        @if (lichThi.Count > 0)
+        {
+            <RadzenCard class="the-muc">
+                <h2><RadzenIcon Icon="event_available" />Lịch thi của tôi</h2>
+                <div class="lt-cua-toi">
+                    @foreach (var x in lichThi)
+                    {
+                        var lt = x.Lich; var conNgay = (lt.Ngay.Date - DateTime.Today).Days;
+                        <article class="lt-the @(x.DuTuCach ? "" : "khong-du")">
+                            <div class="lt-ngay"><small>@QuyTacHocVu.TenThu(lt.Ngay)</small><strong>@lt.Ngay.ToString("dd")</strong><small>tháng @lt.Ngay.Month</small><small>@(conNgay > 0 ? $"còn {conNgay} ngày" : conNgay == 0 ? "hôm nay" : "đã thi")</small></div>
+                            <div class="lt-noi-dung">
+                                <h3>@x.TenChuyenDe<span class="nhan-tu-cach @(x.DuTuCach ? "du" : "khong")">@(x.DuTuCach ? "Đủ tư cách dự thi" : "Không đủ tư cách")</span></h3>
+                                <span class="phu-dong">@QuyTacHocVu.GioBatDauTiet(lt.TietBatDau).ToString(@"hh\:mm") (tiết @lt.TietBatDau–@lt.TietKetThuc) · @x.TenPhong · @lt.HinhThuc</span>
+                                @if (!x.DuTuCach && x.LyDo is not null) { <p class="ghi-chu-diem">Lý do: @x.LyDo. Liên hệ Quản lý học viên nếu cần xem lại.</p> }
+                                @if (x.BaiThi is { } bt)
+                                {
+                                    <dl class="xn-luoi">
+                                        <div><dt>Thời gian làm bài</dt><dd>@bt.ThoiGianLamBai phút</dd></div><div><dt>Tài liệu</dt><dd>@bt.QuyDinhTaiLieu</dd></div>
+                                        <div class="toan-hang"><dt>Cấu trúc đề</dt><dd>@bt.CauTrucDe</dd></div>
+                                        <div class="toan-hang"><dt>Phạm vi ôn tập</dt><dd>@bt.PhamViOnTap</dd></div>
+                                        @if (bt.LuuY != "") { <div class="toan-hang"><dt>Lưu ý</dt><dd>@bt.LuuY</dd></div> }
+                                    </dl>
+                                }
+                                else { <p class="phu-dong">Phòng đào tạo chưa công bố thông tin bài thi.</p> }
+                            </div>
+                        </article>
+                    }
+                </div>
+            </RadzenCard>
+        }
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="calendar_month" />Lịch học tuần này</h2>
+            @if (lichTuan.Count == 0) { <p class="phu-dong">Tuần này không có buổi học.</p> }
+            <div class="danh-sach-buoi">@foreach (var b in lichTuan) { <TheBuoiHoc Buoi="b" DangDong="true" /> }</div>
+            <RadzenLink Path="/dao-tao/lich" Text="Xem lịch theo tuần" Icon="open_in_new" />
+        </RadzenCard>
+
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="fact_check" />Lịch sử điểm danh</h2>
+            @if (lichSu.Count == 0) { <p class="phu-dong">Chưa có dữ liệu điểm danh.</p> }
+            else
+            {
+                <div class="tom-tat-diem-danh">@foreach (var tt in TrangThaiDiemDanh.TatCa) { <span class="o-tom-tat @TabDiemDanh.LopTrangThai(tt)"><strong>@lichSu.Count(x => x.TrangThai == tt)</strong>@tt</span> }</div>
+                <ul class="danh-sach-gon">@foreach (var x in lichSu.Take(15))
+                {
+                    <li><span><strong>@x.Buoi.Ngay.ToString("dd/MM") · @x.TenChuyenDe</strong><span>Tiết @x.Buoi.TietBatDau–@x.Buoi.TietKetThuc@(x.TuDiemDanh ? " · tự điểm danh" : "")</span></span><span class="nhan-buoi @TabDiemDanh.LopTrangThai(x.TrangThai)">@x.TrangThai</span></li>
+                }</ul>
+            }
+        </RadzenCard>
+    </div>
+}
+
+@code {
+    private Nhom2_BTL.Models.HocVien? toi;
+    private BuoiHocHienThi? buoiMo, buoiToi;
+    private List<BuoiHocHienThi> lichTuan = [];
+    private List<DichVuHocVu.KetQuaCaNhan> ketQua = [];
+    private List<DichVuHocVu.HocKyCaNhan> bangDiem = [];
+    private List<DichVuHocVu.DongLichSuDiemDanh> lichSu = [];
+    private KetQuaThaoTac? thongBaoDd;
+    private List<DichVuChuongTrinh.LichThiCuaToi> lichThi = [];
+    private bool dangGui;
+
+    protected override async Task OnInitializedAsync() { await Tai(); DuLieu.DuLieuDaThayDoi += KhiDoi; }
+    private async Task Tai()
+    {
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        toi = DuLieu.LayDanhSachHocVien().FirstOrDefault(h => h.MaHocVien == nd.MaHocVien);
+        if (toi is null) return;
+        var dau = QuyTacHocVu.DauTuan(DateTime.Today);
+        var lich = await DaoTao.LayLichAsync(dau, dau.AddDays(13));
+        lichTuan = lich.Where(b => b.Buoi.Ngay < dau.AddDays(7)).ToList();
+        var mo = await HocVu.LayBuoiDangMoTuDiemDanhAsync();
+        buoiMo = mo is null ? null : lich.FirstOrDefault(b => b.Buoi.Id == mo.Id);
+        buoiToi = lich.Where(b => QuyTacHocVu.CuaSoTuDiemDanh(b.Buoi).Mo > DateTime.Now).OrderBy(b => QuyTacHocVu.BatDau(b.Buoi)).FirstOrDefault();
+        ketQua = await HocVu.LayKetQuaCuaToiAsync();
+        bangDiem = await HocVu.LayBangDiemToanKhoaCuaToiAsync();
+        lichSu = await HocVu.LayLichSuDiemDanhCuaToiAsync();
+        lichThi = await ChuongTrinh.LayLichThiCuaToiAsync();
+    }
+    private async Task TuDiemDanh()
+    {
+        if (buoiMo is null) return;
+        dangGui = true;
+        thongBaoDd = await HocVu.TuDiemDanhAsync(buoiMo.Buoi.Id);
+        dangGui = false;
+        await Tai();
+    }
+    private void KhiDoi() => _ = InvokeAsync(async () => { await Tai(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
+}

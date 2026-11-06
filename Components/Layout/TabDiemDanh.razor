@@ -1,0 +1,110 @@
+@inject DichVuDaoTao DaoTao
+@inject DichVuHocVu HocVu
+@inject DichVuExcel Excel
+@inject NotificationService ThongBao
+
+@* Điểm danh theo buổi. Giảng viên chỉ thấy buổi mình dạy (dịch vụ lịch lọc), Quản lý học viên và Admin thấy mọi buổi. *@
+<div class="thanh-lich">
+    <RadzenDropDown TValue="int?" Data="@cacBuoi" TextProperty="Ten" ValueProperty="Id" @bind-Value="buoiId" Change="@(_ => TaiDiemDanh())" Placeholder="Chọn buổi học" class="chon-buoi" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" />
+    @if (dong.Count > 0 && buoiId is int idXuat)
+    {
+        <NutXuatExcel TaoTep="@(() => Excel.XuatDiemDanhAsync(idXuat))" TenTep="@($"diem-danh-{MaLop}-{buoi?.Ngay:yyyyMMdd}")" />
+    }
+    @if (dong.Count > 0 && duocGhi)
+    {
+        <RadzenButton Text="Còn lại: có mặt" Icon="done_all" ButtonStyle="ButtonStyle.Light" Click="TatCaCoMat" title="Đánh dấu có mặt cho mọi học viên chưa điểm danh" />
+        <RadzenButton Text="@($"Lưu điểm danh{(SoThayDoi > 0 ? $" ({SoThayDoi})" : "")}")" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" Disabled="@(SoThayDoi == 0)" />
+    }
+</div>
+
+@if (cacBuoi is null)
+{
+    @for (var i = 0; i < 6; i++) { <div class="khung-xuong dong-xuong"></div> }
+}
+else if (cacBuoi.Count == 0)
+{
+    <section class="empty-state"><RadzenIcon Icon="event_available" class="empty-state-icon" /><h2>Chưa có buổi học nào đã diễn ra</h2><p>Chỉ điểm danh được các buổi từ hôm nay trở về trước@(laGiangVien ? " mà bạn dạy" : "").</p></section>
+}
+else if (loi is not null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert>
+}
+else if (buoi is not null)
+{
+    <div class="tom-tat-diem-danh">
+        @foreach (var tt in TrangThaiDiemDanh.TatCa)
+        {
+            <span class="o-tom-tat @LopTrangThai(tt)"><strong>@trangThai.Values.Count(v => v == tt)</strong>@tt</span>
+        }
+        <span class="o-tom-tat chua"><strong>@dong.Count(d => !trangThai.ContainsKey(d.MaHocVien))</strong>Chưa điểm danh</span>
+        <span class="phu-dong">@QuyTacHocVu.TenThu(buoi.Ngay), @buoi.Ngay.ToString("dd/MM/yyyy") · tiết @buoi.TietBatDau–@buoi.TietKetThuc · @QuyTacHocVu.KhungGio(buoi)</span>
+    </div>
+    <div class="bang-diem-danh" role="table" aria-label="Điểm danh">
+        @for (var i = 0; i < dong.Count; i++)
+        {
+            var d = dong[i];
+            var hienTai = trangThai.GetValueOrDefault(d.MaHocVien);
+            <div class="dong-diem-danh @(hienTai is null ? "chua" : "") @(DaDoi(d) ? "da-doi" : "")" role="row">
+                <span class="stt-dd">@(i + 1)</span>
+                <span class="ten-dd"><strong>@d.HoTen</strong><small>@d.MaHocVien@(d.ChucVu != "Học viên" ? $" · {d.ChucVu}" : "")</small></span>
+                @if (d.TuDiemDanh && !DaDoi(d)) { <span class="nhan-tu-dd" title="Học viên tự điểm danh lúc @d.ThoiDiem?.ToLocalTime().ToString("HH:mm")"><RadzenIcon Icon="touch_app" />Tự điểm danh</span> }
+                <div class="nhom-trang-thai" role="radiogroup" aria-label="@($"Trạng thái của {d.HoTen}")">
+                    @foreach (var tt in TrangThaiDiemDanh.TatCa)
+                    {
+                        <button type="button" role="radio" aria-checked="@(hienTai == tt ? "true" : "false")" class="nut-tt @LopTrangThai(tt) @(hienTai == tt ? "dang-chon" : "")" disabled="@(!duocGhi)" @onclick="() => Dat(d.MaHocVien, tt)" title="@tt">@VietTat(tt)</button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string MaLop { get; set; } = "";
+    [Parameter] public int? BuoiChon { get; set; }
+    public sealed record LuaChonBuoi(int Id, string Ten);
+    private List<LuaChonBuoi>? cacBuoi;
+    private int? buoiId;
+    private BuoiHoc? buoi;
+    private List<DichVuHocVu.DongDiemDanh> dong = [];
+    private Dictionary<string, string> trangThai = [];
+    private bool duocGhi, dangLuu, laGiangVien;
+    private string? loi;
+    private int SoThayDoi => dong.Count(DaDoi);
+    private bool DaDoi(DichVuHocVu.DongDiemDanh d) => trangThai.GetValueOrDefault(d.MaHocVien) != d.TrangThai;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var lich = await DaoTao.LayLichAsync(DateTime.Today.AddDays(-35), DateTime.Today, MaLop);
+        cacBuoi = lich.OrderByDescending(b => b.Buoi.Ngay).ThenByDescending(b => b.Buoi.TietBatDau)
+            .Select(b => new LuaChonBuoi(b.Buoi.Id, $"{b.Buoi.Ngay:dd/MM} · tiết {b.Buoi.TietBatDau}–{b.Buoi.TietKetThuc} · {b.TenChuyenDe}{(b.DaDiemDanh ? " ✓" : "")}")).ToList();
+        buoiId = BuoiChon is int chon && cacBuoi.Any(b => b.Id == chon) ? chon : cacBuoi.FirstOrDefault()?.Id;
+        await TaiDiemDanh();
+    }
+
+    private async Task TaiDiemDanh()
+    {
+        loi = null; buoi = null; dong = []; trangThai = [];
+        if (buoiId is not int id) return;
+        var kq = await HocVu.LayDiemDanhAsync(id);
+        (buoi, dong, duocGhi, loi) = kq;
+        trangThai = dong.Where(d => d.TrangThai is not null).ToDictionary(d => d.MaHocVien, d => d.TrangThai!);
+    }
+
+    private void Dat(string ma, string tt) => trangThai[ma] = tt;
+    private void TatCaCoMat() { foreach (var d in dong) trangThai.TryAdd(d.MaHocVien, TrangThaiDiemDanh.CoMat); }
+
+    private async Task Luu()
+    {
+        if (buoiId is not int id) return;
+        dangLuu = true;
+        var thayDoi = dong.Where(DaDoi).Where(d => trangThai.ContainsKey(d.MaHocVien)).ToDictionary(d => d.MaHocVien, d => trangThai[d.MaHocVien]);
+        var kq = await HocVu.LuuDiemDanhAsync(id, thayDoi);
+        dangLuu = false;
+        ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Đã lưu" : "Không lưu được", Detail = kq.ThongBao, Duration = 5000 });
+        if (kq.ThanhCong) await TaiDiemDanh();
+    }
+
+    public static string VietTat(string tt) => tt switch { TrangThaiDiemDanh.CoMat => "Có mặt", TrangThaiDiemDanh.DiMuon => "Muộn", TrangThaiDiemDanh.VangCoPhep => "Vắng CP", _ => "Vắng KP" };
+    public static string LopTrangThai(string tt) => tt switch { TrangThaiDiemDanh.CoMat => "co-mat", TrangThaiDiemDanh.DiMuon => "di-muon", TrangThaiDiemDanh.VangCoPhep => "vang-cp", _ => "vang-kp" };
+}

@@ -1,0 +1,38 @@
+@inject DichVuChuongTrinh ChuongTrinh
+
+@* Buổi học / buổi nghỉ của từng học viên (mọi chuyên đề), tính từ điểm danh. Tỉ lệ vắng vượt 20% thì có nguy cơ không đủ tư cách thi. *@
+@if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+else if (dong is null) { @for (var i = 0; i < 5; i++) { <div class="khung-xuong dong-xuong"></div> } }
+else
+{
+    <div class="tom-tat-diem-danh">
+        <span class="o-tom-tat co-mat"><strong>@dong.Sum(d => d.CoMat)</strong>lượt có mặt</span>
+        <span class="o-tom-tat di-muon"><strong>@dong.Sum(d => d.DiMuon)</strong>lượt đi muộn</span>
+        <span class="o-tom-tat vang-cp"><strong>@dong.Sum(d => d.VangCoPhep)</strong>lượt vắng có phép</span>
+        <span class="o-tom-tat vang-kp"><strong>@dong.Sum(d => d.VangKhongPhep)</strong>lượt vắng không phép</span>
+        <span class="o-tom-tat chua"><strong>@dong.Count(d => d.TiLeVang > DichVuChuongTrinh.TiLeVangToiDa)</strong>học viên vắng quá 20%</span>
+    </div>
+    <div class="bang-cuon">
+        <table class="bang-diem">
+            <thead><tr><th>STT</th><th>Học viên</th><th>Buổi đã học</th><th>Có mặt</th><th>Muộn</th><th>Vắng CP</th><th>Vắng KP</th><th>Tỉ lệ vắng</th></tr></thead>
+            <tbody>
+                @for (var i = 0; i < dong.Count; i++)
+                {
+                    var d = dong[i];
+                    <tr class="@(d.TiLeVang > DichVuChuongTrinh.TiLeVangToiDa ? "dong-loi" : "")">
+                        <td class="so">@(i + 1)</td><td><strong>@d.HoTen</strong><small class="phu-dong">@d.MaHocVien</small></td>
+                        <td class="so">@d.SoBuoi</td><td class="so">@d.CoMat</td><td class="so">@d.DiMuon</td><td class="so">@d.VangCoPhep</td><td class="so">@d.VangKhongPhep</td>
+                        <td class="so"><strong>@d.TiLeVang.ToString("P0")</strong></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public string MaLop { get; set; } = "";
+    private List<DichVuChuongTrinh.DongChuyenCan>? dong;
+    private string? loi;
+    protected override async Task OnParametersSetAsync() => (dong, loi) = await ChuongTrinh.LayChuyenCanLopAsync(MaLop);
+}

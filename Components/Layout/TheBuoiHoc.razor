@@ -1,0 +1,39 @@
+@* Thẻ một buổi học trong lịch: lớp, chuyên đề, giảng viên, phòng, tiết và trạng thái điểm danh. *@
+@{
+    var b = Buoi.Buoi;
+    var daQua = b.Ngay.Date < DateTime.Today;
+    var homNay = b.Ngay.Date == DateTime.Today;
+    var trangThai = Buoi.DaDiemDanh ? ("da-diem-danh", "Đã điểm danh") : daQua ? ("chua-diem-danh", "Chưa điểm danh") : homNay ? ("hom-nay", "Hôm nay") : ("sap-toi", "Sắp tới");
+}
+<article class="the-buoi @trangThai.Item1 @(DangDong ? "dang-dong" : "")">
+    <header>
+        <a class="ma-lop-buoi" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(b.MaLop)}")">@b.MaLop</a>
+        <span class="tiet-buoi" title="@QuyTacHocVu.KhungGio(b)">Tiết @b.TietBatDau–@b.TietKetThuc · @QuyTacHocVu.KhungGio(b)</span>
+    </header>
+    <strong class="cd-buoi">@Buoi.TenChuyenDe</strong>
+    <span class="phu-buoi"><RadzenIcon Icon="person" />@Buoi.TenGiangVien</span>
+    <span class="phu-buoi"><RadzenIcon Icon="meeting_room" />@Buoi.TenPhong · @Buoi.SiSo HV</span>
+    <footer>
+        <span class="nhan-buoi">@trangThai.Item2</span>
+        <span class="thao-tac-buoi">
+            @if (DuocDiemDanh && !b.Ngay.Date.Equals(DateTime.MinValue) && b.Ngay.Date <= DateTime.Today)
+            {
+                <a class="nut-nho" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(b.MaLop)}?tab=diem-danh&buoi={b.Id}")" title="Điểm danh buổi này"><RadzenIcon Icon="how_to_reg" /></a>
+            }
+            @if (DuocSua)
+            {
+                <button type="button" class="nut-nho" title="Sửa buổi học" aria-label="Sửa buổi học" @onclick="() => KhiSua.InvokeAsync(b)"><RadzenIcon Icon="edit" /></button>
+                <button type="button" class="nut-nho nguy-hiem" title="Xoá buổi học" aria-label="Xoá buổi học" @onclick="() => KhiXoa.InvokeAsync(b)"><RadzenIcon Icon="delete" /></button>
+            }
+        </span>
+    </footer>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public BuoiHocHienThi Buoi { get; set; } = default!;
+    [Parameter] public bool DuocSua { get; set; }
+    [Parameter] public bool DuocDiemDanh { get; set; }
+    [Parameter] public bool DangDong { get; set; }
+    [Parameter] public EventCallback<BuoiHoc> KhiSua { get; set; }
+    [Parameter] public EventCallback<BuoiHoc> KhiXoa { get; set; }
+}

@@ -1,7 +1,11 @@
 @page "/thong-bao"
 @attribute [Authorize]
 
-<PageTitle>Thông báo | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Thông báo" MoTa="Tra cứu thông báo chung và thông báo theo khoa, lớp đào tạo." />
+<PageTitle>Văn bản, thông báo | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Văn bản, thông báo" MoTa="Thông báo, kế hoạch, công văn theo thể thức văn bản hành chính. Mỗi người chỉ thấy văn bản gửi tới mình; mở văn bản là được ghi đã đọc." />
 @* Dùng lại toàn bộ bộ lọc, nội dung, đăng/sửa/xóa và kiểm tra quyền của bảng tin. *@
-<BangThongBao />
+<BangThongBao MaChon="@Ma" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "ma")] public Guid? Ma { get; set; }
+}

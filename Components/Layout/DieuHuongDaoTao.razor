@@ -1,0 +1,20 @@
+@* Lối tắt nhanh của mảng Quản lý đào tạo: chỉ hiện ở trang Tổng quan; các trang con dùng menu bên trái để tiết kiệm diện tích. *@
+<nav class="loi-tat-nhanh" aria-label="Lối tắt quản lý đào tạo">
+    @foreach (var (duongDan, bieuTuong, ten, moTa) in CacLoiTat)
+    {
+        <a href="@duongDan"><RadzenIcon Icon="@bieuTuong" /><span><strong>@ten</strong><small>@moTa</small></span></a>
+    }
+</nav>
+
+@code {
+    private static readonly (string, string, string, string)[] CacLoiTat =
+    [
+        ("/dao-tao/chuyen-nganh", "category", "Chuyên ngành", "Ngành theo hệ đào tạo"),
+        ("/dao-tao/khoa-hoc", "event_note", "Khóa và niên khóa", "Theo năm nhập học"),
+        ("/dao-tao/chuyen-de", "menu_book", "Chuyên đề", "Môn học, giáo viên đủ điều kiện"),
+        ("/dao-tao/chuong-trinh", "assignment_ind", "Chương trình & phân công", "Khoa phụ trách, lớp đang học gì"),
+        ("/dao-tao/lich", "calendar_month", "Lịch đào tạo", "Lịch tuần, chặn trùng"),
+        ("/dao-tao/phong", "meeting_room", "Phòng học", "Sức chứa, bảo trì"),
+        ("/dao-tao/thi", "fact_check", "Xét tư cách & lịch thi", "Đề xuất → xác nhận → duyệt"),
+    ];
+}

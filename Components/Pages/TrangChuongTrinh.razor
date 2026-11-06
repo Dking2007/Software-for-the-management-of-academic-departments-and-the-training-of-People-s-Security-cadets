@@ -1,0 +1,131 @@
+@page "/dao-tao/chuong-trinh"
+@attribute [Authorize]
+@implements IDisposable
+@inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuDaoTao DaoTao
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject NotificationService ThongBao
+
+<PageTitle>Chương trình & phân công | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Chương trình & phân công giảng dạy" MoTa="Khoa nào phụ trách lớp nào, trong thời gian nào; lớp đang học chuyên đề gì; giảng viên được phân công. Lớp mới cần phân công trước khi xếp lịch." />
+
+@if (lopChuaPc.Count > 0 && duocSua)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">
+        <strong>@lopChuaPc.Count lớp khoá mới chưa được phân công:</strong> @string.Join(", ", lopChuaPc.Take(12))@(lopChuaPc.Count > 12 ? "…" : ""). Dùng ô "Thêm phân công" bên dưới.
+    </RadzenAlert>
+}
+
+<h2 class="tieu-de-khu-vuc">Khoa phụ trách (đang giảng dạy)</h2>
+<div class="luoi-khoa-phu-trach">
+    @foreach (var k in TheoKhoa)
+    {
+        <button type="button" class="the-khoa-phu-trach @(maKhoaLoc == k.MaKhoa ? "dang-chon" : "")" @onclick="@(() => maKhoaLoc = maKhoaLoc == k.MaKhoa ? null : k.MaKhoa)">
+            <strong>@k.TenKhoa</strong>
+            <small>@k.SoLopDangHoc lớp đang học · @k.SoChuyenDe chuyên đề · @k.SoDong lượt phân công</small>
+        </button>
+    }
+</div>
+
+@if (duocSua)
+{
+    <RadzenCard class="the-muc">
+        <h2><RadzenIcon Icon="assignment_ind" />Thêm phân công (lớp mới → phân công)</h2>
+        <div class="thanh-lich">
+            <RadzenDropDown TValue="string" Data="@cacLop" @bind-Value="pcLop" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Chọn lớp" class="filter-dropdown" />
+            <RadzenDropDown TValue="string" Data="@cacChuyenDe" TextProperty="Ten" ValueProperty="Ma" @bind-Value="pcCd" Change="@(async _ => await DoiCd())" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Chọn chuyên đề" class="filter-dropdown" style="min-width:18rem" />
+            <RadzenDropDown TValue="string" Data="@gvDuDieuKien" TextProperty="Ten" ValueProperty="Ma" @bind-Value="pcGv" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="@(pcCd is null ? "Chọn chuyên đề trước" : "Giảng viên đủ điều kiện")" class="filter-dropdown" style="min-width:16rem" />
+            <RadzenButton Text="Phân công" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="ThemPhanCong" Disabled="@(pcLop is null || pcCd is null || pcGv is null)" />
+        </div>
+    </RadzenCard>
+}
+
+<RadzenCard class="directory-panel">
+    <div class="thanh-lich">
+        <RadzenDropDown TValue="string" Data="@cacLop" @bind-Value="maLopLoc" AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Tất cả lớp" class="filter-dropdown" />
+        <RadzenDropDown TValue="string" Data="@cacTrangThai" @bind-Value="trangThaiLoc" AllowClear="true" Placeholder="Mọi trạng thái" class="filter-dropdown" />
+        <span class="ket-qua-tim-kiem"><strong>@HienThi.Count()</strong> / @dong.Count lớp – chuyên đề@(maKhoaLoc is not null ? " · đang lọc theo khoa" : "")</span>
+    </div>
+    @if (dangTai) { @for (var i = 0; i < 6; i++) { <div class="khung-xuong dong-xuong"></div> } }
+    else
+    {
+        <RadzenDataGrid TItem="DichVuChuongTrinh.DongChuongTrinh" Data="@HienThi" AllowPaging="true" PageSize="15" PageSizeOptions="@(new int[] { 10, 15, 30, 50 })" PageSizeText="dòng / trang" AllowSorting="true" GridLines="DataGridGridLines.Horizontal" PagerHorizontalAlign="HorizontalAlign.Center" EmptyText="Không có dữ liệu phù hợp." class="directory-grid bang-chuong-trinh">
+            <Columns>
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="MaLop" Title="Lớp" Width="6rem"><Template Context="d"><a class="record-code" href="@($"/quan-ly-hoc-vien/lop/{d.MaLop}")">@d.MaLop</a></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="TenChuyenDe" Title="Chuyên đề (lớp đang học gì)" Width="16rem"><Template Context="d"><strong>@d.TenChuyenDe</strong><small class="phu-dong">@d.MaChuyenDe</small></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="TenKhoa" Title="Khoa phụ trách" Width="14rem" />
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="TenGiangVien" Title="Giảng viên phân công" Width="13rem">
+                    <Template Context="d">
+                        @if (duocSua)
+                        {
+                            <button type="button" class="nut-so-luong" @onclick="() => MoDoiGv(d)" title="Đổi giảng viên phân công"><RadzenIcon Icon="edit" />@d.TenGiangVien</button>
+                            @if (dangDoi == d)
+                            {
+                                <div class="thanh-lich" style="margin-top:.375rem">
+                                    <RadzenDropDown TValue="string" Data="@gvDoi" TextProperty="Ten" ValueProperty="Ma" @bind-Value="gvMoi" Placeholder="Chọn" Style="min-width:12rem" />
+                                    <RadzenButton Icon="check" Size="ButtonSize.Small" Click="() => LuuDoiGv(d)" Disabled="@(gvMoi is null)" />
+                                </div>
+                            }
+                        }
+                        else { @d.TenGiangVien }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="TuNgay" Title="Thời gian" Width="10rem"><Template Context="d">@(d.TuNgay is null ? "—" : $"{d.TuNgay:dd/MM} – {d.DenNgay:dd/MM/yyyy}")</Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="SoBuoiDaHoc" Title="Tiến độ" Width="9rem">
+                    <Template Context="d"><div class="tien-do"><div class="thanh-ti-le-nho"><span style="width:@((d.TongBuoi == 0 ? 0 : 100 * d.SoBuoiDaHoc / d.TongBuoi))%"></span></div><small>@d.SoBuoiDaHoc/@d.TongBuoi</small></div></Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="DichVuChuongTrinh.DongChuongTrinh" Property="TrangThai" Title="Trạng thái" Width="8rem"><Template Context="d"><span class="trang-thai-cd @LopTrangThai(d.TrangThai)">@d.TrangThai</span></Template></RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenCard>
+
+@code {
+    public sealed record LuaChon(string Ma, string Ten);
+    private sealed record TomTatKhoa(string MaKhoa, string TenKhoa, int SoLopDangHoc, int SoChuyenDe, int SoDong);
+    private List<DichVuChuongTrinh.DongChuongTrinh> dong = [];
+    private List<string> cacLop = [], lopChuaPc = [];
+    private List<LuaChon> cacChuyenDe = [], gvDuDieuKien = [], gvDoi = [];
+    private readonly string[] cacTrangThai = ["Đang học", "Sắp học", "Đã xong", "Chưa xếp lịch"];
+    private string? maLopLoc, trangThaiLoc, maKhoaLoc, pcLop, pcCd, pcGv, gvMoi;
+    private DichVuChuongTrinh.DongChuongTrinh? dangDoi;
+    private bool duocSua, dangTai = true;
+
+    private IEnumerable<DichVuChuongTrinh.DongChuongTrinh> HienThi => dong.Where(d => (maLopLoc is null || d.MaLop == maLopLoc) && (trangThaiLoc is null || d.TrangThai == trangThaiLoc) && (maKhoaLoc is null || d.MaKhoa == maKhoaLoc));
+    private IEnumerable<TomTatKhoa> TheoKhoa => dong.GroupBy(d => (d.MaKhoa, d.TenKhoa)).OrderByDescending(g => g.Count(d => d.TrangThai == "Đang học"))
+        .Select(g => new TomTatKhoa(g.Key.MaKhoa, g.Key.TenKhoa, g.Where(d => d.TrangThai == "Đang học").Select(d => d.MaLop).Distinct().Count(), g.Select(d => d.MaChuyenDe).Distinct().Count(), g.Count()));
+    private static string LopTrangThai(string t) => t switch { "Đang học" => "dang-hoc", "Sắp học" => "sap-hoc", "Đã xong" => "da-xong", _ => "chua-xep" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        duocSua = await PhanQuyen.CoQuyenVungAsync("DaoTao");
+        cacLop = DuLieu.LayDanhSachLop().Select(l => l.MaLop).ToList();
+        cacChuyenDe = (await DaoTao.LayChuyenDeAsync()).Select(c => new LuaChon(c.ChuyenDe.MaChuyenDe, $"{c.ChuyenDe.TenChuyenDe} · {c.TenKhoa}")).ToList();
+        await TaiLai();
+        DuLieu.DuLieuDaThayDoi += KhiDoi;
+    }
+    private async Task TaiLai()
+    {
+        dong = await ChuongTrinh.LayChuongTrinhAsync();
+        lopChuaPc = await ChuongTrinh.LopChuaPhanCongAsync();
+        dangTai = false;
+    }
+    private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
+
+    private async Task<List<LuaChon>> GiangVienDuDieuKien(string maCd)
+    {
+        var ma = (await DaoTao.LayGiaoVienDuDieuKienAsync(maCd)).ToHashSet();
+        return DaoTao.CacGiangVien().Where(g => ma.Contains(g.Ma)).Select(g => new LuaChon(g.Ma, g.Ten)).ToList();
+    }
+    private async Task DoiCd() { pcGv = null; gvDuDieuKien = pcCd is null ? [] : await GiangVienDuDieuKien(pcCd); }
+    private async Task ThemPhanCong() => await Bao(await ChuongTrinh.LuuPhanCongAsync(pcLop!, pcCd!, pcGv!));
+    private async Task MoDoiGv(DichVuChuongTrinh.DongChuongTrinh d) { dangDoi = dangDoi == d ? null : d; gvMoi = d.MaCanBo; gvDoi = await GiangVienDuDieuKien(d.MaChuyenDe); }
+    private async Task LuuDoiGv(DichVuChuongTrinh.DongChuongTrinh d) { dangDoi = null; await Bao(await ChuongTrinh.LuuPhanCongAsync(d.MaLop, d.MaChuyenDe, gvMoi!)); }
+    private async Task Bao(KetQuaThaoTac k)
+    {
+        ThongBao.Notify(new NotificationMessage { Severity = k.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = k.ThanhCong ? "Hoàn tất" : "Không thực hiện được", Detail = k.ThongBao, Duration = 6000 });
+        await TaiLai();
+    }
+}

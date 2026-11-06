@@ -10,17 +10,35 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 // Bộ kiểm tra chạy trên kho riêng, không gọi server và không sửa dữ liệu của phiên đang mở.
 var dv = new ServiceCollection();
 dv.AddScoped<TuyChonGiaoDien>();
 dv.AddLogging(); dv.AddRadzenComponents(); dv.AddSingleton<NavigationManager, DieuHuongKiemThu>(); dv.AddSingleton<IJSRuntime, JavaScriptKhongTuongTac>();
-dv.AddAuthorizationCore(o => o.AddPolicy("Admin", p => p.RequireRole("Admin")));
-dv.AddSingleton<KhoDuLieuDemo>(); dv.AddSingleton<KhoVeDangNhapDemo>();
+dv.AddAuthorizationCore(o => o.AddPolicy("Admin", p => p.RequireRole("Admin"))); dv.AddCascadingAuthenticationState();
+// Kho nghiệp vụ thuần bộ nhớ (công thức gốc); dữ liệu đào tạo dùng CSDL tạm rỗng để trang dựng được.
+dv.AddSingleton(new KhoDuLieuDemo()); dv.AddSingleton<KhoVeDangNhapDemo>();
+var tepDaoTao = Path.Combine(Path.GetTempPath(), $"kiem-thu-dao-tao-{Guid.NewGuid()}.db");
+dv.AddDbContextFactory<CoSoDuLieuNghiepVu>(o => o.UseSqlite($"Data Source={tepDaoTao};Pooling=False"));
+dv.AddScoped<DichVuDaoTao>(); dv.AddScoped<DichVuHocVu>(); dv.AddScoped<DichVuNhatKy>(); dv.AddScoped<DichVuTimKiem>();
+dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>(); dv.AddSingleton(new KhoThongBaoDemo()); dv.AddScoped<DichVuThongBao>();
 dv.AddScoped<NhaCungCapTrangThaiXacThucDemo>();
 dv.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
 dv.AddScoped<DichVuPhanQuyenDemo>(); dv.AddScoped<DichVuQuanLyDuLieuDemo>();
+// Đăng nhập đi qua Identity: dùng CSDL tài khoản tạm trong thư mục Temp, không đụng App_Data.
+var tepTaiKhoan = Path.Combine(Path.GetTempPath(), $"kiem-thu-nghiep-vu-{Guid.NewGuid()}.db");
+dv.AddDbContext<CoSoTaiKhoan>(o => o.UseSqlite("Data Source=" + tepTaiKhoan + ";Pooling=False"));
+dv.AddIdentityCore<TaiKhoan>(o => KiemTraMatKhau.CauHinh(o.Password)).AddPasswordValidator<KiemTraMatKhau>().AddEntityFrameworkStores<CoSoTaiKhoan>();
+dv.AddSingleton<DichVuTaiKhoan>();
+// Tài khoản mẫu chỉ đăng nhập được trong Development.
+dv.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(new MoiTruongKiemThu());
 using var root = dv.BuildServiceProvider(); using var phien = root.CreateScope();
+await phien.ServiceProvider.GetRequiredService<CoSoTaiKhoan>().Database.EnsureCreatedAsync();
+root.GetRequiredService<IDbContextFactory<CoSoDuLieuNghiepVu>>().CreateDbContext().DamBaoCauTruc();
+await KhoiTaoTaiKhoanMau.TaoAsync(phien.ServiceProvider.GetRequiredService<UserManager<TaiKhoan>>());
+AppDomain.CurrentDomain.ProcessExit += (_, _) => { try { File.Delete(tepTaiKhoan); File.Delete(tepDaoTao); } catch { } };
 var auth = phien.ServiceProvider.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>();
 var data = phien.ServiceProvider.GetRequiredService<DichVuQuanLyDuLieuDemo>();
 int dem = 0;
@@ -38,8 +56,10 @@ KiemTra(data.LayDanhSachLop().All(l=>l.SiSo==40 && QuyTacDuLieu.LopHopLe(l.MaLop
 KiemTra(data.LayDanhSachHocVien().GroupBy(h=>h.MaLop).All(g=>QuyTacDuLieu.ChiTieuChucVu.All(q=>g.Count(h=>h.ChucVu==q.Key)==q.Value)),"Cơ cấu bảy chức vụ trên mọi lớp");
 KiemTra(data.LayDanhSachHocVien().All(h=>h.TaoLuc is null) && data.LayDanhSachCanBo().All(c=>c.TaoLuc is null),"Hồ sơ khởi tạo không mang nhãn mới");
 KiemTra(data.LayDanhSachHocVien().Select(h=>h.HoTen).Distinct().Count()>4000,"Tên tiếng Việt đa dạng, trên 4000 tên duy nhất");
-KiemTra(data.LayDanhSachHocVien().All(h=>Validator.TryValidateObject(h,new(h),[],true)) && data.LayDanhSachCanBo().All(c=>Validator.TryValidateObject(c,new(c),[],true)),"Định dạng toàn bộ dữ liệu khởi tạo");
-KiemTra(data.LayDanhSachHocVien().Select(h=>h.SoCCCD).Distinct().Count()==4240,"CCCD khởi tạo duy nhất");
+// Kiểm tra định dạng trên dữ liệu gốc của kho; bản sao cho khách đã bị che trường cá nhân nên không hợp lệ theo thiết kế.
+var khoGoc=root.GetRequiredService<KhoDuLieuDemo>();
+KiemTra(khoGoc.DanhSachHocVien.All(h=>Validator.TryValidateObject(h,new(h),[],true)) && khoGoc.DanhSachCanBo.All(c=>Validator.TryValidateObject(c,new(c),[],true)),"Định dạng toàn bộ dữ liệu khởi tạo");
+KiemTra(khoGoc.DanhSachHocVien.Select(h=>h.SoCCCD).Distinct().Count()==4240,"CCCD khởi tạo duy nhất");
 KiemTra(data.LayDanhSachCanBo().All(c=>data.LayDanhSachTo().Any(t=>t.MaTo==c.MaTo && t.MaKhoa==c.MaKhoa)),"Cán bộ có tổ và khoa nhất quán");
 await TuChoi(()=>data.LuuHocVienAsync(TaoHV()),"Khách chưa đăng nhập không được ghi");
 KiemTra(!await auth.DangNhapAsync("admin","sai"),"Sai mật khẩu bị từ chối");
@@ -119,9 +139,10 @@ KiemTra(data.LayDanhSachTo().Single(t=>t.MaTo==toDich.MaTo).MaToTruong is null,"
 ThanhCong(await data.XoaToAsync(toMoi.MaTo),"Xóa tổ rỗng");
 ThanhCong(await data.XoaToAsync(toDich.MaTo),"Xóa tổ đích rỗng");
 ThanhCong(await data.XoaKhoaAsync(khoaMoi.MaKhoa),"Xóa khoa rỗng");
+// Văn bằng 2: số lớp chẵn là ANM & PCTPCNC, số lẻ là Điều tra (quy tắc trong tài liệu thiết kế).
 var lopMoi=new LopDaoTao {MaLop="B6K6",HeDaoTao="Văn bằng 2",KhoaHoc="K6",ChuyenNganh="Điều tra"};
-ThanhCong(await data.LuuLopAsync(lopMoi),"Tạo lớp để kiểm tra phân công");
-lopMoi.ChuyenNganh="ANM & PCTPCNC";ThanhCong(await data.LuuLopAsync(lopMoi,lopMoi.MaLop),"Sửa chuyên ngành hợp lệ của Văn bằng 2");
+await TuChoi(()=>data.LuuLopAsync(lopMoi),"VB2 lớp số chẵn không được gán chuyên ngành Điều tra");
+lopMoi.ChuyenNganh="ANM & PCTPCNC";ThanhCong(await data.LuuLopAsync(lopMoi),"Tạo lớp để kiểm tra phân công");
 hv=TaoHV();hv.MaLop=lopMoi.MaLop;hv.ChucVu="B trưởng";
 ThanhCong(await data.LuuHocVienAsync(hv),"Thêm B trưởng vào vị trí trống");
 var daTao=data.LayDanhSachHocVien().Single(x=>x.MaHocVien==hv.MaHocVien);
@@ -143,7 +164,7 @@ ThanhCong(await Task.FromResult(new KetQuaThaoTac(await auth.DangNhapAsync("admi
 KiemTra(suKien>10,"Phát thông báo thay đổi cho các tab");
 
 // Nhóm E: gọi thẳng mọi API ghi bằng Guest để xác nhận quyền không chỉ nằm ở nút.
-await auth.DangXuatAsync();await auth.DangNhapAsync("guest","demo123");
+await auth.DangXuatAsync();KiemTra(await auth.DangNhapAsync("nguoixem","demo123"),"Tài khoản xem (Guest) đăng nhập");
 await TuChoi(()=>data.LuuHocVienAsync(TaoHV()),"Guest không thêm/sửa học viên");
 await TuChoi(()=>data.XoaHocVienAsync(data.LayDanhSachHocVien()[0].MaHocVien),"Guest không xóa học viên");
 await TuChoi(()=>data.LuuCanBoAsync(TaoCB()),"Guest không thêm/sửa cán bộ");
@@ -172,18 +193,18 @@ var trangQuanTri=await HienThi<Nhom2_BTL.Components.Pages.HocVien>();
 KiemTra(trangQuanTri.Contains("Thêm học viên") && trangQuanTri.Contains("Xóa học viên"),"HTML Admin có điều khiển quản lý học viên");
 // STT lấy từ View hiện tại của Radzen, không phải vị trí của dữ liệu gốc.
 var cacStt=System.Text.RegularExpressions.Regex.Matches(trangQuanTri, @"<tr[^>]*class=""rz-data-row[^>]*>\s*<td[^>]*>\s*<span[^>]*>([0-9]+)</span>");
-KiemTra(cacStt.Count==20 && cacStt.Select(m=>int.Parse(m.Groups[1].Value)).SequenceEqual(Enumerable.Range(1,20)),"STT trang đầu là 1–20 khi Radzen dựng bảng");
+KiemTra(cacStt.Count==10 && cacStt.Select(m=>int.Parse(m.Groups[1].Value)).SequenceEqual(Enumerable.Range(1,10)),"STT trang đầu là 1–10 (mặc định 10 dòng/trang) khi Radzen dựng bảng");
 var trangCanBo=await HienThi<Nhom2_BTL.Components.Pages.CanBoGiangVien>();
 KiemTra(trangCanBo.Contains("Tất cả các khoa") && trangCanBo.Contains("Tất cả các tổ"),"HTML cán bộ có cả bộ lọc khoa và tổ");
 var trangChu=await HienThi<Nhom2_BTL.Components.Pages.Home>();
-KiemTra(trangChu.Contains("Quản lý đào tạo tập trung") && trangChu.Contains("huong-dan-quan-tri") && !trangChu.Contains("target=\"_blank\""),"HTML trang chủ có tổng quan, hướng dẫn quản trị và liên kết cùng tab");
-KiemTra(System.Text.RegularExpressions.Regex.Matches(trangChu, "launcher-card").Count == 3, "Trang chủ giữ đủ ba khối phân hệ");
-await auth.DangXuatAsync(); await auth.DangNhapAsync("guest", "demo123");
+KiemTra(trangChu.Contains("Xin chào, admin") && !trangChu.Contains("target=\"_blank\""),"HTML trang chủ chào đúng tài khoản và mở liên kết cùng tab");
+KiemTra(System.Text.RegularExpressions.Regex.Matches(trangChu, "class=\"the-so-lieu\"").Count == 5, "Trang chủ có đủ năm thẻ số liệu (khoa, tổ, cán bộ, lớp, học viên)");
+await auth.DangXuatAsync(); KiemTra(await auth.DangNhapAsync("nguoixem", "demo123"),"Guest đăng nhập lại");
 var trangChuGuest = await HienThi<Nhom2_BTL.Components.Pages.Home>();
-KiemTra(trangChuGuest.Contains("huong-dan-nguoi-xem") && !trangChuGuest.Contains("huong-dan-quan-tri"), "Guest chỉ nhận hướng dẫn tra cứu, không nhận hướng dẫn quản trị");
+KiemTra(trangChuGuest.Contains("Xin chào, nguoixem"), "Trang chủ chào đúng tài khoản Guest");
 await auth.DangXuatAsync();
 var trangChuKhach = await HienThi<Nhom2_BTL.Components.Pages.Home>();
-KiemTra(trangChuKhach.Contains("Chưa xác định") && !trangChuKhach.Contains("huong-dan-quan-tri"), "Vai trò chưa xác định không nhận hướng dẫn quản trị");
+KiemTra(trangChuKhach.Contains("Tổng quan") && !trangChuKhach.Contains("Xin chào"), "Chưa đăng nhập: trang chủ không chào tên ai");
 await auth.DangNhapAsync("admin", "demo123");
 var formHV=await HienThi<BieuMauHocVien>(new() { [nameof(BieuMauHocVien.DuLieuBanDau)]=TaoHV(),[nameof(BieuMauHocVien.DanhSachLop)]=data.LayDanhSachLop() });
 KiemTra(formHV.Contains("D57") && formHV.Contains("ANM & PCTPCNC") && !formHV.Contains("MaKhoa"),"HTML form học viên hiện đúng khóa/chuyên ngành và không chọn khoa");
@@ -211,7 +232,7 @@ Console.WriteLine($"HOÀN TẤT: {dem} kiểm tra đạt.");
 
 // Hai circuit dùng cùng phiên cookie: thu hồi phải vô hiệu hóa cả hai.
 var khoPhien = new KhoPhienDemo();
-using var tabMot = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), khoPhien);
+using var tabMot = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), khoPhien, root.GetRequiredService<DichVuTaiKhoan>());
 await tabMot.DangNhapAsync("admin", "demo123");
 var danhTinhAdmin = (await tabMot.GetAuthenticationStateAsync()).User;
 using var tabHai = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), khoPhien);
@@ -221,8 +242,8 @@ var daNhanThuHoi = false;
 tabHai.AuthenticationStateChanged += _ => daNhanThuHoi = true;
 khoPhien.ThuHoi(danhTinhAdmin);
 KiemTra(daNhanThuHoi && !(await tabHai.GetAuthenticationStateAsync()).User.Identity!.IsAuthenticated, "Tab cũ được thông báo thu hồi và mất quyền");
-using var tabXem = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), khoPhien);
-await tabXem.DangNhapAsync("guest", "demo123");
+using var tabXem = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), khoPhien, root.GetRequiredService<DichVuTaiKhoan>());
+KiemTra(await tabXem.DangNhapAsync("nguoixem", "demo123"),"Tab xem đăng nhập");
 KiemTra((await tabXem.GetAuthenticationStateAsync()).User.IsInRole("Guest") && !(await tabMot.GetAuthenticationStateAsync()).User.IsInRole("Admin"), "Phiên Guest mới không khôi phục quyền Admin cũ");
 
 KiemTra(QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Văn Anh", "anh"), "Tìm Anh khớp nguyên từ và không phân biệt hoa thường");
@@ -249,11 +270,66 @@ KiemTra(ketQuaTen.Single().MaHocVien == "HV01", "Bộ lọc học viên chỉ tr
 await KiemThuHoSoVaSiSo.ChayAsync(phien.ServiceProvider.GetRequiredService<DichVuPhanQuyenDemo>(), KiemTra);
 var hoSoMau = data.LayDanhSachCanBo().First(c => c.ChucVu == "Phó khoa");
 var htmlHoSo = await HienThi<HoSoCanBo>(new() { [nameof(HoSoCanBo.MaCanBo)] = hoSoMau.MaCanBo });
-KiemTra(new[] { hoSoMau.HoTen, hoSoMau.SoCCCD, hoSoMau.SoDienThoai, hoSoMau.ChucVu, hoSoMau.TenKhoa, hoSoMau.TenTo, hoSoMau.Email!, hoSoMau.GioiTinh }.All(htmlHoSo.Contains), "Dialog lãnh đạo dùng đúng hồ sơ cán bộ, gồm CCCD, SĐT và đơn vị");
+KiemTra(new[] { hoSoMau.HoTen, hoSoMau.ChucVu, hoSoMau.TenKhoa, hoSoMau.TenTo, hoSoMau.GioiTinh }.All(htmlHoSo.Contains), "Dialog lãnh đạo dùng đúng hồ sơ cán bộ và đơn vị");
+// Dữ liệu cá nhân mặc định hiển thị dạng che; số đầy đủ chỉ hiện sau khi bấm "Hiện đủ" (có ghi nhật ký).
+KiemTra(htmlHoSo.Contains(QuyTacHocVu.Che(hoSoMau.SoCCCD)) && !htmlHoSo.Contains(hoSoMau.SoCCCD) && !htmlHoSo.Contains(hoSoMau.SoDienThoai) && htmlHoSo.Contains("Hiện đủ"), "Hồ sơ che CCCD, SĐT theo mặc định và có nút Hiện đủ");
 var htmlKhoa = await HienThi<Nhom2_BTL.Components.Pages.Khoa>();
 var htmlTo = await HienThi<Nhom2_BTL.Components.Pages.ToChuyenMon>();
-KiemTra(htmlKhoa.Contains("SĨ SỐ CÁN BỘ") && htmlTo.Contains("SĨ SỐ CÁN BỘ"), "Bảng khoa và tổ hiển thị cột sĩ số cán bộ");
+KiemTra(htmlKhoa.Contains("Sĩ số cán bộ", StringComparison.OrdinalIgnoreCase) && System.Text.RegularExpressions.Regex.Matches(htmlTo, "class=\"o-khoa\"").Count == 12, "Bảng khoa có sĩ số cán bộ; tổ chuyên môn nhóm theo khoa (12 khối, 24 tổ)");
 KiemTra(htmlKhoa.Contains("aria-haspopup=\"dialog\"") && htmlTo.Contains("aria-haspopup=\"dialog\""), "Tên lãnh đạo khoa và tổ có điều khiển mở hồ sơ");
+// Nhóm F: lưu bền SQLite — mở lại kho trên cùng tệp phải thấy đúng dữ liệu đã ghi.
+var tepNghiepVu = Path.Combine(Path.GetTempPath(), $"kiem-thu-du-lieu-{Guid.NewGuid()}.db");
+try
+{
+    var tuyChonCsdl = new DbContextOptionsBuilder<CoSoDuLieuNghiepVu>().UseSqlite($"Data Source={tepNghiepVu};Pooling=False").Options;
+    var nhaMayCsdl = new NhaMayCsdlKiemThu(tuyChonCsdl);
+    var nhatKyKho = root.GetRequiredService<ILoggerFactory>().CreateLogger<KhoDuLieuDemo>();
+    var khoBen = new KhoDuLieuDemo(nhaMayCsdl, nhatKyKho);
+    KiemTra(khoBen.DanhSachKhoa.Count == 12 && khoBen.DanhSachTo.Count == 24 && khoBen.DanhSachCanBo.Count == 108 && khoBen.DanhSachLop.Count == 106 && khoBen.DanhSachHocVien.Count == 4240, "CSDL trống: sinh đủ 12/24/108/106/4.240 bản ghi");
+    var thuTuGoc = khoBen.DanhSachHocVien.Take(40).Select(h => h.MaHocVien).ToList();
+    var maXoa = "";
+    lock (khoBen.KhoaDongBo)
+    {
+        var hvMoi = TaoHV("HV-BEN"); hvMoi.SoCCCD = "000077777777"; hvMoi.SoDienThoai = "0977777777";
+        khoBen.DanhSachHocVien.Add(hvMoi);
+        khoBen.DanhSachKhoa.Single(k => k.MaKhoa == "KH-01").TenKhoa = "Khoa đã đổi tên";
+        // Xoá học viên lớp chưa có lịch (D53); học viên đã có điểm danh thì khoá ngoại sẽ chặn.
+        maXoa = khoBen.DanhSachHocVien.First(h => h.MaLop == "B1D53").MaHocVien;
+        khoBen.DanhSachHocVien.RemoveAll(h => h.MaHocVien == maXoa);
+    }
+    khoBen.ThongBaoThayDoi();
+    var khoMoLai = new KhoDuLieuDemo(nhaMayCsdl, nhatKyKho);
+    KiemTra(khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == "HV-BEN") && !khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == maXoa) && khoMoLai.DanhSachHocVien.Count == 4240, "Mở lại: còn học viên mới thêm, mất học viên đã xoá");
+    KiemTra(khoMoLai.DanhSachKhoa.Single(k => k.MaKhoa == "KH-01").TenKhoa == "Khoa đã đổi tên", "Mở lại: giữ thay đổi tên khoa");
+    KiemTra(khoMoLai.DanhSachHocVien.Take(40).Select(h => h.MaHocVien).SequenceEqual(thuTuGoc), "Mở lại: giữ đúng thứ tự hiển thị ban đầu");
+    KiemTra(khoMoLai.DanhSachHocVien.Last().MaHocVien == "HV-BEN", "Bản ghi mới nằm cuối danh sách");
+    KiemTra(khoMoLai.DanhSachKhoa.Single(k => k.MaKhoa == "KH-01").MaTruongKhoa == khoBen.DanhSachKhoa.Single(k => k.MaKhoa == "KH-01").MaTruongKhoa, "Mở lại: giữ phân công trưởng khoa");
+    // CSDL chặn trùng CCCD dù dịch vụ bị bỏ qua; bộ nhớ được khôi phục về lần lưu gần nhất.
+    lock (khoMoLai.KhoaDongBo)
+    {
+        var hvTrung = TaoHV("HV-TRUNG-CSDL"); hvTrung.SoCCCD = "000077777777";
+        khoMoLai.DanhSachHocVien.Add(hvTrung);
+    }
+    var daChan = false;
+    try { khoMoLai.ThongBaoThayDoi(); } catch (InvalidOperationException) { daChan = true; }
+    KiemTra(daChan && !khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == "HV-TRUNG-CSDL"), "CSDL chặn trùng CCCD và bộ nhớ quay về lần lưu gần nhất");
+}
+finally { try { File.Delete(tepNghiepVu); } catch { } }
+
+// Nhóm G: tích hợp mốc 1 (vai trò, lịch, điểm danh, điểm, nhật ký, tài khoản, tìm kiếm) trên CSDL tạm.
+await KiemThuTichHop.ChayAsync(KiemTra);
+
 Console.WriteLine($"HOÀN TẤT TOÀN BỘ: {dem} kiểm tra đạt.");
 
+sealed class MoiTruongKiemThu : Microsoft.Extensions.Hosting.IHostEnvironment
+{
+    public string EnvironmentName { get; set; } = "Development";
+    public string ApplicationName { get; set; } = "KiemThu";
+    public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+    public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } = new Microsoft.Extensions.FileProviders.NullFileProvider();
+}
 
+sealed class NhaMayCsdlKiemThu(DbContextOptions<CoSoDuLieuNghiepVu> tuyChon) : IDbContextFactory<CoSoDuLieuNghiepVu>
+{
+    public CoSoDuLieuNghiepVu CreateDbContext() => new(tuyChon);
+}

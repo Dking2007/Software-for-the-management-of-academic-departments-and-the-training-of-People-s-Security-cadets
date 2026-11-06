@@ -13,7 +13,7 @@
 
 Xây dựng ứng dụng web quản lý các khoa và lớp đào tạo tại Học viện An ninh nhân dân. Người dùng là sinh viên đại học mới làm quen với lập trình web, cần vừa có sản phẩm vừa hiểu cách hoạt động của sản phẩm.
 
-Mục tiêu là một ứng dụng học tập/chạy thử với dữ liệu tổng hợp trong bộ nhớ. Không kết nối hoặc tạo cơ sở dữ liệu trong phạm vi hiện tại.
+Mục tiêu là một ứng dụng học tập/chạy thử với dữ liệu tổng hợp. Từ 05/11/2026 nhóm quyết định lưu dữ liệu nghiệp vụ bền vững bằng EF Core SQLite; thiết kế đầy đủ và thứ tự công việc nằm ở `docs/THIET_KE_TONG_THE.md` (ưu tiên tài liệu đó khi khác với tệp này).
 
 ## 3. Công nghệ và cấu trúc
 
@@ -21,7 +21,7 @@ Mục tiêu là một ứng dụng học tập/chạy thử với dữ liệu t�
 - Dùng các thành phần Radzen phù hợp cho giao diện và tương tác. Trước khi thêm gói hoặc API, xem cấu trúc và phiên bản hiện có trong dự án; không tự nâng cấp hoặc thay đổi phiên bản nền tảng.
 - Tổ chức lớp mô hình trong thư mục `Models/` và dịch vụ trong `Services/`. Có thể đề xuất các thư mục khác khi thực sự hữu ích, nhưng giải thích lý do trước khi thêm.
 - Giữ nguyên kiến trúc, quy ước và tên tệp sẵn có khi chúng phù hợp. Không tạo lại dự án hoặc thay thế cấu hình hiện hữu nếu người dùng không yêu cầu.
-- Không thêm cơ sở dữ liệu, ORM, migration hay dịch vụ lưu trữ dữ liệu. Dữ liệu mẫu được tạo trong bộ nhớ khi ứng dụng khởi động; giải thích rằng dữ liệu có thể mất khi ứng dụng khởi động lại và có thể được đặt lại khi chạy nhiều phiên bản.
+- Dữ liệu nghiệp vụ lưu trong `App_Data/du-lieu.db` (EF Core SQLite, `CoSoDuLieuNghiepVu`), tài khoản trong `App_Data/tai-khoan.db`. Lần chạy đầu tiên sinh dữ liệu mẫu theo công thức cố định rồi lưu; xoá `du-lieu.db` để đặt lại dữ liệu mẫu. Không đưa tệp `.db` lên Git.
 
 ## 4. Phạm vi chức năng
 
@@ -33,7 +33,7 @@ Phát triển từ nền tảng bên ngoài vào trong, theo thứ tự hợp l�
 4. Chức năng quản trị thêm, sửa, xóa và tìm kiếm.
 5. Hoàn thiện giao diện, trạng thái trống/lỗi/xác nhận và khả năng sử dụng.
 
-Quyền tối thiểu:
+Quyền tối thiểu (đã mở rộng thành Admin, ba manager, Giảng viên, Học viên, Người xem theo mục 6 của `docs/THIET_KE_TONG_THE.md`):
 
 - **Người xem:** tìm kiếm, xem danh sách/chi tiết và truy cập các trang được phép.
 - **Quản trị viên:** các quyền của người xem và thêm, sửa, xóa, tìm kiếm.
@@ -48,7 +48,7 @@ Quyền tối thiểu:
 - Với mọi trang hoặc thao tác quản trị, bảo vệ bằng ủy quyền phía máy chủ/phía ứng dụng theo đúng mô hình tương tác của dự án; kiểm tra lại vai trò trước khi thay đổi dữ liệu. Giao diện chỉ hỗ trợ trải nghiệm, không thay thế kiểm soát truy cập.
 - Không đưa dữ liệu cá nhân hoặc thông tin nghiệp vụ nhạy cảm có thật vào ví dụ. Nếu sau này người dùng muốn triển khai thực tế, cần dừng việc mở rộng đăng nhập demo và tư vấn thay thế bằng giải pháp danh tính, lưu trữ, phân quyền, ghi vết và bảo vệ dữ liệu phù hợp trước khi sử dụng thật.
 
-## 6. Dữ liệu tổng hợp trong bộ nhớ
+## 6. Dữ liệu tổng hợp
 
 - Tạo khoảng 50 bản ghi mẫu cho mỗi lớp hoặc đơn vị danh sách mà người dùng yêu cầu, bằng dữ liệu giả lập hợp lý và nhất quán.
 - Trường dữ liệu có thể gồm họ tên, ngày sinh, quê quán giả lập, đơn vị (khoa/lớp), cấp bậc hàm, học hàm và học vị; chỉ đưa trường phù hợp với loại đối tượng. Không suy diễn rằng mọi học viên đều có học hàm/học vị hoặc cấp bậc.

@@ -1,0 +1,23 @@
+@inject DichVuTruongTuyChinh TruongTuyChinh
+
+@* Hiển thị (chỉ đọc) các trường mở rộng có giá trị của một đối tượng, dùng trong hồ sơ, trang chi tiết, thẻ xem nhanh. *@
+@if (bang.Truong.Any(t => bang.Lay(t, Ma) != ""))
+{
+    <section class="thong-tin-mo-rong @Class">
+        <h3><RadzenIcon Icon="dashboard_customize" />Thông tin mở rộng</h3>
+        <dl class="xn-luoi">
+            @foreach (var t in bang.Truong.Where(t => bang.Lay(t, Ma) != ""))
+            {
+                <div><dt>@t.Ten</dt><dd>@bang.HienThi(t, Ma)</dd></div>
+            }
+        </dl>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Loai { get; set; } = "";
+    [Parameter] public string? Ma { get; set; }
+    [Parameter] public string? Class { get; set; }
+    private DichVuTruongTuyChinh.BangMoRong bang = DichVuTruongTuyChinh.BangMoRong.Rong;
+    protected override async Task OnParametersSetAsync() => bang = await TruongTuyChinh.LayBangAsync(Loai);
+}

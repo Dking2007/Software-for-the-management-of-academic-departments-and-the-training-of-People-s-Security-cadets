@@ -1,0 +1,48 @@
+@inject DichVuBanTin BanTinDv
+@inject DialogService HoiThoai
+
+<RadzenTemplateForm TItem="TinTuc" Data="@banSao" Submit="Luu">
+    <DataAnnotationsValidator />
+    <div class="form-grid">
+        <RadzenFormField Text="Chuyên mục" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@TinTuc.CacChuyenMuc" @bind-Value="banSao.ChuyenMuc" Style="width:100%" /></RadzenFormField>
+        <label class="chon-khoa"><RadzenCheckBox TValue="bool" @bind-Value="banSao.NoiBat" /> Tin nổi bật (lên tiêu điểm trang nhất)</label>
+        <RadzenFormField Text="Tiêu đề" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="banSao.TieuDe" MaxLength="200" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Đoạn dẫn (sapo)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.Sapo" MaxLength="400" Rows="2" Style="width:100%" /></RadzenFormField>
+        <RadzenFormField Text="Nội dung (mỗi dòng một đoạn)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.NoiDung" Rows="8" Style="width:100%" /></RadzenFormField>
+        <div class="toan-hang"><label for="anh-bai">Ảnh đại diện (PNG, JPEG, WebP; tối đa 3 MB; để trống dùng ảnh minh hoạ)</label><InputFile id="anh-bai" OnChange="ChonAnh" accept="image/png,image/jpeg,image/webp" /></div>
+        @if (anhXemTruoc is not null) { <img class="anh-xem-truoc" src="@anhXemTruoc" alt="Ảnh đang chọn" /> <RadzenButton Text="Bỏ ảnh" Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="BoAnh" /> }
+    </div>
+    <ValidationSummary class="loi-bieu-mau" />
+    @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
+    <div class="thao-tac-bieu-mau">
+        <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" />
+        <RadzenButton Text="@(banSao.Id == 0 ? "Đăng bài" : "Lưu bài")" Icon="send" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="dangLuu" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public TinTuc DuLieuBanDau { get; set; } = new();
+    private TinTuc banSao = new();
+    private byte[]? anhMoi;
+    private string? anhXemTruoc, loi;
+    private bool xoaAnh, dangLuu;
+    protected override void OnInitialized() { banSao = DuLieuBanDau.TaoBanSao(); anhXemTruoc = banSao.Anh; }
+    private async Task ChonAnh(InputFileChangeEventArgs e)
+    {
+        loi = null;
+        try
+        {
+            using var ms = new MemoryStream();
+            await using (var s = e.File.OpenReadStream(DichVuThongBao.GioiHanAnh)) await s.CopyToAsync(ms);
+            anhXemTruoc = DichVuThongBao.TaoAnh(ms.ToArray()); anhMoi = ms.ToArray(); xoaAnh = false;
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentException) { loi = "Chỉ nhận ảnh PNG, JPEG, WebP không quá 3 MB."; }
+    }
+    private void BoAnh() { anhMoi = null; anhXemTruoc = null; xoaAnh = true; }
+    private async Task Luu()
+    {
+        dangLuu = true; loi = null;
+        try { var kq = await BanTinDv.LuuAsync(banSao, anhMoi, xoaAnh); if (kq.ThanhCong) HoiThoai.Close(kq); else loi = kq.ThongBao; }
+        finally { dangLuu = false; }
+    }
+}

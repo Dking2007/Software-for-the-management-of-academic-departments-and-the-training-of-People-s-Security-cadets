@@ -1,0 +1,474 @@
+@page "/khoa/so-do"
+@attribute [Authorize]
+@implements IAsyncDisposable
+@inject DichVuSoDoToChuc SoDo
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject IJSRuntime JS
+
+<PageTitle>Sơ đồ tổ chức | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Sơ đồ tổ chức" MoTa="Hai sơ đồ độc lập: Tổ chức – Cán bộ và Đào tạo. Sơ đồ chỉ vẽ đơn vị; danh sách người nằm ở panel bên phải. Mỗi nhánh vẽ tối đa 8 mục, phần còn lại gom vào thẻ “+ N mục nữa”." />
+
+<div class="sd-tab" role="tablist" aria-label="Chọn sơ đồ">
+    <button type="button" role="tab" aria-selected="@(nhanh == "to-chuc" ? "true" : "false")" class="@(nhanh == "to-chuc" ? "dang-chon" : "")" @onclick="@(() => DoiNhanh("to-chuc"))">
+        <RadzenIcon Icon="domain" /><span><strong>Tổ chức – Cán bộ</strong><small>Học viện → Khoa → Tổ → Cán bộ</small></span>
+    </button>
+    <button type="button" role="tab" aria-selected="@(nhanh == "dao-tao" ? "true" : "false")" class="@(nhanh == "dao-tao" ? "dang-chon" : "")" @onclick="@(() => DoiNhanh("dao-tao"))">
+        <RadzenIcon Icon="school" /><span><strong>Đào tạo</strong><small>Học viện → Hệ → Khoá → Lớp → Học viên</small></span>
+    </button>
+</div>
+
+<div class="sd-chip-thong-ke">
+    @if (nhanh == "to-chuc")
+    {
+        <span><strong>@goc.Con.Count</strong>khoa</span><span><strong>@goc.SoTo</strong>tổ chuyên môn</span><span><strong>@goc.SoCanBo</strong>cán bộ</span>
+    }
+    else
+    {
+        <span><strong>@goc.Con.Count</strong>hệ</span><span><strong>@goc.Con.Sum(h => h.Con.Count)</strong>khoá</span><span><strong>@goc.SoLop</strong>lớp</span><span><strong>@goc.SoHocVien.ToString("N0")</strong>học viên</span>
+    }
+    @if (goc.SoCanRaSoat > 0)
+    {
+        <button type="button" class="sd-nut-ra-soat @(chiRaSoat ? "dang-chon" : "")" @onclick="DoiRaSoat"><RadzenIcon Icon="report" />@goc.SoCanRaSoat cần rà soát</button>
+    }
+</div>
+
+<div class="thanh-lich sd-thanh-cong-cu">
+    <div class="search-box">
+        <RadzenIcon Icon="search" />
+        <input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="Tim" placeholder="@(nhanh == "to-chuc" ? "Tìm khoa, tổ hoặc tên cán bộ…" : "Tìm hệ, khoá, mã lớp, tên học viên hoặc GV chủ nhiệm…")" aria-label="Tìm trên sơ đồ" />
+        @if (tuKhoa != "") { <button type="button" class="sd-xoa-tim" title="Xoá từ khoá" aria-label="Xoá từ khoá" @onclick="XoaTim"><RadzenIcon Icon="close" /></button> }
+    </div>
+    @if (DangTim)
+    {
+        <span class="ket-qua-tim-kiem" role="status"><strong>@ketQuaNguoi.Count</strong> người · <strong>@donViKhop.Count</strong> đơn vị khớp</span>
+        <label class="chon-khoa sd-chi-nhanh-khop"><input type="checkbox" checked="@chiNhanhKhop" @onchange="e => chiNhanhKhop = e.Value is true" /> Chỉ hiện nhánh có kết quả</label>
+    }
+    <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị">
+        <button type="button" class="@(cheDoCot ? "dang-chon" : "")" @onclick="() => DoiCheDo(true)" title="Mỗi cấp một cột: dễ theo dõi nhất"><RadzenIcon Icon="view_column" />Dạng cột</button>
+        <button type="button" class="@(!cheDoCot ? "dang-chon" : "")" @onclick="() => DoiCheDo(false)" title="Sơ đồ hình cây: kéo để di chuyển, cuộn để phóng to/thu nhỏ"><RadzenIcon Icon="account_tree" />Sơ đồ</button>
+    </div>
+</div>
+
+<div class="sd-vung @(cheDoCot ? "che-do-cot" : "che-do-so-do")">
+    <div class="sd-trai">
+        @if (cheDoCot)
+        {
+            @* Dạng cột (kiểu Finder): mỗi cấp một cột, chọn mục thì cột kế tiếp hiện con của mục đó. *@
+            <div class="sd-cot-wrap" role="tree" aria-label="Duyệt theo cấp">
+                @if (DangTim)
+                {
+                    @* Cột kết quả: người khớp tên (kèm nơi đang ở) và đơn vị khớp; bấm để nhảy tới đúng vị trí trên sơ đồ. *@
+                    @if (kqThuGon)
+                    {
+                        <button type="button" class="sd-cot-kq-gon" title="Mở cột kết quả tìm kiếm" aria-label="Mở cột kết quả tìm kiếm" @onclick="() => kqThuGon = false">
+                            <RadzenIcon Icon="keyboard_double_arrow_right" /><span>Kết quả tìm kiếm</span><strong>@(ketQuaNguoi.Count + donViKhop.Count)</strong>
+                        </button>
+                    }
+                    else
+                    {
+                    <div class="sd-cot sd-cot-ket-qua" role="group" aria-label="Kết quả tìm kiếm">
+                        <div class="sd-dau-cot">Kết quả tìm kiếm <span class="sd-dau-cot-phai"><small>@(ketQuaNguoi.Count + donViKhop.Count)</small><button type="button" class="sd-nut-thu-cot" title="Thu gọn cột kết quả" aria-label="Thu gọn cột kết quả" @onclick="() => kqThuGon = true"><RadzenIcon Icon="keyboard_double_arrow_left" /></button></span></div>
+                        @if (ketQuaNguoi.Count == 0 && donViKhop.Count == 0) { <p class="phu-dong sd-kq-trong">Không tìm thấy “@tuKhoa”.</p> }
+                        @if (ketQuaNguoi.Count > 0)
+                        {
+                            <div class="sd-nhom-kq">@(nhanh == "to-chuc" ? "Cán bộ" : "Người") · @ketQuaNguoi.Count</div>
+                            @foreach (var r in ketQuaNguoi.Take(80))
+                            {
+                                <button type="button" class="sd-kq @(r == nguoiDangXem ? "dang-chon" : "")" @onclick="() => XemNguoi(r)">
+                                    <span class="sd-avatar mau-@(Math.Abs(r.Ten.GetHashCode()) % 5)">@ChuDau(r.Ten)</span>
+                                    <span class="sd-chu-muc"><strong>@DanhDau(r.Ten)</strong><small>@r.Phu</small></span>
+                                    @if (r.Nhan != "") { <span class="nhan-trang-thai hoat-dong">@r.Nhan</span> }
+                                </button>
+                            }
+                            @if (ketQuaNguoi.Count > 80) { <p class="phu-dong sd-kq-trong">Còn @(ketQuaNguoi.Count - 80) người nữa, gõ thêm để thu hẹp.</p> }
+                        }
+                        @if (donViKhop.Count > 0)
+                        {
+                            <div class="sd-nhom-kq">Đơn vị · @donViKhop.Count</div>
+                            @foreach (var dv in donViKhop.Take(40))
+                            {
+                                <button type="button" class="sd-kq @(dv == nutChon && nguoiDangXem is null ? "dang-chon" : "")" @onclick="() => { nguoiDangXem = null; Chon(dv); }">
+                                    <span class="sd-avatar don-vi"><RadzenIcon Icon="@dv.BieuTuong" /></span>
+                                    <span class="sd-chu-muc"><strong>@DanhDau(dv.Ten)</strong><small>@string.Join(" › ", dv.DuongDiTuGoc().Skip(1).SkipLast(1).Select(x => x.Ten).DefaultIfEmpty(dv.Loai))</small></span>
+                                </button>
+                            }
+                        }
+                    </div>
+                    }
+                }
+                @foreach (var cot in CacCot)
+                {
+                    <div class="sd-cot" role="group">
+                        <div class="sd-dau-cot">@cot.Ten <small>@cot.Muc.Count</small></div>
+                        @foreach (var muc in cot.Muc.Where(m => !DangTim || !chiNhanhKhop || soKhop.ContainsKey(m.Khoa) || khop.Contains(m.Khoa) || duongChon.Contains(m.Khoa) || m.TatCa().Any(x => khop.Contains(x.Khoa))))
+                        {
+                            var trenDuong = duongChon.Contains(muc.Khoa);
+                            <button type="button" role="treeitem" aria-selected="@(muc == nutChon ? "true" : "false")" class="sd-muc @(trenDuong ? "tren-duong" : "") @(muc == nutChon ? "dang-chon" : "") @(khop.Contains(muc.Khoa) ? "khop" : "") @(chiRaSoat && muc.SoCanRaSoat == 0 ? "mo" : "")" @onclick="() => Chon(muc)">
+                                <RadzenIcon Icon="@muc.BieuTuong" />
+                                <span class="sd-chu-muc"><strong>@muc.Ten</strong><small>@TomTat(muc)</small></span>
+                                @if (muc.CanhBao is not null) { <RadzenIcon Icon="report" class="sd-icon-canh-bao" title="@muc.CanhBao" /> }
+                                @if (soKhop.TryGetValue(muc.Khoa, out var sk)) { <span class="sd-dem-khop" title="@($"{sk} người khớp “{tuKhoa}”")">@sk</span> }
+                                @if (muc.Con.Count > 0) { <RadzenIcon Icon="chevron_right" class="sd-mui-ten" /> }
+                            </button>
+                        }
+                    </div>
+                }
+                @if (DangTim && KhopTrongNutChon is { Count: > 0 } khopTrong)
+                {
+                    @* Cột cuối: người khớp từ khoá thuộc đúng lớp/tổ đang chọn, để đối chiếu ngay cạnh cây. *@
+                    <div class="sd-cot sd-cot-khop-trong" role="group" aria-label="@($"Khớp trong {nutChon.Ten}")">
+                        <div class="sd-dau-cot">Khớp trong @nutChon.Ten <small>@khopTrong.Count</small></div>
+                        @foreach (var r in khopTrong)
+                        {
+                            <div class="sd-kq tinh @(r == nguoiDangXem ? "dang-chon" : "")">
+                                <span class="sd-avatar mau-@(Math.Abs(r.Ten.GetHashCode()) % 5)">@ChuDau(r.Ten)</span>
+                                <span class="sd-chu-muc"><strong><TheXemNhanh Loai="@r.LoaiXn" Ma="@r.MaXn">@DanhDau(r.Ten)</TheXemNhanh></strong><small>@r.Phu</small></span>
+                                @if (r.Nhan != "") { <span class="nhan-trang-thai hoat-dong">@r.Nhan</span> }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="sd-canvas tc-khong-gian-canvas" data-canvas-panel>
+                <div class="sd-cong-cu-canvas">
+                    <button type="button" data-canvas-action="thu-nho" title="Thu nhỏ (−)" aria-label="Thu nhỏ"><RadzenIcon Icon="remove" /></button>
+                    <span data-canvas-zoom>100%</span>
+                    <button type="button" data-canvas-action="phong-to" title="Phóng to (+)" aria-label="Phóng to"><RadzenIcon Icon="add" /></button>
+                    <button type="button" data-canvas-action="vua-khung" title="Vừa khung (0)"><RadzenIcon Icon="fit_screen" /></button>
+                    <button type="button" data-canvas-action="nut-dang-chon" title="Về mục đang chọn"><RadzenIcon Icon="my_location" /></button>
+                    <button type="button" @onclick="MoCap2" title="Mở tất cả đến cấp 2"><RadzenIcon Icon="unfold_more" />Mở cấp 2</button>
+                    <button type="button" @onclick="ThuGon" title="Thu gọn về cấp 1"><RadzenIcon Icon="unfold_less" />Thu gọn</button>
+                    <button type="button" data-canvas-action="toan-man-hinh" title="Toàn màn hình" aria-pressed="false"><RadzenIcon Icon="fullscreen" /></button>
+                </div>
+                <div class="sd-khung" tabindex="0" @ref="khung" aria-label="Sơ đồ. Kéo để di chuyển, cuộn hoặc +/− để phóng, 0 để vừa khung.">
+                    <div class="sd-san" data-canvas-stage style="width:@(boCuc.Rong.ToString(Inv))px;height:@(boCuc.Cao.ToString(Inv))px">
+                        <svg class="sd-duong-noi" width="@boCuc.Rong.ToString(Inv)" height="@boCuc.Cao.ToString(Inv)" aria-hidden="true">
+                            @foreach (var d in DuongNoi) { <path d="@d" /> }
+                        </svg>
+                        @foreach (var t in boCuc.The)
+                        {
+                            var nt = t.Nut;
+                            var trai = t.X.ToString(Inv); var tren = t.Y.ToString(Inv);
+                            if (t.LaGom)
+                            {
+                                <button type="button" class="sd-the gom" data-canvas-node="@($"gom:{nt.Khoa}")" style="left:@(trai)px;top:@(tren)px" @onclick="() => MoHet(nt)">
+                                    <strong>+ @t.SoGom mục nữa</strong><small>Bấm để vẽ đủ, hoặc xem danh sách ở panel</small>
+                                </button>
+                            }
+                            else
+                            {
+                                <div class="sd-the loai-@MaLoai(nt.Loai) @(nt == nutChon ? "dang-chon" : "") @(khop.Contains(nt.Khoa) ? "khop" : "") @(nt.CanhBao is not null ? "canh-bao" : "") @(chiRaSoat && nt.SoCanRaSoat == 0 ? "mo" : "")" data-canvas-node="@nt.Khoa" style="left:@(trai)px;top:@(tren)px">
+                                    <button type="button" class="sd-the-chinh" @onclick="() => Chon(nt)" @ondblclick="() => MoNut(nt)">
+                                        <span class="sd-loai"><RadzenIcon Icon="@nt.BieuTuong" />@nt.Loai</span>
+                                        <strong>@nt.Ten</strong>
+                                        <small class="sd-phu">@TomTat(nt)</small>
+                                    </button>
+                                    @if (nt.Con.Count > 0)
+                                    {
+                                        <button type="button" class="sd-mo-dong" @onclick="() => DoiMo(nt)" aria-label="@(dangMo.Contains(nt.Khoa) ? "Thu gọn" : "Mở") @nt.Ten" title="@(dangMo.Contains(nt.Khoa) ? "Thu gọn" : $"Mở {nt.Con.Count} mục")">@(dangMo.Contains(nt.Khoa) ? "−" : nt.Con.Count.ToString())</button>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <aside class="sd-chi-tiet" aria-labelledby="sd-ten-chon">
+        @{ var n = nutChon; }
+        <nav class="sd-duong-dan" aria-label="Vị trí">
+            @foreach (var cap in n.DuongDiTuGoc())
+            {
+                if (cap == n) { <span aria-current="location">@cap.Ten</span> }
+                else { <button type="button" @onclick="() => Chon(cap)">@cap.Ten</button><span class="sd-gach">/</span> }
+            }
+        </nav>
+        <div class="sd-tieu-de">
+            <span class="sd-bieu-tuong loai-@MaLoai(n.Loai)"><RadzenIcon Icon="@n.BieuTuong" /></span>
+            <div><small>@n.Loai@(n.Ma is not null ? $" · {n.Ma}" : "")</small><h2 id="sd-ten-chon">@n.Ten</h2></div>
+        </div>
+        @if (n.CanhBao is not null) { <div class="sd-canh-bao" role="note"><RadzenIcon Icon="report" />@n.CanhBao</div> }
+        <dl class="sd-so-lieu">
+            @if (nhanh == "to-chuc")
+            {
+                @if (n.Loai == "Học viện") { <div><dt>Khoa</dt><dd>@n.Con.Count</dd></div> }
+                @if (n.Loai is "Học viện" or "Khoa") { <div><dt>Tổ</dt><dd>@n.SoTo</dd></div> }
+                <div><dt>Cán bộ</dt><dd>@n.SoCanBo</dd></div>
+            }
+            else
+            {
+                @if (n.Loai is "Học viện" or "Hệ đào tạo" or "Khoá") { <div><dt>Lớp</dt><dd>@n.SoLop</dd></div> }
+                <div><dt>Học viên</dt><dd>@n.SoHocVien.ToString("N0")</dd></div>
+                @if (n.Loai == "Lớp") { <div><dt>Bình quân</dt><dd>@(n.Cha?.SoLop > 0 ? (n.Cha.SoHocVien / n.Cha.SoLop).ToString() : "—")</dd></div> }
+            }
+        </dl>
+        @if (n.LanhDao.Count > 0)
+        {
+            <div class="sd-lanh-dao">
+                @foreach (var ld in n.LanhDao)
+                {
+                    <div class="the-lanh-dao @(ld.ChucVu.StartsWith("Trưởng") || ld.ChucVu == "Tổ trưởng" ? "chinh" : "")">
+                        <span class="user-avatar">@ld.HoTen.Split(' ')[^1][0]</span>
+                        <span><small>@ld.ChucVu</small><strong>@ld.HoTen</strong><em>@ld.PhuChu</em></span>
+                    </div>
+                }
+            </div>
+        }
+        else if (n.MoTa is not null) { <p class="phu-dong">@n.MoTa</p> }
+        @if (n.GioiThieu is not null)
+        {
+            <div class="sd-gioi-thieu"><h3><RadzenIcon Icon="info" />Giới thiệu</h3><p>@n.GioiThieu</p></div>
+        }
+        @if (n.CoCauHocVi.Count > 0)
+        {
+            <div class="sd-co-cau">@foreach (var cc in n.CoCauHocVi) { <span><strong>@cc.Value</strong>@cc.Key</span> }</div>
+        }
+        @if (n.ChuyenDe.Count > 0 && n.Loai == "Khoa")
+        {
+            <div><h3 class="sd-tieu-de-nho">Chuyên đề phụ trách</h3><div class="tags-tin">@foreach (var cd in n.ChuyenDe) { <span class="tag-tin">@cd</span> }</div></div>
+        }
+        @if (n.LopPhuTrach.Count > 0)
+        {
+            <div><h3 class="sd-tieu-de-nho">Lớp đang giảng dạy tuần này (@n.LopPhuTrach.Count)</h3><div class="tags-tin">@foreach (var l in n.LopPhuTrach) { <a class="tag-tin" href="@($"/quan-ly-hoc-vien/lop/{l}")">@l</a> }</div></div>
+        }
+        <div class="sd-nut-chi-tiet">
+            @if (!cheDoCot && n.Con.Count > 0) { <RadzenButton Text="@(dangMo.Contains(n.Khoa) ? "Thu gọn nhánh" : "Mở nhánh")" Icon="account_tree" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="() => DoiMo(n)" /> }
+            @if (n.DuongDan is not null) { <RadzenLink Path="@n.DuongDan" Text="Mở trang chi tiết" Icon="open_in_new" /> }
+        </div>
+
+        @if (DanhSachNguoi is { } nguoi)
+        {
+            <div class="sd-dau-danh-sach"><h3>@(nhanh == "to-chuc" ? "Cán bộ trong tổ" : "Học viên trong lớp")</h3><span>@nguoi.Count người</span></div>
+            @if (nguoi.Count == 0)
+            {
+                <p class="phu-dong">@(nhanh == "dao-tao" && DuLieu.LayDanhSachHocVien().Count == 0 ? "Vai trò của bạn chỉ xem số liệu tổng hợp, không xem danh sách từng học viên." : "Chưa có dữ liệu.")</p>
+            }
+            else
+            {
+                <div class="search-box sd-tim-nho"><RadzenIcon Icon="search" /><input class="form-control" @bind="timNguoi" @bind:event="oninput" placeholder="Tìm trong danh sách" aria-label="Tìm người" /></div>
+                @if (DangTim && timNguoi == "" && KhopTrongNutChon is { Count: > 0 } kt)
+                {
+                    <label class="chon-khoa sd-chi-khop"><input type="checkbox" checked="@panelChiKhop" @onchange="e => panelChiKhop = e.Value is true" /> Chỉ người khớp “@tuKhoa” (@kt.Count)</label>
+                }
+                <ul class="danh-sach-gon sd-danh-sach">
+                    @foreach (var x in nguoi.Where(x => timNguoi.Trim() == "" ? !(DangTim && panelChiKhop && (KhopTrongNutChon?.Count ?? 0) > 0) || KhopTen(x.Ten) : DichVuTimKiem.BoDau(x.Ten).Contains(DichVuTimKiem.BoDau(timNguoi))).Take(80))
+                    {
+                        <li class="@(DangTim && KhopTen(x.Ten) ? "sd-li-khop" : "")"><span><strong><TheXemNhanh Loai="@x.Loai" Ma="@x.Ma">@(DangTim ? DanhDau(x.Ten) : (RenderFragment)(b => b.AddContent(0, x.Ten)))</TheXemNhanh></strong><span>@x.Phu</span></span>@if (x.Nhan != "") { <span class="nhan-trang-thai hoat-dong">@x.Nhan</span> }</li>
+                    }
+                </ul>
+            }
+        }
+        else if (n.Con.Count > 0)
+        {
+            <div class="sd-dau-danh-sach"><h3>Trực thuộc</h3><span>@n.Con.Count mục</span></div>
+            <ul class="danh-sach-gon sd-danh-sach">
+                @foreach (var con in n.Con)
+                {
+                    <li><button type="button" class="sd-lien-ket" @onclick="() => Chon(con)"><RadzenIcon Icon="@con.BieuTuong" /><span><strong>@con.Ten</strong><span>@TomTat(con)</span></span></button>@if (con.CanhBao is not null) { <span class="nhan-trang-thai canh-bao" title="@con.CanhBao">Cần rà soát</span> }</li>
+                }
+            </ul>
+        }
+    </aside>
+</div>
+
+@code {
+    private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
+    private sealed record Cot(string Ten, List<NutSoDo> Muc);
+    private string nhanh = "to-chuc";
+    private bool cheDoCot = true, chiRaSoat;
+    private NutSoDo goc = new();
+    private NutSoDo nutChon = new();
+    private HashSet<string> duongChon = [], dangMo = [], moHet = [], khop = [];
+    private string tuKhoa = "", timNguoi = "";
+    private sealed record KetQuaNguoi(string Ten, string Phu, string Nhan, NutSoDo Nut, string TimTrongDanhSach, string LoaiXn, string MaXn);
+    private sealed record MucChiMuc(string BoDau, string Ten, string Phu, string Nhan, string KhoaNut, string TimTrongDanhSach, string LoaiXn, string MaXn);
+    private bool kqThuGon, chiNhanhKhop, panelChiKhop = true;
+    private List<MucChiMuc> chiMucNguoi = [];
+    private Dictionary<string, NutSoDo> theoKhoa = [];
+    private List<KetQuaNguoi> ketQuaNguoi = [];
+    private List<NutSoDo> donViKhop = [];
+    private Dictionary<string, int> soKhop = [];
+    private KetQuaNguoi? nguoiDangXem;
+    private bool DangTim => DichVuTimKiem.BoDau(tuKhoa).Length >= 2;
+    private (List<ViTriThe> The, double Rong, double Cao) boCuc = ([], 0, 0);
+    private List<Nhom2_BTL.Models.CanBoGiangVien> canBo = [];
+    private ElementReference khung;
+    private IJSObjectReference? module, canvas;
+    private int lanCanKhung;
+    private bool canKhoiTaoCanvas;
+
+    protected override async Task OnInitializedAsync() => await TaiCay();
+
+    private async Task TaiCay()
+    {
+        goc = nhanh == "to-chuc" ? await SoDo.LayCayToChucAsync() : SoDo.LayCayDaoTao();
+        canBo = nhanh == "to-chuc" ? DuLieu.LayDanhSachCanBo().ToList() : [];
+        dangMo = [goc.Khoa]; moHet = []; khop = []; tuKhoa = ""; chiRaSoat = false;
+        ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null;
+        theoKhoa = goc.TatCa().GroupBy(n => n.Khoa).ToDictionary(g => g.Key, g => g.First());
+        // Chỉ mục tên người (đã bỏ dấu) dựng một lần; danh sách lấy qua dịch vụ nên đã lọc theo quyền của vai trò.
+        chiMucNguoi = nhanh == "to-chuc"
+            ? canBo.Select(c => new MucChiMuc(DichVuTimKiem.BoDau(c.HoTen), $"{c.CapBacHam} {c.HoTen}", $"{c.ChucVu} · {c.TenTo}", "", "t:" + c.MaTo, c.HoTen, "CanBo", c.MaTraCuuNoiBo)).ToList()
+            : DuLieu.LayDanhSachHocVien().Select(h => new MucChiMuc(DichVuTimKiem.BoDau(h.HoTen), h.HoTen, $"{h.MaHocVien} · Lớp {h.MaLop}", h.ChucVu == "Học viên" ? "" : h.ChucVu, "l:" + h.MaLop, h.HoTen, "HocVien", h.MaHocVien))
+                .Concat(DuLieu.LayDanhSachLop().Where(l => l.GiaoVienChuNhiem != "").Select(l => new MucChiMuc(DichVuTimKiem.BoDau(l.GiaoVienChuNhiem), l.GiaoVienChuNhiem, $"GV chủ nhiệm · Lớp {l.MaLop}", "GVCN", "l:" + l.MaLop, "", "Lop", l.MaLop)))
+                .ToList();
+        Chon(goc);
+        lanCanKhung++;
+    }
+
+    private async Task DoiNhanh(string moi) { if (nhanh == moi) return; await HuyCanvas(); nhanh = moi; await TaiCay(); canKhoiTaoCanvas = !cheDoCot; }
+    private async Task DoiCheDo(bool cot) { if (cheDoCot == cot) return; await HuyCanvas(); cheDoCot = cot; canKhoiTaoCanvas = !cot; lanCanKhung++; }
+
+    private void Chon(NutSoDo n)
+    {
+        nutChon = n; timNguoi = "";
+        if (nguoiDangXem is not null && nguoiDangXem.Nut != n) nguoiDangXem = null;
+        duongChon = n.DuongDiTuGoc().Select(x => x.Khoa).ToHashSet();
+        // Trên canvas: mở các cấp cha để mục đang chọn luôn hiện.
+        foreach (var cha in n.DuongDiTuGoc().Where(x => x != n)) dangMo.Add(cha.Khoa);
+        CapNhatBoCuc();
+    }
+    private void DoiMo(NutSoDo n) { if (!dangMo.Remove(n.Khoa)) dangMo.Add(n.Khoa); CapNhatBoCuc(); }
+    private void MoNut(NutSoDo n) { dangMo.Add(n.Khoa); Chon(n); }
+    private void MoHet(NutSoDo n) { dangMo.Add(n.Khoa); moHet.Add(n.Khoa); nutChon = n; CapNhatBoCuc(); }
+    private void MoCap2() { foreach (var c in goc.Con) dangMo.Add(c.Khoa); dangMo.Add(goc.Khoa); CapNhatBoCuc(); lanCanKhung++; }
+    private void ThuGon() { dangMo = [goc.Khoa]; moHet = []; Chon(goc); lanCanKhung++; }
+    private void CapNhatBoCuc() => boCuc = DichVuSoDoToChuc.BoCuc(goc, dangMo, moHet);
+
+    private void DoiRaSoat()
+    {
+        chiRaSoat = !chiRaSoat;
+        if (chiRaSoat && goc.TatCa().FirstOrDefault(x => x.CanhBao is not null) is { } dau) Chon(dau);
+    }
+
+    private void Tim(ChangeEventArgs e)
+    {
+        tuKhoa = e.Value?.ToString() ?? "";
+        var k = DichVuTimKiem.BoDau(tuKhoa);
+        khop = []; ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null;
+        if (k.Length < 2) return;
+        donViKhop = goc.TatCa().Where(n => n != goc && DichVuTimKiem.BoDau($"{n.Ten} {n.Ma} {n.MoTa}").Contains(k)).ToList();
+        foreach (var n in donViKhop) khop.Add(n.Khoa);
+        // Người khớp tên: liệt kê ở cột kết quả, đếm dồn lên mọi cấp cha để hiện huy hiệu trên từng cột.
+        foreach (var m in chiMucNguoi.Where(m => m.BoDau.Contains(k)))
+        {
+            if (!theoKhoa.TryGetValue(m.KhoaNut, out var nut)) continue;
+            ketQuaNguoi.Add(new(m.Ten, m.Phu, m.Nhan, nut, m.TimTrongDanhSach, m.LoaiXn, m.MaXn));
+            foreach (var cha in nut.DuongDiTuGoc().Skip(1)) soKhop[cha.Khoa] = soKhop.GetValueOrDefault(cha.Khoa) + 1;
+        }
+        ketQuaNguoi = ketQuaNguoi.OrderBy(r => DichVuTimKiem.BoDau(r.Ten).StartsWith(k) ? 0 : 1).ThenBy(r => r.Ten, QuyTacDuLieu.SoSanhTiengViet).ToList();
+        // Trên canvas không có cột kết quả: tự chọn mục khớp đầu tiên.
+        if (!cheDoCot && (ketQuaNguoi.FirstOrDefault()?.Nut ?? donViKhop.FirstOrDefault()) is { } dau) Chon(dau);
+    }
+
+    private void XoaTim() { tuKhoa = ""; khop = []; ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null; timNguoi = ""; }
+
+    private void XemNguoi(KetQuaNguoi r)
+    {
+        foreach (var cha in r.Nut.DuongDiTuGoc().Where(x => x != r.Nut)) dangMo.Add(cha.Khoa);
+        nguoiDangXem = r;
+        Chon(r.Nut);
+        timNguoi = r.TimTrongDanhSach; // panel bên phải lọc đúng người vừa chọn
+    }
+
+    private static string ChuDau(string ten)
+    {
+        var tu = ten.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return tu.Length == 0 ? "?" : tu[^1][..1].ToUpperInvariant();
+    }
+
+    /// <summary>Tô sáng phần khớp từ khoá (so khớp không dấu, tô trên chữ gốc có dấu).</summary>
+    private RenderFragment DanhDau(string ten) => b =>
+    {
+        var k = DichVuTimKiem.BoDau(tuKhoa);
+        var boDau = DichVuTimKiem.BoDau(ten);
+        var i = k.Length < 2 || boDau.Length != ten.Length ? -1 : boDau.IndexOf(k, StringComparison.Ordinal);
+        if (i < 0) { b.AddContent(0, ten); return; }
+        b.AddContent(1, ten[..i]);
+        b.OpenElement(2, "mark"); b.AddAttribute(3, "class", "sd-mark"); b.AddContent(4, ten.Substring(i, k.Length)); b.CloseElement();
+        b.AddContent(5, ten[(i + k.Length)..]);
+    };
+
+    private IEnumerable<Cot> CacCot
+    {
+        get
+        {
+            yield return new(nhanh == "to-chuc" ? "Khoa" : "Hệ đào tạo", goc.Con);
+            foreach (var n in nutChon.DuongDiTuGoc().Skip(1))
+                if (n.Con.Count > 0) yield return new(n.Con[0].Loai, n.Con);
+        }
+    }
+
+    private IEnumerable<string> DuongNoi
+    {
+        get
+        {
+            var viTri = boCuc.The.Where(t => !t.LaGom).ToDictionary(t => t.Nut.Khoa);
+            foreach (var t in boCuc.The)
+            {
+                var cha = t.LaGom ? t.Nut : t.Nut.Cha;
+                if (cha is null || !viTri.TryGetValue(cha.Khoa, out var p)) continue;
+                double x1 = p.X + DichVuSoDoToChuc.RongThe, y1 = p.Y + DichVuSoDoToChuc.CaoThe / 2, x2 = t.X, y2 = t.Y + DichVuSoDoToChuc.CaoThe / 2, xm = (x1 + x2) / 2;
+                yield return string.Create(Inv, $"M{x1},{y1} C{xm},{y1} {xm},{y2} {x2},{y2}");
+            }
+        }
+    }
+
+    /// <summary>Danh sách người ở panel: cán bộ của tổ hoặc học viên của lớp (đã lọc theo quyền ở dịch vụ).</summary>
+    private List<(string Ten, string Phu, string Nhan, string Loai, string Ma)>? DanhSachNguoi => nutChon.Loai switch
+    {
+        "Tổ chuyên môn" => canBo.Where(c => "t:" + c.MaTo == nutChon.Khoa).OrderBy(c => c.ChucVu == "Cán bộ giảng viên").ThenBy(c => c.KhoaSapXepTen, StringComparer.Ordinal)
+            .Select(c => ($"{c.CapBacHam} {c.HoTen}", $"{c.ChucVu} · {c.HocVi}{(c.HocHam != "" ? ", " + c.HocHam : "")}", c.ChucVu == "Cán bộ giảng viên" ? "" : c.ChucVu, "CanBo", c.MaTraCuuNoiBo)).ToList(),
+        "Lớp" => DuLieu.LayDanhSachHocVien().Where(h => h.MaLop == nutChon.Ma).OrderBy(h => h.KhoaSapXepTen, StringComparer.Ordinal)
+            .Select(h => (h.HoTen, h.MaHocVien == "" ? "Học viên" : $"{h.MaHocVien} · {h.GioiTinh}", h.ChucVu == "Học viên" ? "" : h.ChucVu, "HocVien", h.MaHocVien)).ToList(),
+        _ => null
+    };
+    private bool KhopTen(string ten) => DangTim && DichVuTimKiem.BoDau(ten).Contains(DichVuTimKiem.BoDau(tuKhoa));
+    /// <summary>Người khớp từ khoá thuộc đúng lớp/tổ đang chọn (null khi mục đang chọn không phải lớp/tổ).</summary>
+    private List<KetQuaNguoi>? KhopTrongNutChon => nutChon.Loai is "Lớp" or "Tổ chuyên môn" ? ketQuaNguoi.Where(r => r.Nut == nutChon && r.Nhan != "GVCN").ToList() : null;
+
+    private string TomTat(NutSoDo n) => n.Loai switch
+    {
+        "Khoa" => $"{n.SoTo} tổ · {n.SoCanBo} cán bộ",
+        "Tổ chuyên môn" => $"{n.SoCanBo} cán bộ",
+        "Hệ đào tạo" or "Khoá" => $"{n.SoLop} lớp · {n.SoHocVien:N0} HV",
+        "Lớp" => $"{n.SoHocVien} học viên",
+        _ => n.MoTa ?? ""
+    };
+    private static string MaLoai(string loai) => loai switch { "Học viện" => "goc", "Khoa" or "Hệ đào tạo" => "cap1", "Tổ chuyên môn" or "Khoá" => "cap2", _ => "cap3" };
+
+    protected override async Task OnAfterRenderAsync(bool lanDau)
+    {
+        if (cheDoCot) return;
+        try
+        {
+            if (canvas is null || canKhoiTaoCanvas)
+            {
+                module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/canvas-to-chuc.js");
+                canvas = await module.InvokeAsync<IJSObjectReference>("khoiTao", khung);
+                canKhoiTaoCanvas = false;
+            }
+            await canvas.InvokeVoidAsync("capNhat", nutChon.Khoa, lanCanKhung, $"{boCuc.The.Count}:{boCuc.Rong}:{boCuc.Cao}");
+        }
+        catch (JSDisconnectedException) { }
+        catch (InvalidOperationException) { } // Kết xuất trước (prerender) chưa có JS.
+    }
+
+    private async Task HuyCanvas()
+    {
+        if (canvas is null) return;
+        try { await canvas.InvokeVoidAsync("huy"); await canvas.DisposeAsync(); } catch (JSDisconnectedException) { }
+        canvas = null;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await HuyCanvas();
+        if (module is not null) { try { await module.DisposeAsync(); } catch (JSDisconnectedException) { } }
+    }
+}

@@ -5,6 +5,8 @@ public enum VaiTroDemo
 {
     Admin,
     Manager,
+    GiangVien,
+    HocVien,
     Guest
 }
 

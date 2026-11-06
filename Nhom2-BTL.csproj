@@ -10,12 +10,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Bộ kiểm thử đọc mã tra cứu nội bộ (internal) của hồ sơ cán bộ. -->
+    <InternalsVisibleTo Include="NghiepVu" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Chương trình kiểm thử độc lập không được biên dịch vào ứng dụng web. -->
     <Compile Remove="KiemThu/**" />
     <Content Remove="KiemThu/**" />
     <None Remove="KiemThu/**" />
     <Content Remove="App_Data/**" />
     <None Remove="App_Data/**" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.22" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.22" />
     <!-- Radzen cung cấp các điều khiển giao diện thống nhất cho Blazor. -->

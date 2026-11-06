@@ -2,46 +2,91 @@
 @inject DialogService HoiThoai
 @inject DichVuQuanLyDuLieuDemo DuLieu
 
-@* Biểu mẫu lưu đúng các trường hệ, khóa, chuyên ngành và sĩ số của lớp. *@
+@* Thêm lớp: mã lớp KHÔNG gõ tay. Chọn hệ, khoá và số lớp → mã B{số}{khoá} được sinh,
+   chuyên ngành suy ra theo quy tắc, niên khoá tự tính. Dịch vụ kiểm tra lại quy tắc và chặn trùng mã. *@
 <RadzenTemplateForm TItem="LopDaoTao" Data="@banSao" Submit="Luu">
     <RadzenStack Gap="1rem">
         <div class="form-grid">
-            <RadzenFormField Text="Mã lớp" Variant="Variant.Outlined"><RadzenTextBox Name="MaLop" @bind-Value="banSao.MaLop" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
-            <RadzenFormField Text="Hệ đào tạo" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="HeDaoTao" Data="@cacHeDaoTao" @bind-Value="banSao.HeDaoTao" Change="DoiHeDaoTao" Style="width:100%" /></RadzenFormField>
-            <RadzenFormField Text="Khóa" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="KhoaHoc" Data="@CacKhoaHoc" @bind-Value="banSao.KhoaHoc" Style="width:100%" /></RadzenFormField>
-            <RadzenFormField Text="Chuyên ngành" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Name="ChuyenNganh" Data="@CacChuyenNganh" @bind-Value="banSao.ChuyenNganh" Style="width:100%" /></RadzenFormField>
-            <RadzenText TextStyle="TextStyle.Caption">Sĩ số được tính từ danh sách học viên của lớp.</RadzenText>
-            <RadzenFormField Text="GV chủ nhiệm (cấp bậc hàm + họ tên)" Variant="Variant.Outlined"><RadzenTextBox Name="GiaoVienChuNhiem" @bind-Value="banSao.GiaoVienChuNhiem" MaxLength="120" Style="width:100%" /></RadzenFormField>
-            <RadzenText TextStyle="TextStyle.Caption">Niên khóa: @banSao.NienKhoa (4 năm, tự tính theo khóa học). Tên chủ nhiệm mẫu là dữ liệu tổng hợp.</RadzenText>
+            <RadzenFormField Text="Hệ đào tạo" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@cacHeDaoTao" @bind-Value="banSao.HeDaoTao" Change="DoiHeDaoTao" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
+            <RadzenFormField Text="Khóa" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@CacKhoaHoc" @bind-Value="banSao.KhoaHoc" Change="CapNhatMa" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
+            <RadzenFormField Text="Số lớp" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="soLop" Min="@SoNhoNhat" Max="@SoLonNhat" Change="CapNhatMa" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
+            <div class="o-ma-tu-sinh" aria-live="polite">
+                <span>Mã lớp (tự sinh)</span>
+                <strong class="record-code">@banSao.MaLop</strong>
+                @if (!DangSua && trungMa) { <small class="loi-nho">Mã đã tồn tại. Chọn số lớp khác (gợi ý: @goiYSo).</small> }
+            </div>
+            @if (banSao.HeDaoTao == "Liên thông")
+            {
+                <RadzenFormField Text="Chuyên ngành" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@QuyTacDuLieu.ChuyenNganhChinhQuyDanhMuc" @bind-Value="banSao.ChuyenNganh" Disabled="@DangSua" Style="width:100%" /></RadzenFormField>
+            }
+            else
+            {
+                <div class="o-ma-tu-sinh"><span>Chuyên ngành (suy ra từ số lớp)</span><strong>@banSao.ChuyenNganh</strong></div>
+            }
+            <div class="o-ma-tu-sinh"><span>Niên khóa (4 năm)</span><strong>@banSao.NienKhoa</strong></div>
+            <RadzenFormField Text="GV chủ nhiệm (cấp bậc hàm + họ tên)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox Name="GiaoVienChuNhiem" @bind-Value="banSao.GiaoVienChuNhiem" MaxLength="120" Style="width:100%" /></RadzenFormField>
+            <RadzenText TextStyle="TextStyle.Caption" class="toan-hang">Chính quy: lớp 1–3 Trinh sát an ninh, 4–7 Điều tra hình sự, 8 Quản lý xuất nhập cảnh, 9–12 ANM &amp; PCTPCNC, 13–15 Công nghệ thông tin. Liên thông: dùng chung mã B{số}D{khoá}, số lớp 16–20, chọn chuyên ngành. Văn bằng 2: số lẻ Điều tra, số chẵn ANM &amp; PCTPCNC. Sĩ số tính từ danh sách học viên.</RadzenText>
         </div>
-        <RadzenRequiredValidator Component="MaLop" Text="Vui lòng nhập mã lớp." />
+<TruongMoRongBieuMau @ref="moRong" Loai="Lop" Ma="@(DangSua ? DuLieuBanDau.MaLop : null)" />
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem">
             <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" />
-            <RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu lớp" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
+            <RadzenButton Disabled="@(dangLuu || (!DangSua && trungMa))" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu lớp" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
         </RadzenStack>
     </RadzenStack>
 @if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
 </RadzenTemplateForm>
 
 @code {
+    private TruongMoRongBieuMau? moRong;
     [Parameter] public LopDaoTao DuLieuBanDau { get; set; } = new();
     [Parameter] public bool DangSua { get; set; }
     private LopDaoTao banSao = new();
-    private readonly string[] cacHeDaoTao = ["Chính quy", "Văn bằng 2"];
+    private int soLop = 1;
+    private bool trungMa;
+    private int goiYSo;
+    private HashSet<string> maDaCo = [];
+    private readonly string[] cacHeDaoTao = QuyTacDuLieu.CacHeDaoTao;
+    private int SoNhoNhat => banSao.HeDaoTao == "Liên thông" ? 16 : 1;
+    private int SoLonNhat => banSao.HeDaoTao switch { "Chính quy" => 15, "Liên thông" => 20, _ => 99 };
     private readonly string[] khoaChinhQuy = ["D58", "D57", "D56", "D55", "D54", "D53"];
     private readonly string[] khoaVanBangHai = ["K6", "K5", "K4", "K3"];
-    private readonly string[] chuyenNganhChinhQuy = ["Trinh sát an ninh", "Điều tra hình sự", "Quản lý xuất nhập cảnh", "ANM & PCTPCNC", "Công nghệ thông tin"];
-    private readonly string[] chuyenNganhVanBangHai = ["Điều tra", "ANM & PCTPCNC"];
-    private IEnumerable<string> CacKhoaHoc => banSao.HeDaoTao == "Chính quy" ? khoaChinhQuy : khoaVanBangHai;
-    private IEnumerable<string> CacChuyenNganh => banSao.HeDaoTao == "Chính quy" ? chuyenNganhChinhQuy : chuyenNganhVanBangHai;
+    private IEnumerable<string> CacKhoaHoc => banSao.HeDaoTao == "Văn bằng 2" ? khoaVanBangHai : khoaChinhQuy;
 
-    protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
-    private void DoiHeDaoTao(object giaTri)
+    protected override void OnInitialized()
     {
-        banSao.HeDaoTao = Convert.ToString(giaTri) ?? "Chính quy";
-        banSao.KhoaHoc = banSao.HeDaoTao == "Chính quy" ? khoaChinhQuy[0] : khoaVanBangHai[0];
-        banSao.ChuyenNganh = banSao.HeDaoTao == "Chính quy" ? chuyenNganhChinhQuy[0] : chuyenNganhVanBangHai[0];
+        banSao = DuLieuBanDau.TaoBanSao();
+        maDaCo = DuLieu.LayDanhSachLop().Select(l => l.MaLop).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (DangSua)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(banSao.MaLop, @"^B(\d+)");
+            soLop = m.Success ? int.Parse(m.Groups[1].Value) : 1;
+            return;
+        }
+        if (string.IsNullOrEmpty(banSao.KhoaHoc)) banSao.KhoaHoc = khoaChinhQuy[0];
+        // Gợi ý số lớp trống đầu tiên của khoá để người dùng ít phải sửa.
+        soLop = SoTrongDauTien();
+        CapNhatMa();
     }
+
+    private int SoTrongDauTien() => Enumerable.Range(SoNhoNhat, SoLonNhat - SoNhoNhat + 1).FirstOrDefault(s => !maDaCo.Contains($"B{s}{banSao.KhoaHoc}"), 0);
+
+    private void DoiHeDaoTao()
+    {
+        banSao.KhoaHoc = banSao.HeDaoTao == "Văn bằng 2" ? khoaVanBangHai[0] : khoaChinhQuy[0];
+        soLop = Math.Max(SoNhoNhat, SoTrongDauTien());
+        CapNhatMa();
+    }
+
+    private void CapNhatMa()
+    {
+        if (DangSua) return;
+        banSao.MaLop = $"B{soLop}{banSao.KhoaHoc}";
+        var suyRa = QuyTacDuLieu.ChuyenNganhTheoSoLop(banSao.HeDaoTao, soLop);
+        if (suyRa != "" || !QuyTacDuLieu.ChuyenNganhChinhQuyDanhMuc.Contains(banSao.ChuyenNganh)) banSao.ChuyenNganh = suyRa == "" ? QuyTacDuLieu.ChuyenNganhChinhQuyDanhMuc[0] : suyRa;
+        trungMa = maDaCo.Contains(banSao.MaLop);
+        goiYSo = SoTrongDauTien();
+    }
+
     // Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.
     private bool dangLuu;
     private string? loi;
@@ -51,12 +96,12 @@
         dangLuu = true; loi = null;
         try
         {
+            if (moRong?.KiemTra() is { } loiMoRong) { loi = loiMoRong; return; }
             var ketQua = await DuLieu.LuuLopAsync(banSao, DangSua ? DuLieuBanDau.MaLop : null);
-            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            if (ketQua.ThanhCong) { if (moRong is not null) await moRong.LuuAsync(ketQua.MaBanGhi ?? banSao.MaLop.Trim().ToUpperInvariant()); HoiThoai.Close(ketQua); }
             else loi = ketQua.ThongBao;
         }
         finally { dangLuu = false; }
     }
     private void Huy() => HoiThoai.Close(null);
 }
-

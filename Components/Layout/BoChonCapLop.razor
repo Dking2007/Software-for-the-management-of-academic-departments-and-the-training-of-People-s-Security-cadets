@@ -1,0 +1,66 @@
+@* Chọn lớp theo cấp, đi từ ngoài vào trong: Niên khoá (năm nhập học) → Hệ đào tạo → Khoá → Lớp.
+   Mỗi cấp là một hàng nút kèm số lượng; cấp sau chỉ hiện giá trị nằm trong cấp trước đã chọn. *@
+<div class="bo-chon-cap">
+    <div class="hang-cap">
+        <span class="nhan-cap"><RadzenIcon Icon="event_note" />Niên khoá</span>
+        <button type="button" class="@(Nam is null ? "dang-chon" : "")" @onclick="() => Chon(null, null, null, null)">Tất cả <small>@CacLop.Count</small></button>
+        @foreach (var nam in CacLop.GroupBy(NamNhapHoc).OrderByDescending(g => g.Key))
+        {
+            <button type="button" class="@(Nam == nam.Key ? "dang-chon" : "")" @onclick="() => Chon(nam.Key, null, null, null)">@nam.Key–@(nam.Key + 4) <small>@nam.Count()</small></button>
+        }
+    </div>
+    @if (Nam is not null)
+    {
+        var theoNam = CacLop.Where(l => NamNhapHoc(l) == Nam).ToList();
+        <div class="hang-cap">
+            <span class="nhan-cap"><RadzenIcon Icon="school" />Hệ</span>
+            @foreach (var he in theoNam.GroupBy(l => l.HeDaoTao).OrderBy(g => Array.IndexOf(QuyTacDuLieu.CacHeDaoTao, g.Key)))
+            {
+                <button type="button" class="@(He == he.Key ? "dang-chon" : "")" @onclick="() => Chon(Nam, He == he.Key ? null : he.Key, null, null)">@he.Key <small>@he.Count()</small></button>
+            }
+        </div>
+        @if (He is not null)
+        {
+            var theoHe = theoNam.Where(l => l.HeDaoTao == He).ToList();
+            <div class="hang-cap">
+                <span class="nhan-cap"><RadzenIcon Icon="groups_3" />Khoá</span>
+                @foreach (var kh in theoHe.GroupBy(l => l.KhoaHoc).OrderByDescending(g => g.Key))
+                {
+                    <button type="button" class="@(Khoa == kh.Key ? "dang-chon" : "")" @onclick="() => Chon(Nam, He, Khoa == kh.Key ? null : kh.Key, null)">@kh.Key <small>@kh.Count() lớp</small></button>
+                }
+            </div>
+            @if (Khoa is not null && HienLop)
+            {
+                <div class="hang-cap">
+                    <span class="nhan-cap"><RadzenIcon Icon="meeting_room" />Lớp</span>
+                    @foreach (var l in theoHe.Where(l => l.KhoaHoc == Khoa).OrderBy(l => l.MaLop.Length).ThenBy(l => l.MaLop))
+                    {
+                        <button type="button" class="@(Lop == l.MaLop ? "dang-chon" : "")" @onclick="() => Chon(Nam, He, Khoa, Lop == l.MaLop ? null : l.MaLop)" title="@l.ChuyenNganh">@l.MaLop <small>@l.SiSo</small></button>
+                    }
+                </div>
+            }
+        }
+    }
+    @if (Nam is not null)
+    {
+        <div class="duong-cap"><RadzenIcon Icon="filter_alt" />Đang xem: <strong>@Nam–@(Nam + 4)</strong>@if (He is not null) { <span>›</span><strong>@He</strong> }@if (Khoa is not null) { <span>›</span><strong>Khoá @Khoa</strong> }@if (Lop is not null) { <span>›</span><strong>Lớp @Lop</strong> }
+            <button type="button" @onclick="() => Chon(null, null, null, null)">Bỏ chọn</button></div>
+    }
+</div>
+
+@code {
+    public sealed record BoLoc(int? Nam, string? He, string? Khoa, string? Lop)
+    {
+        public bool Khop(LopDaoTao l) => (Nam is null || NamNhapHoc(l) == Nam) && (He is null || l.HeDaoTao == He) && (Khoa is null || l.KhoaHoc == Khoa) && (Lop is null || l.MaLop == Lop);
+    }
+    [Parameter, EditorRequired] public IReadOnlyList<LopDaoTao> CacLop { get; set; } = [];
+    [Parameter] public bool HienLop { get; set; } = true;
+    [Parameter] public EventCallback<BoLoc> KhiDoi { get; set; }
+    private int? Nam; private string? He, Khoa, Lop;
+    public static int NamNhapHoc(LopDaoTao l) => int.TryParse(l.NienKhoa.Split('–')[0], out var n) ? n : 0;
+    private async Task Chon(int? nam, string? he, string? khoa, string? lop)
+    {
+        Nam = nam; He = he; Khoa = khoa; Lop = lop;
+        await KhiDoi.InvokeAsync(new BoLoc(Nam, He, Khoa, Lop));
+    }
+}

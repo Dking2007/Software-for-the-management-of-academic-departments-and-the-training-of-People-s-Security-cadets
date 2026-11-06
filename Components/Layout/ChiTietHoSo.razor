@@ -1,3 +1,4 @@
+@inject DichVuNhatKy NhatKy
 @* Phiếu hồ sơ chỉ đọc dùng chung cho cán bộ và học viên.
    Đầu phiếu: avatar, họ tên, chức vụ và các nhãn nổi bật (mã, cấp bậc hàm, học vị); bên dưới chia trường thành nhóm.
    Trường không có giá trị (kể cả trường đã bị lọc theo quyền ở dịch vụ) không hiển thị; nhóm không còn trường nào cũng ẩn. *@
@@ -30,12 +31,20 @@
     {
         var cacTruong = nhom.Truong.Select(k => (Nhan: k, GiaTri: Lay(k))).Where(x => !string.IsNullOrWhiteSpace(x.GiaTri)).ToList();
         if (cacTruong.Count == 0) continue;
+        var coTruongChe = !daHienDu && cacTruong.Any(x => TruongCaNhan.Contains(x.Nhan));
         <section class="nhom-ho-so">
-            <h3><RadzenIcon Icon="@nhom.BieuTuong" />@nhom.Ten</h3>
+            <h3><RadzenIcon Icon="@nhom.BieuTuong" />@nhom.Ten
+                @if (coTruongChe)
+                {
+                    @* Dữ liệu cá nhân mặc định hiển thị dạng che; "Hiện đủ" ghi nhật ký ai xem, xem ai, lúc nào. *@
+                    <button type="button" class="nut-hien-du" @onclick="HienDu" title="Hiện đầy đủ dữ liệu cá nhân (được ghi nhật ký)"><RadzenIcon Icon="visibility" />Hiện đủ</button>
+                }
+            </h3>
             <dl class="luoi-ho-so">
                 @foreach (var truong in cacTruong)
                 {
-                    <div class="@(TruongDai.Contains(truong.Nhan) ? "toan-hang" : null)"><dt>@truong.Nhan</dt><dd>@truong.GiaTri</dd></div>
+                    var che = !daHienDu && TruongCaNhan.Contains(truong.Nhan);
+                    <div class="@(TruongDai.Contains(truong.Nhan) ? "toan-hang" : null)"><dt>@truong.Nhan</dt><dd class="@(che ? "gia-tri-che" : null)">@(che ? QuyTacHocVu.Che(truong.GiaTri) : truong.GiaTri)</dd></div>
                 }
             </dl>
         </section>
@@ -57,6 +66,18 @@
 @code {
     // Chấp nhận cả Dictionary<string, string> do trang truyền qua hộp thoại lẫn từ điển có giá trị rỗng.
     [Parameter] public IReadOnlyDictionary<string, string?> CacTruong { get; set; } = new Dictionary<string, string?>();
+    /// <summary>Loại hồ sơ ("Cán bộ" / "Học viên") để ghi nhật ký khi bấm Hiện đủ.</summary>
+    [Parameter] public string DoiTuong { get; set; } = "Hồ sơ";
+
+    // Trường cá nhân, liên hệ: hiển thị dạng che (079•••••••123) cho tới khi người xem bấm Hiện đủ.
+    private static readonly HashSet<string> TruongCaNhan = ["Số CCCD", "Số điện thoại", "Email", "Địa chỉ thường trú"];
+    private bool daHienDu;
+    private async Task HienDu()
+    {
+        var truong = string.Join(", ", TruongCaNhan.Where(t => !string.IsNullOrWhiteSpace(Lay(t))));
+        await NhatKy.GhiXemDuLieuCaNhanAsync(DoiTuong, Lay("Mã cán bộ") ?? Lay("Mã") ?? Lay("Họ tên") ?? "", truong);
+        daHienDu = true;
+    }
 
     private sealed record NhomTruong(string Ten, string BieuTuong, string[] Truong);
 

@@ -1,0 +1,87 @@
+@inject DichVuExcel Excel
+@inject DialogService HoiThoai
+@inject IJSRuntime JS
+
+@* Nhập học viên từ Excel theo ba bước: tải tệp mẫu → chọn tệp, xem trước từng dòng kèm lý do lỗi → xác nhận ghi các dòng hợp lệ.
+   Không có gì được ghi trước khi bấm Xác nhận; khi ghi, dịch vụ kiểm quyền và quy tắc lại từng dòng. *@
+<ol class="buoc-nhap">
+    <li class="@(dong is null ? "dang" : "xong")"><strong>1. Tải tệp mẫu</strong><span>Giữ nguyên dòng tiêu đề; có sẵn danh sách chọn lớp, giới tính, chức vụ.</span>
+        <RadzenButton Text="Tải tệp mẫu" Icon="description" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="TaiMau" /></li>
+    <li class="@(dong is null ? "dang" : "xong")"><strong>2. Chọn tệp đã điền</strong><span>Tệp .xlsx, tối đa 2.000 dòng, 5 MB.</span>
+        <InputFile OnChange="ChonTep" accept=".xlsx" disabled="@dangDoc" /></li>
+    <li class="@(dong is { Count: > 0 } ? "dang" : "")"><strong>3. Xem trước và xác nhận</strong><span>Chỉ các dòng hợp lệ được ghi.</span></li>
+</ol>
+
+@if (dangDoc) { <div class="khung-xuong dong-xuong"></div> }
+@if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+@if (dong is { Count: > 0 })
+{
+    <div class="tom-tat-diem-danh">
+        <span class="o-tom-tat co-mat"><strong>@dong.Count(d => d.HopLe)</strong>dòng hợp lệ</span>
+        <span class="o-tom-tat vang-kp"><strong>@dong.Count(d => !d.HopLe)</strong>dòng lỗi</span>
+        <label class="chon-khoa"><RadzenCheckBox TValue="bool" @bind-Value="chiLoi" /> Chỉ xem dòng lỗi</label>
+    </div>
+    <div class="bang-cuon bang-xem-truoc">
+        <table class="bang-diem">
+            <thead><tr><th>Dòng</th><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Ngày sinh</th><th>CCCD</th><th>Kết quả kiểm tra</th></tr></thead>
+            <tbody>
+                @foreach (var d in dong.Where(d => !chiLoi || !d.HopLe).Take(300))
+                {
+                    <tr class="@(d.HopLe ? "" : "dong-loi")">
+                        <td class="so">@d.SoDong</td>
+                        <td><span class="record-code">@d.HocVien.MaHocVien</span>@if (d.TuSinhMa) { <small class="phu-dong">tự sinh</small> }</td>
+                        <td>@d.HocVien.HoTen</td><td>@d.HocVien.MaLop</td>
+                        <td>@(d.HocVien.NgaySinh == default ? "" : d.HocVien.NgaySinh.ToString("dd/MM/yyyy"))</td>
+                        <td>@QuyTacHocVu.Che(d.HocVien.SoCCCD)</td>
+                        <td>@if (d.HopLe) { <span class="nhan-xep-loai gioi">Hợp lệ</span> } else { <ul class="loi-dong">@foreach (var l in d.Loi) { <li>@l</li> }</ul> }</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+@if (ketQua is not null)
+{
+    <RadzenAlert AlertStyle="@(ketQua.Value.Loi.Count == 0 ? AlertStyle.Success : AlertStyle.Warning)" AllowClose="false">
+        Đã thêm @ketQua.Value.ThanhCong học viên.@if (ketQua.Value.Loi.Count > 0) { <span> @ketQua.Value.Loi.Count dòng bị từ chối khi ghi: @string.Join("; ", ketQua.Value.Loi.Take(5))</span> }
+    </RadzenAlert>
+}
+<div class="thao-tac-bieu-mau">
+    <RadzenButton Text="@(ketQua is null ? "Hủy" : "Đóng")" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(ketQua is null ? null : new KetQuaThaoTac(true, KetQuaNgan))" />
+    @if (ketQua is null)
+    {
+        <RadzenButton Text="@($"Xác nhận nhập {dong?.Count(d => d.HopLe) ?? 0} dòng")" Icon="upload" ButtonStyle="ButtonStyle.Primary" Click="XacNhan" IsBusy="dangGhi" Disabled="@(dong is null || !dong.Any(d => d.HopLe))" />
+    }
+</div>
+
+@code {
+    private List<DichVuExcel.DongNhap>? dong;
+    private string? loi;
+    private bool dangDoc, dangGhi, chiLoi;
+    private (int ThanhCong, List<string> Loi)? ketQua;
+    private string KetQuaNgan => ketQua is { } k ? $"Đã nhập {k.ThanhCong} học viên từ Excel{(k.Loi.Count > 0 ? $", {k.Loi.Count} dòng bị từ chối" : "")}." : "";
+
+    private async Task TaiMau() => await JS.InvokeVoidAsync("taiTep", "mau-nhap-hoc-vien.xlsx", DichVuExcel.MimeXlsx, Convert.ToBase64String(Excel.TaoMauNhapHocVien()));
+
+    private async Task ChonTep(InputFileChangeEventArgs e)
+    {
+        dangDoc = true; loi = null; dong = null; ketQua = null;
+        try
+        {
+            using var ms = new MemoryStream();
+            await using (var s = e.File.OpenReadStream(5 * 1024 * 1024)) await s.CopyToAsync(ms);
+            ms.Position = 0;
+            (dong, loi) = await Excel.DocTepHocVienAsync(ms);
+        }
+        catch (IOException) { loi = "Tệp vượt quá 5 MB hoặc không đọc được."; }
+        finally { dangDoc = false; }
+    }
+
+    private async Task XacNhan()
+    {
+        if (dong is null) return;
+        dangGhi = true;
+        try { ketQua = await Excel.XacNhanNhapAsync(dong); }
+        finally { dangGhi = false; }
+    }
+}

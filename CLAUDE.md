@@ -1,0 +1,2 @@
+@AGENTS.md
+@docs/THIET_KE_TONG_THE.md

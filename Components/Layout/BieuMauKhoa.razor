@@ -23,6 +23,7 @@
                 <RadzenLabel Text="Đơn vị đang hoạt động" Component="DangHoatDong" />
             </RadzenStack>
         }
+<TruongMoRongBieuMau @ref="moRong" Loai="Khoa" Ma="@(DangSua ? DuLieuBanDau.MaKhoa : null)" />
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem">
             <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" />
             <RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu khoa" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" />
@@ -32,6 +33,7 @@
 </RadzenTemplateForm>
 
 @code {
+    private TruongMoRongBieuMau? moRong;
     [Parameter] public Khoa DuLieuBanDau { get; set; } = new();
     [Parameter] public bool DangSua { get; set; }
     private Khoa banSao = new();
@@ -48,8 +50,9 @@
         dangLuu = true; loi = null;
         try
         {
+            if (moRong?.KiemTra() is { } loiMoRong) { loi = loiMoRong; return; }
             var ketQua = await DuLieu.LuuKhoaAsync(banSao, DangSua ? DuLieuBanDau.MaKhoa : null);
-            if (ketQua.ThanhCong) HoiThoai.Close(ketQua);
+            if (ketQua.ThanhCong) { if (moRong is not null) await moRong.LuuAsync(ketQua.MaBanGhi ?? banSao.MaKhoa.Trim().ToUpperInvariant()); HoiThoai.Close(ketQua); }
             else loi = ketQua.ThongBao;
         }
         finally { dangLuu = false; }

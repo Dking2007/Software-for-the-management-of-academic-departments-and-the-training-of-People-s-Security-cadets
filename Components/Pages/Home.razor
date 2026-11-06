@@ -2,9 +2,13 @@
 @implements IDisposable
 @using System.Globalization
 @inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuHocVu HocVu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuTongQuan TongQuan
+@inject DichVuThongBao ThongBaoDv
 
 @* Trang chủ: dải chào mừng, thẻ số liệu (lối vào từng phân hệ) và hai biểu đồ cơ cấu.
-   Mọi con số lấy từ dữ liệu mẫu trong bộ nhớ nên sẽ đổi khi dữ liệu được đặt lại. *@
+   Mọi con số tính trực tiếp từ dữ liệu đang lưu trong CSDL. *@
 <PageTitle>Trang chủ | Quản lý đào tạo</PageTitle>
 
 <section class="tong-quan-hero" aria-labelledby="tieu-de-tong-quan">
@@ -18,7 +22,7 @@
         </h1>
         <p>Theo dõi nhanh khoa, tổ chuyên môn, lớp đào tạo và học viên của Học viện.</p>
     </div>
-    <span class="tong-quan-nhan-demo"><RadzenIcon Icon="science" />Bản demo · dữ liệu giả lập, đặt lại khi khởi động</span>
+    <span class="tong-quan-nhan-demo"><RadzenIcon Icon="science" />Bản demo · dữ liệu giả lập</span>
 </section>
 
 @* Thẻ số liệu nằm chồng lên mép dưới dải chào mừng (margin âm trong app.css). *@
@@ -31,11 +35,81 @@
                 <span class="the-so-lieu-mui-ten"><RadzenIcon Icon="arrow_outward" /></span>
             </span>
             <span class="the-so-lieu-nhan">@muc.Ten</span>
-            <strong class="the-so-lieu-gia-tri">@(muc.GiaTri?.ToString("N0") ?? "—")</strong>
+            <strong class="the-so-lieu-gia-tri" data-chay-so>@(muc.GiaTri?.ToString("N0") ?? "—")</strong>
             <span class="the-so-lieu-phu">@muc.MoTa</span>
         </a>
     }
 </section>
+
+@* Dải học vụ theo vai trò: lịch hôm nay, tuần này, buổi đã qua chưa điểm danh và lối vào nhanh. *@
+@if (hocVu is { } hv)
+{
+    <section class="dai-hoc-vu" aria-label="Học vụ">
+        <a class="o-hoc-vu" href="/dao-tao/lich"><RadzenIcon Icon="today" /><span><strong data-chay-so>@hv.BuoiHomNay</strong>buổi học hôm nay</span></a>
+        <a class="o-hoc-vu" href="/dao-tao/lich"><RadzenIcon Icon="date_range" /><span><strong data-chay-so>@hv.SoBuoiTuanNay</strong>buổi học tuần này</span></a>
+        <a class="o-hoc-vu @(hv.BuoiChuaDiemDanh > 0 ? "canh-bao" : "tot")" href="@(nd.LaGiangVien ? "/giang-day" : "/dao-tao/lich")"><RadzenIcon Icon="@(hv.BuoiChuaDiemDanh > 0 ? "pending_actions" : "task_alt")" /><span><strong>@hv.BuoiChuaDiemDanh</strong>buổi đã qua chưa điểm danh (2 tuần gần đây)</span></a>
+        @foreach (var (ten, bieuTuong, duongDan) in LoiVaoNhanh)
+        {
+            <a class="o-hoc-vu loi-vao" href="@duongDan"><RadzenIcon Icon="@bieuTuong" /><span><strong>@ten</strong>Mở nhanh</span><RadzenIcon Icon="arrow_forward" class="mui-ten-tim" /></a>
+        }
+    </section>
+}
+
+@* Bảng điều khiển: cần chú ý (số liệu tổng hợp theo vai trò), văn bản ưu tiên, hoạt động gần đây (Admin). *@
+@if (canChuY.Count > 0 || uuTien.Count > 0)
+{
+    <div class="luoi-dieu-khien">
+        @if (canChuY.Count > 0)
+        {
+            <section class="the-bieu-do the-can-chu-y" aria-labelledby="tieu-de-can-chu-y">
+                <header class="dau-bieu-do"><div><h2 id="tieu-de-can-chu-y">Cần chú ý</h2><p>@(canChuY.Count(m => m.SoLuong > 0) == 0 ? "Không có việc tồn đọng." : $"{canChuY.Count(m => m.SoLuong > 0)} mục cần xử lý")</p></div></header>
+                <ul class="ds-can-chu-y">
+                    @foreach (var m in canChuY.OrderByDescending(m => m.SoLuong > 0))
+                    {
+                        <li class="@(m.SoLuong == 0 ? "xong" : m.MucDo)">
+                            <a href="@m.DuongDan" title="@m.GoiY">
+                                <RadzenIcon Icon="@(m.SoLuong == 0 ? "task_alt" : m.BieuTuong)" />
+                                <span><strong>@m.Ten</strong><small>@(m.SoLuong == 0 ? "Đã ổn" : m.GoiY)</small></span>
+                                <b>@m.SoLuong.ToString("N0")</b>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        @if (uuTien.Count > 0)
+        {
+            <section class="the-bieu-do" aria-labelledby="tieu-de-uu-tien">
+                <header class="dau-bieu-do"><div><h2 id="tieu-de-uu-tien">Văn bản ưu tiên</h2><p>Ghim, khẩn, quan trọng trước</p></div><a class="lien-ket-bieu-do" href="/thong-bao">Tất cả<RadzenIcon Icon="arrow_forward" /></a></header>
+                <ul class="ds-uu-tien">
+                    @foreach (var tb in uuTien)
+                    {
+                        var ngay = tb.DangLuc.ToOffset(TimeSpan.FromHours(7));
+                        <li><a href="@($"/thong-bao?ma={tb.Ma}")">
+                            <span class="tb-o-ngay"><strong>@ngay.ToString("dd")</strong><small>Th@(ngay.Month)</small></span>
+                            <span class="tb-chu-muc">
+                                <span class="tb-dong-nhan">@if (tb.Ghim) { <RadzenIcon Icon="push_pin" class="tb-ghim" /> }<span class="tb-loai">@tb.LoaiVanBan</span>@if (tb.SoKyHieu != "") { <span class="tb-so">@tb.SoKyHieu</span> }@if (tb.MucDo != "Thường") { <span class="tb-muc-do @(tb.MucDo == "Khẩn" ? "khan" : "quan-trong")">@tb.MucDo</span> }</span>
+                                <strong>@tb.TieuDe</strong>
+                            </span>
+                        </a></li>
+                    }
+                </ul>
+            </section>
+        }
+        @if (hoatDong.Count > 0)
+        {
+            <section class="the-bieu-do" aria-labelledby="tieu-de-hoat-dong">
+                <header class="dau-bieu-do"><div><h2 id="tieu-de-hoat-dong">Hoạt động gần đây</h2><p>Từ nhật ký thao tác</p></div><a class="lien-ket-bieu-do" href="/quan-tri/nhat-ky">Nhật ký<RadzenIcon Icon="arrow_forward" /></a></header>
+                <ul class="ds-hoat-dong">
+                    @foreach (var x in hoatDong)
+                    {
+                        <li><span class="nhan-hanh-dong @(x.HanhDong switch { "Thêm" => "them", "Sửa" => "sua", "Xoá" => "xoa", _ => "xem" })">@x.HanhDong</span><span><strong>@x.DoiTuong @x.MaDoiTuong</strong><small>@x.NguoiThucHien · @x.ThoiDiem.ToLocalTime().ToString("HH:mm dd/MM")</small></span></li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+}
 
 @if (thongKe is { } tk)
 {
@@ -102,10 +176,33 @@
     private List<BieuDoThanh.Dong> CacChuyenNganh = [];
     private List<KeyValuePair<string, int>> CacLopTheoHe = [];
 
-    protected override void OnInitialized()
+    private (int BuoiHomNay, int BuoiChuaDiemDanh, int SoBuoiTuanNay)? hocVu;
+    private List<DichVuTongQuan.MucCanChuY> canChuY = [];
+    private List<ThongBao> uuTien = [];
+    private List<NhatKy> hoatDong = [];
+    private NguoiDungHienTai nd = NguoiDungHienTai.Khach;
+    private IEnumerable<(string Ten, string BieuTuong, string DuongDan)> LoiVaoNhanh
+    {
+        get
+        {
+            if (nd.LaGiangVien) yield return ("Giảng dạy của tôi", "co_present", "/giang-day");
+            if (nd.LaHocVien) yield return ("Học tập của tôi", "person", "/cua-toi");
+            if (nd.CoQuyenVung("DaoTao")) yield return ("Xếp lịch đào tạo", "edit_calendar", "/dao-tao/lich");
+            if (nd.CoQuyenVung("Lop") && !nd.LaAdmin) yield return ("Danh sách lớp", "groups", "/quan-ly-hoc-vien/lop");
+            if (nd.CoQuyenVung("Khoa") && !nd.LaAdmin) yield return ("Chuyên môn giảng dạy", "menu_book", "/dao-tao/chuyen-de");
+            if (nd.LaAdmin) yield return ("Nhật ký thao tác", "history", "/quan-tri/nhat-ky");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
     {
         TaiSoLieu();
         DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+        nd = await PhanQuyen.LayNguoiDungAsync();
+        if (nd.DaDangNhap && nd.VaiTro != "Guest") hocVu = await HocVu.LayTongHopAsync();
+        canChuY = await TongQuan.LayCanChuYAsync();
+        uuTien = await ThongBaoDv.LayUuTienAsync();
+        hoatDong = await TongQuan.LayHoatDongGanDayAsync();
     }
 
     // Nếu dữ liệu tạm thời không nhất quán thì ẩn số liệu và biểu đồ (hiện "—"), không làm hỏng cả trang chủ.

@@ -9,17 +9,67 @@
         <RadzenCard>
             <h2><RadzenIcon Icon="info" />@TuyChon.Dich("Giới thiệu")</h2>
             <p>@(TiengAnh ? "The Faculty/Training Class Management System brings together faculty, training and student management in one workspace." : "Hệ thống quản lý Khoa/Lớp đào tạo tập hợp ba mảng: Quản lý khoa, Quản lý đào tạo và Quản lý học viên.")</p>
-            <p>@(TiengAnh ? "This is a learning demo. Sample records are synthetic; in-memory changes can be lost when the application restarts." : "Đây là ứng dụng minh họa học tập. Hồ sơ mẫu là dữ liệu tổng hợp; thay đổi trong bộ nhớ có thể mất khi ứng dụng khởi động lại.")</p>
+            <p>@(TiengAnh ? "This is a learning demo. Sample records are synthetic and stored in a local SQLite database (App_Data/du-lieu.db)." : "Đây là ứng dụng minh họa học tập. Hồ sơ mẫu là dữ liệu tổng hợp, lưu trong CSDL SQLite cục bộ (App_Data/du-lieu.db) nên còn nguyên sau khi tắt ứng dụng.")</p>
         </RadzenCard>
         <RadzenCard>
             <h2><RadzenIcon Icon="menu_book" />@TuyChon.Dich("Hướng dẫn sử dụng")</h2>
             <ol class="cac-buoc-huong-dan">
                 <li><strong>@TuyChon.Dich("Quản lý khoa")</strong><p>@(TiengAnh ? "Open a faculty name to see its departments and staff. Open a department name to see its staff list." : "Bấm tên khoa để xem tổ và cán bộ trong khoa. Bấm tên tổ để xem danh sách cán bộ thuộc tổ.")</p></li>
                 <li><strong>@TuyChon.Dich("Quản lý học viên")</strong><p>@(TiengAnh ? "Open Classes, then select a class code to see its information and students. Search and filters narrow the current list." : "Mở Danh sách lớp, bấm mã lớp để xem thông tin và học viên của lớp. Dùng ô tìm kiếm và bộ lọc để thu hẹp danh sách.")</p></li>
-                <li><strong>@TuyChon.Dich("Quản lý đào tạo")</strong><p>@(TiengAnh ? "View training summaries, specializations and academic years calculated from current class records." : "Xem tổng quan, chuyên ngành và niên khóa được tổng hợp từ danh sách lớp hiện hành.")</p></li>
+                <li><strong>@TuyChon.Dich("Quản lý đào tạo")</strong><p>@(TiengAnh ? "Training summary, specializations, academic years, subjects, weekly schedule and rooms." : "Tổng quan, chuyên ngành, niên khóa, chuyên đề, lịch đào tạo theo tuần và phòng học. Khi xếp buổi học, hệ thống chặn trùng giờ giảng viên, trùng phòng, trùng lớp, vượt sức chứa, phòng bảo trì, giảng viên chưa đủ điều kiện dạy, và nêu rõ lý do.")</p></li>
+                <li><strong>Trang lớp: học viên, lịch, điểm danh, điểm</strong><p>Bấm mã lớp để mở bốn tab. Điểm danh theo buổi (có mặt, đi muộn, vắng có phép, vắng không phép). Học viên tự điểm danh ở trang "Học tập của tôi" từ 30 phút trước giờ học đến 15 phút sau giờ bắt đầu. Điểm tổng kết = 30% chuyên cần + 70% kiểm tra, làm tròn 1 chữ số, từ 5,0 là đạt; thiếu điểm thì ghi rõ thiếu điểm nào. Chuyên cần tính từ điểm danh: có mặt 1, đi muộn 0,75, vắng có phép 0,5, vắng không phép 0.</p></li>
+                <li><strong>Bản tin Học viện</strong><p>Mục đầu tiên trên menu: tin tức theo chuyên mục, tin mới chạy chữ, đọc nhiều, văn bản mới. Admin bấm "Viết bài" để đăng tin.</p></li>
+                <li><strong>Chương trình & phân công</strong><p>Quản lý đào tạo → Chương trình & phân công: khoa nào phụ trách lớp nào, trong thời gian nào, lớp đang học gì, tiến độ. Lớp mới phân công giảng viên trước khi xếp lịch; biểu mẫu xếp lịch tự điền giảng viên đã phân công.</p></li>
+                <li><strong>Xét tư cách thi & lịch thi</strong><p>Quản lý học viên gửi đề xuất → Khoa xác nhận → Phòng đào tạo duyệt (mỗi bước có thể trả lại kèm lý do) → Phòng đào tạo xếp lịch thi (kiểm tra phòng đủ chỗ, không trùng lịch học/lịch thi). Đủ tư cách khi vắng không quá 20% số buổi đã điểm danh.</p></li>
+                <li><strong>Chuyên cần, lớp đi học/nghỉ, điểm danh đi làm</strong><p>Trang lớp có tab Chuyên cần (buổi học, buổi nghỉ từng học viên). Lịch đào tạo cho biết hôm nay lớp nào đi học, lớp nào nghỉ. Giảng viên điểm danh đi làm ở trang Giảng dạy của tôi; Quản lý khoa theo dõi ở Quản lý khoa → Điểm danh đi làm.</p></li>
+                <li><strong>Sơ đồ tổ chức</strong><p>Quản lý khoa → Sơ đồ tổ chức. Hai sơ đồ: Tổ chức – Cán bộ và Đào tạo. "Dạng cột" duyệt từng cấp; "Sơ đồ" kéo để di chuyển, cuộn hoặc +/− để phóng, 0 để vừa khung, bấm đúp thẻ để mở nhánh. Nút "cần rà soát" chỉ ra khoa/tổ chưa có lãnh đạo, lớp thiếu chủ nhiệm.</p></li>
+                <li><strong>Văn bản, thông báo</strong><p>Bấm chuông (số đỏ là văn bản chưa đọc). Văn bản có loại, số/ký hiệu, mức độ (Thường/Quan trọng/Khẩn), hiệu lực và nơi nhận; mở văn bản là được ghi đã đọc. Nút In tạo bản in sạch.</p></li>
+                <li><strong>Excel</strong><p>Nút "Xuất Excel" trên các danh sách, bảng điểm, điểm danh, nhật ký; tệp chỉ chứa dữ liệu bạn được xem. "Nhập Excel" có ở học viên, lớp (Quản lý học viên), cán bộ (Quản lý khoa), chuyên đề, phòng học (Quản lý đào tạo) và bảng điểm (giảng viên, Quản lý học viên): tải tệp mẫu có danh sách chọn, điền, chọn tệp, xem trước lỗi từng dòng rồi xác nhận.</p></li>
+                <li><strong>Sổ đầu bài online</strong><p>Trang lớp → tab Sổ đầu bài: mỗi buổi đã học một dòng (nội dung bài, nhận xét, xếp loại tiết A–D, sĩ số có mặt lấy từ điểm danh). Giảng viên ghi buổi mình dạy; ba quản lý xem để phối hợp.</p></li>
+                <li><strong>Xem nhanh khi rê chuột</strong><p>Rê chuột (hoặc Tab tới) tên cán bộ, học viên, mã lớp, tên khoa, tổ để xem thẻ thông tin; có thể di chuột vào thẻ để đọc, bấm "Hiện đủ".</p></li>
+                <li><strong>Trường dữ liệu mở rộng</strong><p>Quản trị hệ thống → Trường dữ liệu mở rộng: thêm thông tin mới (ví dụ Khoa: Sáp nhập, Ngày sáp nhập) mà không cần sửa phần mềm. Trường mới hiện trong biểu mẫu thêm/sửa, thành cột trong bảng và trong thẻ xem nhanh.</p></li>
+                <li><strong>Cài đặt cá nhân</strong><p>Bánh răng: giao diện, màu chủ đạo, cỡ chữ (chọn "Tự động" để chữ lớn dần trên màn hình rộng), mật độ, độ rộng nội dung, phông, bo góc, tương phản cao, giảm chuyển động. Chỉ lưu trên trình duyệt đang dùng.</p></li>
+                <li><strong>Ngôn ngữ</strong><p>Bánh răng → Ngôn ngữ: Tiếng Việt, English, ພາສາລາວ. Toàn bộ nhãn giao diện trên trang được dịch; tên người, mã, nội dung nhập giữ nguyên.</p></li>
+                <li><strong>Hồ sơ cá nhân</strong><p>Bấm tên tài khoản góc phải → Hồ sơ cá nhân: xem hồ sơ gắn với tài khoản, lịch sử bổ nhiệm, đổi mật khẩu.</p></li>
+                <li><strong>Tìm kiếm nhanh (Ctrl+K)</strong><p>Gõ tên khoa, lớp, cán bộ, học viên, chuyên đề, phòng hoặc tên trang, không cần dấu. Kết quả chỉ gồm dữ liệu bạn được xem.</p></li>
+                <li><strong>Dữ liệu cá nhân và nhật ký</strong><p>CCCD, số điện thoại, email, địa chỉ hiển thị dạng che; bấm "Hiện đủ" để xem, lượt xem được ghi nhật ký. Mọi thao tác thêm, sửa, xoá được ghi nhật ký kèm giá trị cũ → mới; nhật ký không sửa, xoá được.</p></li>
                 <li><strong>@(TiengAnh ? "Tables and editing" : "Bảng và thao tác dữ liệu")</strong><p>@(TiengAnh ? "Choose rows per page below each table. Scroll horizontally for more columns; actions stay on the right. Editing requires the appropriate role." : "Chọn số dòng/trang ở cuối bảng. Cuộn ngang để xem thêm cột; nút thao tác được giữ ở bên phải. Chỉ tài khoản có quyền mới được thêm, sửa, xóa.")</p></li>
                 <li><strong>@TuyChon.Dich("Thông báo") / @TuyChon.Dich("Cài đặt")</strong><p>@(TiengAnh ? "Use the bell to open notifications. Use the gear to change appearance and the language of common interface labels." : "Bấm chuông để xem thông báo. Bấm bánh răng để chọn sáng/tối và ngôn ngữ của các nhãn giao diện chung.")</p></li>
             </ol>
+        </RadzenCard>
+        <RadzenCard>
+            <h2><RadzenIcon Icon="rule" />Ranh giới vai trò và việc phối hợp</h2>
+            <p class="ghi-chu-phan-hoi">Mỗi mảng có một chủ sở hữu được thêm, sửa, xoá, nhập Excel. Mảng khác chỉ thấy phần cần để phối hợp; trường cá nhân (CCCD, số điện thoại, email, địa chỉ, điểm từng người) không được xem chéo. Quyền kiểm ở lớp dịch vụ, menu chỉ hiện đúng phần được dùng.</p>
+            <div class="bang-cuon"><table class="bang-diem bang-ma-tran">
+                <thead><tr><th>Dữ liệu / công việc</th><th>Quản lý khoa</th><th>Quản lý đào tạo</th><th>Quản lý học viên</th><th>Giảng viên</th><th>Học viên</th></tr></thead>
+                <tbody>
+                    <tr><td>Khoa, tổ, hồ sơ cán bộ</td><td class="mt-so-huu">Sở hữu (CRUD, nhập Excel)</td><td class="mt-xem">Xem danh sách (che trường cá nhân)</td><td class="mt-xem">Xem tên, đơn vị</td><td class="mt-xem">Hồ sơ của mình</td><td class="mt-khong">—</td></tr>
+                    <tr><td>Điểm danh đi làm (chấm công)</td><td class="mt-so-huu">Sở hữu (theo dõi, sửa)</td><td class="mt-khong">—</td><td class="mt-khong">—</td><td class="mt-xem">Tự chấm công</td><td class="mt-khong">—</td></tr>
+                    <tr><td>Chuyên ngành, chuyên đề, phòng, lịch, chương trình</td><td class="mt-phoi-hop">Chọn GV đủ điều kiện dạy chuyên đề</td><td class="mt-so-huu">Sở hữu (CRUD, nhập Excel, xếp lịch, phân công)</td><td class="mt-xem">Xem lịch, chương trình</td><td class="mt-xem">Lịch dạy của mình</td><td class="mt-xem">Lịch học của mình</td></tr>
+                    <tr><td>Lớp, hồ sơ học viên</td><td class="mt-khong">—</td><td class="mt-xem">Lớp mức tổng hợp (sĩ số)</td><td class="mt-so-huu">Sở hữu (CRUD, nhập Excel)</td><td class="mt-xem">Họ tên học viên lớp mình dạy</td><td class="mt-xem">Hồ sơ của mình</td></tr>
+                    <tr><td>Điểm danh buổi học, điểm kiểm tra</td><td class="mt-khong">Chỉ số liệu tổng hợp</td><td class="mt-khong">Chỉ số liệu tổng hợp</td><td class="mt-so-huu">Xem, sửa mọi lớp</td><td class="mt-so-huu">Buổi/chuyên đề mình dạy (nhập Excel điểm)</td><td class="mt-xem">Của mình, tự điểm danh</td></tr>
+                    <tr><td>Sổ đầu bài online</td><td class="mt-phoi-hop">Xem (chất lượng giảng dạy)</td><td class="mt-phoi-hop">Xem (tiến độ chương trình)</td><td class="mt-phoi-hop">Xem (nề nếp lớp)</td><td class="mt-so-huu">Ghi buổi mình dạy</td><td class="mt-khong">—</td></tr>
+                    <tr><td>Xét tư cách thi</td><td class="mt-phoi-hop">Bước 2: xác nhận / trả lại</td><td class="mt-phoi-hop">Bước 3: duyệt, xếp lịch thi</td><td class="mt-phoi-hop">Bước 1: lập đề xuất</td><td class="mt-khong">—</td><td class="mt-xem">Xem lịch thi của mình</td></tr>
+                    <tr><td>Văn bản, thông báo</td><td class="mt-phoi-hop" colspan="5">Admin soạn và gửi theo nơi nhận; mọi vai trò đọc văn bản gửi đến mình.</td></tr>
+                </tbody>
+            </table></div>
+            <div class="chu-giai-ma-tran"><span class="mt-so-huu">Sở hữu</span><span class="mt-phoi-hop">Phối hợp</span><span class="mt-xem">Chỉ xem</span><span class="mt-khong">Không truy cập</span></div>
+        </RadzenCard>
+        <RadzenCard>
+            <h2><RadzenIcon Icon="admin_panel_settings" />Vai trò và tài khoản mẫu</h2>
+            <p class="ghi-chu-phan-hoi">Tài khoản mẫu chỉ dùng được ở môi trường Development, mật khẩu chung <code>demo123</code>. Mỗi tài khoản một vai trò; quyền được kiểm ở lớp dịch vụ, ẩn nút chỉ để dễ dùng.</p>
+            <div class="bang-cuon"><table class="bang-diem">
+                <thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Làm được</th></tr></thead>
+                <tbody>
+                    <tr><td><code>admin</code></td><td>Quản trị viên</td><td>Mọi tác vụ ba mảng, tài khoản, nhật ký.</td></tr>
+                    <tr><td><code>quanlykhoa</code></td><td>Quản lý khoa</td><td>Khoa, tổ, cán bộ, chuyên môn giảng dạy. Học viên chỉ ở mức tổng hợp.</td></tr>
+                    <tr><td><code>quanlydaotao</code></td><td>Quản lý đào tạo</td><td>Chuyên đề, lịch, phòng; cấp tài khoản giảng viên. Không xem danh sách, điểm từng học viên.</td></tr>
+                    <tr><td><code>quanlyhocvien</code></td><td>Quản lý học viên</td><td>Lớp, học viên, điểm danh, điểm; cấp tài khoản học viên. Không xem dữ liệu cá nhân cán bộ.</td></tr>
+                    <tr><td><code>giangvien</code></td><td>Giảng viên</td><td>Lớp mình dạy: điểm danh buổi mình dạy, nhập điểm chuyên đề mình dạy; xem hồ sơ của mình.</td></tr>
+                    <tr><td><code>hocvien</code></td><td>Học viên</td><td>Học viên năm thứ 4 (lớp B1D55): lịch, bảng điểm các năm học/học kỳ, lịch thi kèm thông tin bài thi, lịch sử chuyên cần; tự điểm danh trong khung giờ; bạn cùng lớp chỉ thấy họ tên.</td></tr>
+                    <tr><td><code>nguoixem</code></td><td>Người xem</td><td>Tra cứu danh sách đã lọc dữ liệu cá nhân (tài khoản tự đăng ký cũng ở vai trò này).</td></tr>
+                </tbody>
+            </table></div>
         </RadzenCard>
     </div>
     <RadzenCard class="phan-hoi-tro-giup">

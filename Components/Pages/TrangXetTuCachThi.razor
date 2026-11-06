@@ -1,0 +1,268 @@
+@page "/dao-tao/thi"
+@attribute [Authorize(Roles = "Admin,Manager,GiangVien")]
+@implements IDisposable
+@inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuDaoTao DaoTao
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject NotificationService ThongBao
+@inject DialogService HoiThoai
+
+<PageTitle>Xét tư cách & lịch thi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Xét tư cách thi & lịch thi" MoTa="Quy trình: Quản lý học viên đề xuất danh sách → Khoa xác nhận → Phòng đào tạo duyệt → Phòng đào tạo sắp xếp lịch thi. Đủ tư cách khi vắng không quá 20% số buổi đã điểm danh." />
+
+@* Tổng quan tiến độ cả quy trình và thao tác hàng loạt theo đúng bước của vai trò đang đăng nhập. *@
+<div class="xt-tong-quan">
+    <div class="xt-o"><span>Hồ sơ</span><strong>@ds.Count</strong><small>lớp – chuyên đề đã học</small></div>
+    <div class="xt-o cho"><span>Đang chờ xử lý</span><strong>@ds.Count(x => x.TrangThai is TrangThaiXetTuCach.ChoKhoa or TrangThaiXetTuCach.ChoDaoTao)</strong><small>@ds.Count(x => x.TrangThai == TrangThaiXetTuCach.ChoKhoa) chờ khoa · @ds.Count(x => x.TrangThai == TrangThaiXetTuCach.ChoDaoTao) chờ đào tạo</small></div>
+    <div class="xt-o xong"><span>Đã duyệt</span><strong>@ds.Count(x => x.TrangThai == TrangThaiXetTuCach.DaDuyet)</strong><small>@ds.Count(x => x.CoLichThi) đã có lịch thi</small></div>
+    <div class="xt-o tra"><span>Bị trả lại</span><strong>@ds.Count(x => x.TrangThai == TrangThaiXetTuCach.TraLai)</strong><small>cần Quản lý học viên xử lý</small></div>
+    <div class="xt-tien-do"><span>Tiến độ quy trình</span><div class="bd-thanh"><span style="width:@(ds.Count == 0 ? "0" : (100.0 * ds.Count(x => x.TrangThai == TrangThaiXetTuCach.DaDuyet) / ds.Count).ToString("0", System.Globalization.CultureInfo.InvariantCulture))%"></span></div><small>@(ds.Count == 0 ? 0 : 100 * ds.Count(x => x.TrangThai == TrangThaiXetTuCach.DaDuyet) / ds.Count)% hồ sơ đã duyệt</small></div>
+</div>
+@if (BuocHangLoat is { } bhl && HienThi.Count(x => x.TrangThai == bhl.TuTrangThai || (bhl.Buoc == "gui" && x.TrangThai == TrangThaiXetTuCach.TraLai)) is > 0 and var soHl)
+{
+    <div class="xt-hang-loat">
+        <RadzenIcon Icon="bolt" /><span>@bhl.MoTa <strong>@soHl</strong> hồ sơ đang hiển thị (theo bộ lọc).</span>
+        <RadzenButton Text="@bhl.Nhan" Icon="done_all" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" IsBusy="dangHangLoat" Click="XuLyHangLoat" />
+    </div>
+}
+
+<div class="tb-chuyen-muc" style="margin-bottom:.75rem">
+    <button type="button" class="@(loc is null ? "dang-chon" : "")" @onclick="() => loc = null">Tất cả <small>@ds.Count</small></button>
+    @foreach (var tt in new[] { TrangThaiXetTuCach.Nhap, TrangThaiXetTuCach.ChoKhoa, TrangThaiXetTuCach.ChoDaoTao, TrangThaiXetTuCach.DaDuyet, TrangThaiXetTuCach.TraLai })
+    {
+        <button type="button" class="@(loc == tt ? "dang-chon" : "")" @onclick="() => loc = tt">@tt <small>@ds.Count(x => x.TrangThai == tt)</small></button>
+    }
+</div>
+
+<div class="sd-vung">
+    <RadzenCard class="directory-panel">
+        <div class="thanh-lich"><RadzenDropDown TValue="string" Data="@ds.Select(x => x.MaLop).Distinct()" @bind-Value="lopLoc" AllowClear="true" AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Tất cả lớp" class="filter-dropdown" /><span class="ket-qua-tim-kiem"><strong>@HienThi.Count()</strong> hồ sơ</span></div>
+        <RadzenDataGrid TItem="(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)" Data="@HienThi" AllowPaging="true" PageSize="12" GridLines="DataGridGridLines.Horizontal" PagerHorizontalAlign="HorizontalAlign.Center" EmptyText="Không có hồ sơ phù hợp." class="directory-grid"
+                        RowSelect="@(r => Chon(r.MaLop, r.MaChuyenDe))" SelectionMode="DataGridSelectionMode.Single">
+            <Columns>
+                <RadzenDataGridColumn TItem="(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)" Title="Lớp" Width="6rem"><Template Context="r"><span class="record-code">@r.MaLop</span></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)" Title="Chuyên đề"><Template Context="r"><strong>@r.TenChuyenDe</strong><small class="phu-dong">@r.TenKhoa</small></Template></RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)" Title="Trạng thái" Width="10rem"><Template Context="r"><span class="trang-thai-cd @LopTt(r.TrangThai)">@r.TrangThai</span>@if (r.CoLichThi) { <RadzenIcon Icon="event_available" title="Đã có lịch thi" class="tb-ghim" /> }</Template></RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+
+    <aside class="sd-chi-tiet">
+        @if (hoSo is not { } hs)
+        {
+            <p class="phu-dong">Chọn một hồ sơ ở danh sách bên trái để xem và xử lý.</p>
+        }
+        else
+        {
+            var h = hs.Ho;
+            <div class="sd-tieu-de"><span class="sd-bieu-tuong"><RadzenIcon Icon="fact_check" /></span><div><small>Lớp @h.MaLop</small><h2>@TenCd(h.MaChuyenDe)</h2></div></div>
+            <ol class="quy-trinh">
+                <li class="@Buoc(1, h.TrangThai)">QLHV đề xuất</li>
+                <li class="@Buoc(2, h.TrangThai)">Khoa xác nhận</li>
+                <li class="@Buoc(3, h.TrangThai)">Đào tạo duyệt</li>
+                <li class="@(hs.Lich is not null ? "xong" : h.TrangThai == TrangThaiXetTuCach.DaDuyet ? "dang" : "")">Lịch thi</li>
+            </ol>
+            @if (h.TrangThai == TrangThaiXetTuCach.TraLai) { <div class="sd-canh-bao"><RadzenIcon Icon="undo" />@h.GhiChu</div> }
+            <dl class="sd-so-lieu">
+                <div><dt>Đủ tư cách</dt><dd>@(hs.DuocXemTungNguoi ? hs.Dong.Count(d => d.Du) : (h.SoHocVien > 0 ? h.SoHocVien - hs.Dong.Count : 0))</dd></div>
+                <div><dt>Không đủ</dt><dd>@hs.Dong.Count(d => !d.Du)</dd></div>
+                @if (h.NguoiDeXuat != "") { <div><dt>Đề xuất</dt><dd style="font-size:var(--cc-13)">@h.NguoiDeXuat</dd></div> }
+                @if (h.NguoiXacNhan != "") { <div><dt>Khoa xác nhận</dt><dd style="font-size:var(--cc-13)">@h.NguoiXacNhan</dd></div> }
+                @if (h.NguoiDuyet != "") { <div><dt>Đào tạo duyệt</dt><dd style="font-size:var(--cc-13)">@h.NguoiDuyet</dd></div> }
+            </dl>
+            <div class="sd-nut-chi-tiet">
+                @if (hs.DuocGui) { <RadzenButton Text="Gửi khoa xác nhận" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="Gui" /> }
+                @if (hs.DuocXacNhan) { <RadzenButton Text="Khoa xác nhận" Icon="verified" ButtonStyle="ButtonStyle.Primary" Click="XacNhan" /> }
+                @if (hs.DuocDuyet) { <RadzenButton Text="Duyệt danh sách" Icon="task_alt" ButtonStyle="ButtonStyle.Primary" Click="Duyet" /> }
+            </div>
+            @if (hs.DuocTraLai)
+            {
+                <div class="thanh-lich"><input class="form-control" style="flex:1" @bind="lyDoTraLai" placeholder="Lý do trả lại (bắt buộc)" /><RadzenButton Text="Trả lại" Icon="undo" ButtonStyle="ButtonStyle.Danger" Click="TraLai" /></div>
+            }
+
+            <div class="sd-dau-danh-sach"><h3>@(hs.DuocXemTungNguoi ? "Danh sách học viên" : "Học viên không đủ tư cách")</h3><span>@hs.Dong.Count người@(hs.Dong.Count(d => d.DieuChinh is not null) is > 0 and var sdc ? $" · {sdc} điều chỉnh" : "")</span></div>
+            @if (hs.DuocDieuChinh) { <p class="phu-dong xt-goi-y">Trước khi gửi, Quản lý học viên có thể <b>miễn trừ</b> (vắng có lý do chính đáng) hoặc <b>đánh dấu không đủ</b> từng học viên, bắt buộc ghi lý do; khoa và phòng đào tạo thấy lý do này.</p> }
+            <div class="bang-cuon" style="max-height:22rem">
+                <table class="bang-diem">
+                    <thead><tr><th>Học viên</th><th>Vắng</th><th>Kết quả</th>@if (hs.DuocDieuChinh) { <th></th> }</tr></thead>
+                    <tbody>@foreach (var d in hs.Dong)
+                    {
+                        <tr class="@(d.DieuChinh is not null ? "xt-dong-dc" : "")">
+                            <td><strong><TheXemNhanh Loai="HocVien" Ma="@d.MaHocVien">@d.HoTen</TheXemNhanh></strong>@if (d.DieuChinh is not null) { <small class="phu-dong xt-dc">@d.DieuChinh</small> }</td>
+                            <td class="so">@d.SoVang/@d.SoBuoi</td>
+                            <td>@if (d.Du) { <span class="nhan-tu-cach du">Đủ</span> } else { <span class="nhan-tu-cach khong" title="@d.LyDo">Không đủ</span><small class="phu-dong">@d.LyDo</small> }</td>
+                            @if (hs.DuocDieuChinh)
+                            {
+                                <td class="xt-thao-tac">
+                                    @if (dangDieuChinh == d.MaHocVien)
+                                    {
+                                        <input class="form-control" @bind="lyDoDieuChinh" placeholder="Lý do (bắt buộc)" />
+                                        <RadzenButton Text="@(d.Du ? "Đánh dấu không đủ" : "Miễn trừ")" Size="ButtonSize.ExtraSmall" ButtonStyle="@(d.Du ? ButtonStyle.Danger : ButtonStyle.Success)" Click="() => LuuDieuChinh(d.MaHocVien, !d.Du)" />
+                                        <RadzenButton Icon="close" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Light" Click="() => dangDieuChinh = null" />
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="nut-nho" title="Điều chỉnh tư cách" @onclick="() => MoDieuChinh(d.MaHocVien)"><RadzenIcon Icon="tune" /></button>
+                                        @if (d.DieuChinh is not null) { <button type="button" class="nut-nho" title="Bỏ điều chỉnh" @onclick="() => LuuDieuChinh(d.MaHocVien, null)"><RadzenIcon Icon="undo" /></button> }
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }</tbody>
+                </table>
+            </div>
+            @if (hs.LichSu is { Count: > 0 } ls)
+            {
+                <details class="xt-lich-su">
+                    <summary><RadzenIcon Icon="history" />Lịch sử xử lý (@ls.Count)</summary>
+                    <ol>@foreach (var x in ls) { <li><strong>@x.HanhDong</strong><span>@x.NguoiThucHien · @x.VaiTro · @x.ThoiDiem.ToLocalTime().ToString("HH:mm dd/MM/yyyy")</span>@if (x.GhiChu != "") { <em>@x.GhiChu</em> }</li> }</ol>
+                </details>
+            }
+
+            @if (hs.Lich is { } lt)
+            {
+                <div class="sd-gioi-thieu"><h3><RadzenIcon Icon="event_available" />Lịch thi</h3><p>@QuyTacHocVu.TenThu(lt.Ngay), @lt.Ngay.ToString("dd/MM/yyyy") · tiết @lt.TietBatDau–@lt.TietKetThuc (@QuyTacHocVu.GioBatDauTiet(lt.TietBatDau).ToString(@"hh\:mm")) · @lt.MaPhong · @lt.HinhThuc</p></div>
+            }
+            @if (hs.DuocXepLichThi)
+            {
+                <div class="sd-gioi-thieu"><h3><RadzenIcon Icon="edit_calendar" />@(hs.Lich is null ? "Xếp lịch thi" : "Đổi lịch thi")</h3></div>
+                <div class="form-grid">
+                    <RadzenFormField Text="Ngày thi" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" @bind-Value="lich.Ngay" DateFormat="dd/MM/yyyy" Change="KiemTraLich" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Hình thức" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@LichThi.CacHinhThuc" @bind-Value="lich.HinhThuc" Change="KiemTraLich" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Tiết bắt đầu" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="lich.TietBatDau" Min="1" Max="12" Change="KiemTraLich" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Số tiết" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="lich.SoTiet" Min="1" Max="5" Change="KiemTraLich" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Phòng thi" Variant="Variant.Outlined" class="toan-hang"><RadzenDropDown TValue="string" Data="@cacPhong" TextProperty="Ten" ValueProperty="Ma" @bind-Value="lich.MaPhong" Change="KiemTraLich" Style="width:100%" /></RadzenFormField>
+                </div>
+                <div class="ket-qua-kiem-tra">
+                    @if (loiLich.Count > 0) { <div class="hop-loi"><strong><RadzenIcon Icon="error" />Chưa xếp được:</strong><ul>@foreach (var l in loiLich) { <li>@l</li> }</ul></div> }
+                    else if (lich.MaPhong != "") { <div class="hop-ok"><RadzenIcon Icon="check_circle" />Hợp lệ: phòng đủ chỗ, không trùng lịch học/lịch thi của lớp và phòng.</div> }
+                </div>
+                <div class="thanh-lich">
+                    <RadzenButton Text="Lưu lịch thi" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="LuuLich" Disabled="@(loiLich.Count > 0 || lich.MaPhong == "")" />
+                    @if (hs.Lich is not null) { <RadzenButton Text="Huỷ lịch thi" Icon="event_busy" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Click="HuyLich" /> }
+                </div>
+
+                <div class="sd-gioi-thieu"><h3><RadzenIcon Icon="description" />Thông tin tổng quát bài thi</h3><p>Gửi kèm thông báo tới học viên lớp @h.MaLop.</p></div>
+                <div class="form-grid">
+                    <RadzenFormField Text="Thời gian làm bài (phút)" Variant="Variant.Outlined"><RadzenNumeric TValue="int" @bind-Value="baiThi.ThoiGianLamBai" Min="15" Max="240" Step="15" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Quy định tài liệu" Variant="Variant.Outlined"><RadzenDropDown TValue="string" Data="@BaiThi.CacQuyDinhTaiLieu" @bind-Value="baiThi.QuyDinhTaiLieu" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Cấu trúc đề" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="baiThi.CauTrucDe" MaxLength="500" Placeholder="Ví dụ: 3 câu tự luận; câu 1 lý thuyết (3đ), câu 2–3 tình huống (7đ)" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Phạm vi ôn tập" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="baiThi.PhamViOnTap" MaxLength="1000" Rows="3" Placeholder="Các bài, chương thuộc phạm vi thi" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Cán bộ coi thi" Variant="Variant.Outlined"><RadzenTextBox @bind-Value="baiThi.CanBoCoiThi" MaxLength="200" Style="width:100%" /></RadzenFormField>
+                    <RadzenFormField Text="Lưu ý thêm" Variant="Variant.Outlined"><RadzenTextBox @bind-Value="baiThi.LuuY" MaxLength="500" Style="width:100%" /></RadzenFormField>
+                </div>
+                <div class="thanh-lich">
+                    <RadzenButton Text="Lưu thông tin bài thi" Icon="save" ButtonStyle="ButtonStyle.Light" Click="LuuBaiThi" />
+                    <RadzenButton Text="@(hs.BaiThi?.DaGuiLuc is null ? "Gửi thông báo thi tới lớp" : "Gửi lại thông báo (cập nhật)")" Icon="campaign" ButtonStyle="ButtonStyle.Primary" Disabled="@(!hs.DuocGuiThongBao)" Click="GuiThongBaoThi" title="Cần có lịch thi và thông tin bài thi đã lưu" />
+                </div>
+            }
+            @if (hs.BaiThi is { } bt)
+            {
+                <div class="xt-bai-thi">
+                    <h3><RadzenIcon Icon="assignment" />Bài thi</h3>
+                    <dl class="xn-luoi">
+                        <div><dt>Thời gian làm bài</dt><dd>@bt.ThoiGianLamBai phút</dd></div><div><dt>Tài liệu</dt><dd>@bt.QuyDinhTaiLieu</dd></div>
+                        <div class="toan-hang"><dt>Cấu trúc đề</dt><dd>@bt.CauTrucDe</dd></div>
+                        <div class="toan-hang"><dt>Phạm vi ôn tập</dt><dd>@bt.PhamViOnTap</dd></div>
+                        @if (bt.CanBoCoiThi != "") { <div><dt>Cán bộ coi thi</dt><dd>@bt.CanBoCoiThi</dd></div> }
+                        @if (bt.LuuY != "") { <div><dt>Lưu ý</dt><dd>@bt.LuuY</dd></div> }
+                    </dl>
+                    @if (bt.DaGuiLuc is { } luc) { <p class="xt-da-gui"><RadzenIcon Icon="mark_email_read" />Đã gửi thông báo tới lớp lúc @luc.ToLocalTime().ToString("HH:mm dd/MM/yyyy") (@bt.NguoiGui)@if (bt.MaThongBao is { } mtb) { <a href="@($"/thong-bao?ma={mtb}")"> · Xem thông báo</a> }</p> }
+                    else { <p class="phu-dong">Chưa gửi thông báo tới học viên.</p> }
+                </div>
+            }
+        }
+    </aside>
+</div>
+
+@code {
+    public sealed record LuaChon(string Ma, string Ten);
+    private List<(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)> ds = [];
+    private string? loc, lopLoc, lyDoTraLai;
+    private DichVuChuongTrinh.HoSoTuCach? hoSo;
+    private LichThi lich = new();
+    private BaiThi baiThi = new();
+    private string? dangDieuChinh; private string lyDoDieuChinh = "";
+    private void MoDieuChinh(string ma) { dangDieuChinh = ma; lyDoDieuChinh = string.Empty; }
+    private bool dangHangLoat;
+    [CascadingParameter] private Task<AuthenticationState>? TrangThaiXacThuc { get; set; }
+    private NguoiDungHienTai nd = NguoiDungHienTai.Tu(new System.Security.Claims.ClaimsPrincipal());
+    private sealed record HangLoat(string Buoc, string TuTrangThai, string Nhan, string MoTa);
+    // Mỗi vai trò chỉ thấy thao tác hàng loạt của bước mình phụ trách.
+    private HangLoat? BuocHangLoat => nd.LaAdmin ? null
+        : nd.LaQuanLy("Lop") ? new("gui", TrangThaiXetTuCach.Nhap, "Gửi khoa tất cả", "Gửi khoa xác nhận")
+        : nd.LaQuanLy("Khoa") ? new("xac-nhan", TrangThaiXetTuCach.ChoKhoa, "Xác nhận tất cả", "Khoa xác nhận")
+        : nd.LaQuanLy("DaoTao") ? new("duyet", TrangThaiXetTuCach.ChoDaoTao, "Duyệt tất cả", "Phòng đào tạo duyệt") : null;
+    private List<string> loiLich = [];
+    private List<LuaChon> cacPhong = [];
+    private Dictionary<string, string> tenCd = [];
+    private IEnumerable<(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)> HienThi => ds.Where(x => (loc is null || x.TrangThai == loc) && (lopLoc is null || x.MaLop == lopLoc));
+    private string TenCd(string ma) => tenCd.GetValueOrDefault(ma, ma);
+    private static string LopTt(string t) => t switch { TrangThaiXetTuCach.DaDuyet => "dang-hoc", TrangThaiXetTuCach.ChoKhoa or TrangThaiXetTuCach.ChoDaoTao => "sap-hoc", TrangThaiXetTuCach.TraLai => "chua-xep", _ => "da-xong" };
+    private static string Buoc(int buoc, string tt)
+    {
+        var dat = tt switch { TrangThaiXetTuCach.ChoKhoa => 1, TrangThaiXetTuCach.ChoDaoTao => 2, TrangThaiXetTuCach.DaDuyet => 3, _ => 0 };
+        if (tt == TrangThaiXetTuCach.TraLai && buoc == 1) return "tra-lai";
+        return buoc <= dat ? "xong" : buoc == dat + 1 ? "dang" : "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TrangThaiXacThuc is not null) nd = NguoiDungHienTai.Tu((await TrangThaiXacThuc).User);
+        tenCd = (await DaoTao.LayChuyenDeAsync()).ToDictionary(c => c.ChuyenDe.MaChuyenDe, c => c.ChuyenDe.TenChuyenDe);
+        cacPhong = (await DaoTao.LayPhongAsync()).Where(p => !p.DangBaoTri).Select(p => new LuaChon(p.MaPhong, $"{p.TenPhong} · {p.SucChua} chỗ")).ToList();
+        await TaiLai();
+        DuLieu.DuLieuDaThayDoi += KhiDoi;
+    }
+    private async Task TaiLai()
+    {
+        ds = await ChuongTrinh.LayDanhSachXetAsync();
+        if (hoSo is { } h) await Chon(h.Ho.MaLop, h.Ho.MaChuyenDe);
+    }
+    private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
+
+    private async Task Chon(string maLop, string maCd)
+    {
+        hoSo = await ChuongTrinh.LayHoSoTuCachAsync(maLop, maCd);
+        baiThi = hoSo.BaiThi is { } b0 ? new BaiThi { MaLop = b0.MaLop, MaChuyenDe = b0.MaChuyenDe, ThoiGianLamBai = b0.ThoiGianLamBai, CauTrucDe = b0.CauTrucDe, PhamViOnTap = b0.PhamViOnTap, QuyDinhTaiLieu = b0.QuyDinhTaiLieu, CanBoCoiThi = b0.CanBoCoiThi, LuuY = b0.LuuY }
+            : new BaiThi { MaLop = maLop, MaChuyenDe = maCd, ThoiGianLamBai = 90 };
+        dangDieuChinh = null;
+        lich = hoSo.Lich is { } l ? new LichThi { Id = l.Id, MaLop = l.MaLop, MaChuyenDe = l.MaChuyenDe, Ngay = l.Ngay, TietBatDau = l.TietBatDau, SoTiet = l.SoTiet, MaPhong = l.MaPhong, HinhThuc = l.HinhThuc }
+            : new LichThi { MaLop = maLop, MaChuyenDe = maCd, Ngay = DateTime.Today.AddDays(7), TietBatDau = 1, SoTiet = 2 };
+        loiLich = []; lyDoTraLai = null;
+    }
+    private async Task KiemTraLich() => loiLich = lich.MaPhong == "" ? [] : await ChuongTrinh.KiemTraLichThiAsync(lich);
+    private async Task Gui() => await Bao(await ChuongTrinh.GuiXetTuCachAsync(hoSo!.Ho.MaLop, hoSo.Ho.MaChuyenDe));
+    private async Task XacNhan() => await Bao(await ChuongTrinh.XacNhanXetTuCachAsync(hoSo!.Ho.MaLop, hoSo.Ho.MaChuyenDe));
+    private async Task Duyet() => await Bao(await ChuongTrinh.DuyetXetTuCachAsync(hoSo!.Ho.MaLop, hoSo.Ho.MaChuyenDe));
+    private async Task TraLai() => await Bao(await ChuongTrinh.TraLaiXetTuCachAsync(hoSo!.Ho.MaLop, hoSo.Ho.MaChuyenDe, lyDoTraLai ?? ""));
+    private async Task LuuLich() => await Bao(await ChuongTrinh.LuuLichThiAsync(lich));
+    private async Task LuuBaiThi() => await Bao(await ChuongTrinh.LuuBaiThiAsync(baiThi));
+    private async Task GuiThongBaoThi() => await Bao(await ChuongTrinh.GuiThongBaoThiAsync(hoSo!.Ho.MaLop, hoSo.Ho.MaChuyenDe));
+    private async Task LuuDieuChinh(string maHv, bool? du) => await Bao(await ChuongTrinh.DieuChinhTuCachAsync(hoSo!.Ho.MaLop, hoSo.Ho.MaChuyenDe, maHv, du, lyDoDieuChinh));
+    private async Task XuLyHangLoat()
+    {
+        if (BuocHangLoat is not { } b) return;
+        var cac = HienThi.Where(x => x.TrangThai == b.TuTrangThai || (b.Buoc == "gui" && x.TrangThai == TrangThaiXetTuCach.TraLai)).Select(x => (x.MaLop, x.MaChuyenDe)).ToList();
+        if (await HoiThoai.Confirm($"{b.MoTa} {cac.Count} hồ sơ đang hiển thị? Mỗi hồ sơ vẫn được kiểm tra quyền và điều kiện như khi làm từng cái.", "Xử lý hàng loạt", new ConfirmOptions { OkButtonText = b.Nhan, CancelButtonText = "Hủy" }) != true) return;
+        dangHangLoat = true;
+        try
+        {
+            var (ok, bo) = await ChuongTrinh.XuLyHangLoatAsync(b.Buoc, cac);
+            ThongBao.Notify(ok > 0 ? NotificationSeverity.Success : NotificationSeverity.Warning, "Xử lý hàng loạt", $"Thành công {ok} hồ sơ{(bo > 0 ? $", bỏ qua {bo} hồ sơ không đủ điều kiện" : "")}.");
+            await TaiLai();
+        }
+        finally { dangHangLoat = false; }
+    }
+    private async Task HuyLich()
+    {
+        if (await HoiThoai.Confirm($"Huỷ lịch thi lớp {lich.MaLop}?", "Xác nhận huỷ", new ConfirmOptions { OkButtonText = "Huỷ lịch", CancelButtonText = "Không" }) == true)
+            await Bao(await ChuongTrinh.XoaLichThiAsync(lich.MaLop, lich.MaChuyenDe));
+    }
+    private async Task Bao(KetQuaThaoTac k)
+    {
+        ThongBao.Notify(new NotificationMessage { Severity = k.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = k.ThanhCong ? "Hoàn tất" : "Không thực hiện được", Detail = k.ThongBao, Duration = 7000 });
+        await TaiLai();
+    }
+}

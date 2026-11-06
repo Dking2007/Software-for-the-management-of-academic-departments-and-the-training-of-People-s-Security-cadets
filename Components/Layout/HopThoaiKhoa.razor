@@ -1,0 +1,72 @@
+@inject DialogService HoiThoai
+
+@* Hộp thoại giới thiệu tổng quát một khoa: lãnh đạo, giới thiệu, tổ chuyên môn (bấm để xem thành viên), cán bộ. *@
+<RadzenTabs @bind-SelectedIndex="tab" class="tab-hop-khoa">
+    <Tabs>
+        <RadzenTabsItem Text="Tổng quan" Icon="info">
+            <div class="hk-tong-quan">
+                <div class="sd-lanh-dao">
+                    @foreach (var ld in Khoa.LanhDao)
+                    {
+                        <div class="the-lanh-dao @(ld.ChucVu == "Trưởng khoa" ? "chinh" : "")"><span class="user-avatar">@ld.HoTen.Split(' ')[^1][0]</span><span><small>@ld.ChucVu</small><strong>@ld.HoTen</strong><em>@ld.PhuChu</em></span></div>
+                    }
+                </div>
+                <div class="hk-phai">
+                    <dl class="sd-so-lieu"><div><dt>Tổ chuyên môn</dt><dd>@Khoa.SoTo</dd></div><div><dt>Cán bộ</dt><dd>@Khoa.SoCanBo</dd></div><div><dt>Chuyên đề</dt><dd>@Khoa.ChuyenDe.Count</dd></div><div><dt>Lớp tuần này</dt><dd>@Khoa.LopPhuTrach.Count</dd></div></dl>
+                    @if (Khoa.GioiThieu is not null) { <div class="sd-gioi-thieu"><h3><RadzenIcon Icon="info" />Giới thiệu</h3><p>@Khoa.GioiThieu</p></div> }
+                    <div class="sd-co-cau">@foreach (var cc in Khoa.CoCauHocVi) { <span><strong>@cc.Value</strong>@cc.Key</span> }</div>
+                    @if (Khoa.ChuyenDe.Count > 0) { <div><h3 class="sd-tieu-de-nho">Chuyên đề phụ trách</h3><div class="tags-tin">@foreach (var cd in Khoa.ChuyenDe) { <span class="tag-tin">@cd</span> }</div></div> }
+                    @if (Khoa.LopPhuTrach.Count > 0) { <div><h3 class="sd-tieu-de-nho">Lớp đang giảng dạy tuần này</h3><div class="tags-tin">@foreach (var l in Khoa.LopPhuTrach) { <a class="tag-tin" href="@($"/quan-ly-hoc-vien/lop/{l}")" @onclick="() => HoiThoai.Close()">@l</a> }</div></div> }
+                </div>
+            </div>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="@($"Tổ chuyên môn ({Khoa.Con.Count})")" Icon="groups">
+            <div class="hk-luoi-to">
+                @foreach (var to in Khoa.Con)
+                {
+                    var mo = toMo == to.Khoa;
+                    <article class="hk-to @(mo ? "mo" : "")">
+                        <button type="button" class="hk-dau-to" @onclick="() => toMo = mo ? null : to.Khoa">
+                            <span class="sd-bieu-tuong"><RadzenIcon Icon="groups" /></span>
+                            <span><strong>@to.Ten <small class="record-code">@to.Ma</small></strong><small>@to.SoCanBo cán bộ · @string.Join(", ", to.CoCauHocVi.Select(x => $"{x.Value} {x.Key.ToLowerInvariant()}"))</small></span>
+                            <RadzenIcon Icon="@(mo ? "expand_less" : "expand_more")" class="mui-ten-thu-gon" />
+                        </button>
+                        <div class="hk-ld-to">@foreach (var ld in to.LanhDao) { <span><small>@ld.ChucVu</small>@ld.HoTen</span> }</div>
+                        @if (mo)
+                        {
+                            @if (to.GioiThieu is not null) { <p class="phu-dong">@to.GioiThieu</p> }
+                            <ul class="danh-sach-gon">
+                                @foreach (var cb in CanBo.Where(c => "t:" + c.MaTo == to.Khoa).OrderBy(c => c.ChucVu == "Cán bộ giảng viên").ThenBy(c => c.KhoaSapXepTen, StringComparer.Ordinal))
+                                {
+                                    <li><span><strong><TheXemNhanh Loai="CanBo" Ma="@cb.MaTraCuuNoiBo">@cb.CapBacHam @cb.HoTen</TheXemNhanh></strong><span>@cb.HocVi@(cb.HocHam != "" ? ", " + cb.HocHam : "") · @cb.ChuyenMon</span></span><span class="nhan-trang-thai hoat-dong">@cb.ChucVu</span></li>
+                                }
+                            </ul>
+                            @if (to.DuongDan is not null) { <a class="tag-tin" href="@to.DuongDan" @onclick="() => HoiThoai.Close()">Mở trang tổ ›</a> }
+                        }
+                    </article>
+                }
+            </div>
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="@($"Cán bộ ({CanBo.Count(c => "k:" + c.MaKhoa == Khoa.Khoa)})")" Icon="badge">
+            <div class="search-box" style="max-width:none;margin-bottom:.5rem"><RadzenIcon Icon="search" /><input class="form-control" @bind="tim" @bind:event="oninput" placeholder="Tìm tên cán bộ" /></div>
+            <ul class="danh-sach-gon" style="max-height:52vh;overflow-y:auto">
+                @foreach (var cb in CanBo.Where(c => "k:" + c.MaKhoa == Khoa.Khoa && (tim.Trim() == "" || DichVuTimKiem.BoDau(c.HoTen).Contains(DichVuTimKiem.BoDau(tim)))).OrderBy(c => c.KhoaSapXepTen, StringComparer.Ordinal))
+                {
+                    <li><span><strong><TheXemNhanh Loai="CanBo" Ma="@cb.MaTraCuuNoiBo">@cb.CapBacHam @cb.HoTen</TheXemNhanh></strong><span>@cb.ChucVu · @cb.TenTo · @cb.HocVi</span></span></li>
+                }
+            </ul>
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
+<div class="thao-tac-bieu-mau">
+    @if (Khoa.DuongDan is not null) { <a class="tag-tin" href="@Khoa.DuongDan" @onclick="() => HoiThoai.Close()">Mở trang chi tiết khoa ›</a> }
+    <RadzenButton Text="Đóng" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close()" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public NutSoDo Khoa { get; set; } = default!;
+    [Parameter] public List<Nhom2_BTL.Models.CanBoGiangVien> CanBo { get; set; } = [];
+    private int tab;
+    private string? toMo;
+    private string tim = "";
+}

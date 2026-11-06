@@ -1,41 +1,129 @@
 @inject TuyChonGiaoDien TuyChon
 @inject IJSRuntime JavaScript
 
+@* Cài đặt hiển thị cá nhân: giao diện, ngôn ngữ, màu chủ đạo, cỡ chữ, mật độ, độ rộng, phông, bo góc và hỗ trợ tiếp cận.
+   Chỉ lưu trên trình duyệt này (localStorage), áp dụng ngay, không ảnh hưởng người dùng khác. *@
 <div class="cai-dat-giao-dien" @onkeydown="KhiNhanPhim">
     <RadzenButton class="nut-cai-dat" Icon="settings" ButtonStyle="ButtonStyle.Light" Click="DoiTrangThai" title="@TuyChon.Dich("Cài đặt")" aria-label="@TuyChon.Dich("Cài đặt")" aria-expanded="@(dangMo ? "true" : "false")" aria-controls="hop-cai-dat" />
     @if (dangMo)
     {
         <button class="phu-cai-dat" @onclick="Dong" aria-label="@TuyChon.Dich("Đóng")" tabindex="-1"></button>
-        <section class="hop-cai-dat" id="hop-cai-dat" aria-label="@TuyChon.Dich("Cài đặt")">
+        <section class="hop-cai-dat hop-cai-dat-rong" id="hop-cai-dat" aria-label="@TuyChon.Dich("Cài đặt")">
             <header><strong>@TuyChon.Dich("Cài đặt")</strong><RadzenButton Icon="close" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="Dong" aria-label="@TuyChon.Dich("Đóng")" /></header>
-            <label for="chon-giao-dien">@TuyChon.Dich("Giao diện")</label>
-            <select id="chon-giao-dien" class="form-select" value="@TuyChon.GiaoDien" @onchange="DoiGiaoDien"><option value="sang">☀ @TuyChon.Dich("Sáng")</option><option value="toi">☾ @TuyChon.Dich("Tối")</option></select>
-            <label for="chon-ngon-ngu">@TuyChon.Dich("Ngôn ngữ")</label>
-            <select id="chon-ngon-ngu" class="form-select" value="@TuyChon.NgonNgu" @onchange="DoiNgonNgu"><option value="vi">Tiếng Việt</option><option value="en">English</option></select>
-            <small>@(TuyChon.NgonNgu == "en" ? "Applies to navigation and common labels. Data and authored content keep their original language." : "Áp dụng cho điều hướng và nhãn chung. Dữ liệu, nội dung do người dùng nhập giữ nguyên ngôn ngữ.")</small>
+            <div class="cd-cuon">
+                <h3 class="cd-nhom">Giao diện &amp; ngôn ngữ</h3>
+                <div class="cd-chon" role="radiogroup" aria-label="Giao diện">
+                    @foreach (var (ma, nhan, icon) in new[] { ("sang", "Sáng", "light_mode"), ("toi", "Tối", "dark_mode"), ("he-thong", "Theo hệ thống", "contrast") })
+                    {
+                        <button type="button" role="radio" aria-checked="@(t.GiaoDien == ma ? "true" : "false")" class="@(t.GiaoDien == ma ? "dang-chon" : "")" @onclick="() => Dat(x => x.GiaoDien = ma)"><RadzenIcon Icon="@icon" />@TuyChon.Dich(nhan)</button>
+                    }
+                </div>
+                <label for="chon-ngon-ngu">@TuyChon.Dich("Ngôn ngữ")</label>
+                <select id="chon-ngon-ngu" class="form-select" value="@t.NgonNgu" @onchange="DoiNgonNgu"><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="lo">ພາສາລາວ (Tiếng Lào)</option></select>
+
+                <h3 class="cd-nhom">Màu chủ đạo</h3>
+                <div class="cd-mau" role="radiogroup" aria-label="Màu chủ đạo">
+                    @foreach (var (ma, nhan, mau) in CacMau)
+                    {
+                        <button type="button" role="radio" aria-checked="@(t.Mau == ma ? "true" : "false")" class="@(t.Mau == ma ? "dang-chon" : "")" title="@nhan" @onclick="() => Dat(x => x.Mau = ma)"><span style="background:@mau"></span><small>@nhan</small></button>
+                    }
+                </div>
+
+                <h3 class="cd-nhom">Chữ &amp; bố cục</h3>
+                <label>Cỡ chữ <small class="cd-gia-tri">@(t.CoChu == "tu-dong" ? "tự động" : t.CoChu + " px")</small></label>
+                <div class="cd-chon cd-co-chu">
+                    @foreach (var c in new[] { "14", "15", "16", "17", "18", "20" })
+                    {
+                        <button type="button" class="@(t.CoChu == c ? "dang-chon" : "")" style="font-size:@(int.Parse(c) * 0.8)px" @onclick="() => Dat(x => x.CoChu = c)" aria-label="@($"Cỡ chữ {c}px")">A</button>
+                    }
+                    <button type="button" class="@(t.CoChu == "tu-dong" ? "dang-chon" : "")" @onclick="@(() => Dat(x => x.CoChu = "tu-dong"))" title="Tự lớn dần trên màn hình rộng hoặc khi thu nhỏ trình duyệt">Tự động</button>
+                </div>
+                <label>Mật độ hiển thị</label>
+                <div class="cd-chon">
+                    @foreach (var (ma, nhan) in new[] { ("gon", "Gọn"), ("vua", "Vừa"), ("thoang", "Thoáng") })
+                    {
+                        <button type="button" class="@(t.MatDo == ma ? "dang-chon" : "")" @onclick="() => Dat(x => x.MatDo = ma)">@nhan</button>
+                    }
+                </div>
+                <label>Độ rộng nội dung</label>
+                <div class="cd-chon">
+                    <button type="button" class="@(t.DoRong == "day" ? "dang-chon" : "")" @onclick="@(() => Dat(x => x.DoRong = "day"))" title="Nội dung giãn theo cửa sổ, kể cả khi thu nhỏ trình duyệt"><RadzenIcon Icon="width_full" />Toàn màn hình</button>
+                    <button type="button" class="@(t.DoRong == "vua" ? "dang-chon" : "")" @onclick="@(() => Dat(x => x.DoRong = "vua"))" title="Giới hạn 1.440px, dễ đọc trên màn hình rất rộng"><RadzenIcon Icon="width_normal" />Vừa, dễ đọc</button>
+                </div>
+                <label for="chon-phong">Phông chữ</label>
+                <select id="chon-phong" class="form-select" value="@t.Phong" @onchange="DoiPhong">
+                    <option value="segoe">Segoe UI (mặc định)</option><option value="he-thong">Phông hệ thống</option><option value="de-doc">Dễ đọc (Verdana, Tahoma)</option><option value="serif">Có chân (Times New Roman)</option>
+                </select>
+                <label>Bo góc</label>
+                <div class="cd-chon">
+                    @foreach (var (ma, nhan) in new[] { ("vuong", "Vuông"), ("vua", "Vừa"), ("tron", "Tròn") })
+                    {
+                        <button type="button" class="@(t.BoGoc == ma ? "dang-chon" : "") cd-goc-@ma" @onclick="() => Dat(x => x.BoGoc = ma)">@nhan</button>
+                    }
+                </div>
+
+                <h3 class="cd-nhom">Hỗ trợ tiếp cận</h3>
+                <label class="cd-bat-tat"><input type="checkbox" checked="@t.TuongPhan" @onchange="e => Dat(x => x.TuongPhan = e.Value is true)" /><span><strong>Tương phản cao</strong><small>Chữ đậm hơn, viền rõ hơn</small></span></label>
+                <label class="cd-bat-tat"><input type="checkbox" checked="@t.GachChanLienKet" @onchange="e => Dat(x => x.GachChanLienKet = e.Value is true)" /><span><strong>Gạch chân liên kết</strong><small>Dễ nhận ra chỗ bấm được</small></span></label>
+                <label class="cd-bat-tat"><input type="checkbox" checked="@t.GiamChuyenDong" @onchange="e => Dat(x => x.GiamChuyenDong = e.Value is true)" /><span><strong>Giảm chuyển động</strong><small>Tắt hiệu ứng trượt, mờ dần</small></span></label>
+
+                <div class="cd-xem-truoc" aria-hidden="true">
+                    <strong>Xem trước</strong>
+                    <p>Hệ thống quản lý Khoa/Lớp đào tạo — <a href="javascript:void(0)">liên kết</a> · <span class="nhan-trang-thai hoat-dong">Nhãn</span></p>
+                    <span class="cd-nut-mau">Nút chính</span>
+                </div>
+            </div>
+            <footer class="cd-chan">
+                <small>@(t.NgonNgu switch { "en" => "Saved in this browser only.", "lo" => "ບັນທຶກໃນບຣາວເຊີນີ້ເທົ່ານັ້ນ.", _ => "Chỉ lưu trên trình duyệt này, áp dụng ngay." })</small>
+                <RadzenButton Text="Khôi phục mặc định" Icon="restart_alt" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="KhoiPhuc" />
+            </footer>
         </section>
     }
 </div>
 @code {
     private bool dangMo;
+    private TuyChonDaLuu t = new();
+    private static readonly (string Ma, string Nhan, string Mau)[] CacMau =
+        [("xanh-la", "Xanh CAND", "#1b4b34"), ("xanh-duong", "Xanh dương", "#1d4e89"), ("do-do", "Đỏ đô", "#8b1e2b"), ("tim", "Tím than", "#4b3a8c"), ("nau", "Nâu đồng", "#7a4a1f"), ("xam", "Xám than", "#37474f")];
     private void DoiTrangThai() => dangMo = !dangMo;
     private void Dong() => dangMo = false;
     private void KhiNhanPhim(KeyboardEventArgs e) { if (e.Key == "Escape") Dong(); }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        try {
-            var daLuu = await JavaScript.InvokeAsync<TuyChonDaLuu>("tuyChonGiaoDien.doc");
-            TuyChon.CapNhat(daLuu.GiaoDien, daLuu.NgonNgu);
+        try
+        {
+            t = await JavaScript.InvokeAsync<TuyChonDaLuu>("tuyChonGiaoDien.doc");
+            var gd = await JavaScript.InvokeAsync<string>("tuyChonGiaoDien.giaoDienThuc");
+            TuyChon.CapNhat(gd, t.NgonNgu);
             StateHasChanged();
-        } catch (JSDisconnectedException) { }
+            if (TuyChon.NgonNgu != "vi") await JavaScript.InvokeVoidAsync("dichTrang.dat", TuyChon.NgonNgu);
+        }
+        catch (JSDisconnectedException) { }
+        catch (InvalidOperationException) { }
     }
-    private Task DoiGiaoDien(ChangeEventArgs e) => Luu(e.Value?.ToString(), TuyChon.NgonNgu);
-    private Task DoiNgonNgu(ChangeEventArgs e) => Luu(TuyChon.GiaoDien, e.Value?.ToString());
-    private async Task Luu(string? giaoDien, string? ngonNgu)
+    private async Task Dat(Action<TuyChonDaLuu> doi)
     {
-        TuyChon.CapNhat(giaoDien, ngonNgu);
-        await JavaScript.InvokeVoidAsync("tuyChonGiaoDien.luu", TuyChon.GiaoDien, TuyChon.NgonNgu);
+        var ngonCu = t.NgonNgu;
+        doi(t);
+        var gd = await JavaScript.InvokeAsync<string>("tuyChonGiaoDien.luuDayDu", t);
+        TuyChon.CapNhat(gd, t.NgonNgu);
+        if (ngonCu != t.NgonNgu) await JavaScript.InvokeVoidAsync("dichTrang.dat", t.NgonNgu);
     }
-    public sealed class TuyChonDaLuu { public string GiaoDien { get; set; } = "sang"; public string NgonNgu { get; set; } = "vi"; }
+    private Task DoiNgonNgu(ChangeEventArgs e) => Dat(x => x.NgonNgu = e.Value?.ToString() ?? "vi");
+    private Task DoiPhong(ChangeEventArgs e) => Dat(x => x.Phong = e.Value?.ToString() ?? "segoe");
+    private async Task KhoiPhuc()
+    {
+        var ngon = t.NgonNgu;
+        t = await JavaScript.InvokeAsync<TuyChonDaLuu>("tuyChonGiaoDien.macDinh");
+        t.NgonNgu = ngon; // giữ ngôn ngữ đang dùng
+        await Dat(_ => { });
+    }
+    public sealed class TuyChonDaLuu
+    {
+        public string GiaoDien { get; set; } = "sang"; public string NgonNgu { get; set; } = "vi"; public string Mau { get; set; } = "xanh-la";
+        public string CoChu { get; set; } = "16"; public string MatDo { get; set; } = "vua"; public string DoRong { get; set; } = "day";
+        public string Phong { get; set; } = "segoe"; public string BoGoc { get; set; } = "vua";
+        public bool TuongPhan { get; set; } public bool GiamChuyenDong { get; set; } public bool GachChanLienKet { get; set; }
+    }
 }

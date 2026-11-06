@@ -3,14 +3,16 @@
 @page "/khoa/can-bo"
 @using CanBoModel = Nhom2_BTL.Models.CanBoGiangVien
 @inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuExcel Excel
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DialogService HoiThoai
+@inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
 
 @* Danh sách nhân sự gồm các trường bắt buộc của sơ đồ; dữ liệu là giả lập. *@
 @if (MaKhoaPhamVi is null) { <PageTitle>Cán bộ, giảng viên | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle> }
 <DauTrang TieuDe="Cán bộ, giảng viên" MoTa="Tra cứu theo chức vụ, khoa, tổ và chuyên môn.">
-    <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="person_add" Text="@TuyChon.Dich("Thêm cán bộ")" ButtonStyle="ButtonStyle.Primary" Click="ThemCanBo" /> }</ThaoTac>
+    <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await Excel.XuatCanBoAsync(MaKhoaPhamVi, MaToPhamVi))" TenTep="can-bo" />@if (duocChinhSua) { <RadzenButton Icon="upload_file" Text="Nhập Excel" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" /><RadzenButton Icon="person_add" Text="@TuyChon.Dich("Thêm cán bộ")" ButtonStyle="ButtonStyle.Primary" Click="ThemCanBo" /> }</ThaoTac>
 </DauTrang>
 <RadzenCard class="directory-panel">
     <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="@(duocChinhSua ? "Tìm tên chính xác hoặc mã cán bộ" : "Tìm tên cán bộ")" NhanTimKiem="Tìm cán bộ" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachCanBo.Count">
@@ -24,18 +26,20 @@
         <Columns>
             <RadzenDataGridColumn TItem="CanBoModel" Title="@TuyChon.Dich("STT")" TextAlign="TextAlign.Center" Width="3rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
             @if (duocChinhSua) { <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.MaCanBo)" Title="@TuyChon.Dich("Mã cán bộ")" TextAlign="TextAlign.Center" Width="6.5rem"><Template Context="cb"><span class="record-code">@cb.MaCanBo</span></Template></RadzenDataGridColumn> }
-            <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.KhoaSapXepTen)" Title="@TuyChon.Dich("Họ và tên")" Width="12rem"><Template Context="cb"><strong>@cb.HoTen</strong> <NhanBanGhi TaoLuc="cb.TaoLuc" CapNhatLuc="cb.CapNhatLuc" /></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.KhoaSapXepTen)" Title="@TuyChon.Dich("Họ và tên")" Width="12rem"><Template Context="cb"><strong><TheXemNhanh Loai="CanBo" Ma="@cb.MaTraCuuNoiBo">@cb.HoTen</TheXemNhanh></strong> <NhanBanGhi TaoLuc="cb.TaoLuc" CapNhatLuc="cb.CapNhatLuc" /></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.ChucVu)" Title="@TuyChon.Dich("Chức vụ")" TextAlign="TextAlign.Center" Width="9rem" />
             <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.CapBacHam)" Title="@TuyChon.Dich("Cấp bậc hàm")" TextAlign="TextAlign.Center" Width="7rem" />
             <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.HocVi)" Title="@TuyChon.Dich("Học hàm, học vị")" TextAlign="TextAlign.Center" Width="9rem"><Template Context="cb">@string.Join(", ", new[] { cb.HocHam, cb.HocVi }.Where(x => !string.IsNullOrWhiteSpace(x)))</Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="CanBoModel" Property="@nameof(CanBoModel.ChuyenMon)" Title="@TuyChon.Dich("Chuyên môn")" Width="10rem" />
             <RadzenDataGridColumn TItem="CanBoModel" Property="TenKhoa" Title="@TuyChon.Dich("Khoa, tổ")" Width="13rem"><Template Context="cb">@cb.TenKhoa<span class="phu-dong">@cb.TenTo</span></Template></RadzenDataGridColumn>
+            @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="CanBoModel" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.MaTraCuuNoiBo)</span></Template></RadzenDataGridColumn> }
             <RadzenDataGridColumn TItem="CanBoModel" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="@(duocChinhSua ? "8rem" : "4rem")"><Template Context="cb"><div class="actions-cell"><RadzenButton class="nut-xem-dong" Icon="visibility" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xem chi tiết hồ sơ")" aria-label="@TuyChon.Dich("Xem chi tiết hồ sơ")" Click="@(() => XemChiTiet(cb))" />@if (duocChinhSua) { <RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa cán bộ {cb.MaCanBo}")" Click="@(() => SuaCanBo(cb))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa cán bộ {cb.MaCanBo}")" Click="@(() => XoaCanBo(cb))" /> }</div></Template></RadzenDataGridColumn>
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
 
 @code {
+    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string? MaKhoaPhamVi { get; set; }
     [Parameter] public string? MaToPhamVi { get; set; }
@@ -81,7 +85,7 @@ private string? maKhoaLoc, maToLoc;
 
 private IEnumerable<CanBoModel> DanhSachHienThi => danhSachCanBo.Where(cb => (string.IsNullOrEmpty(maKhoaLoc) || cb.MaKhoa == maKhoaLoc) && (string.IsNullOrEmpty(maToLoc) || cb.MaTo == maToLoc) && (string.IsNullOrWhiteSpace(tuKhoa) || cb.MaCanBo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || QuyTacDuLieu.TenKhopTuKhoa(cb.HoTen, tuKhoa)));
 
-protected override async Task OnInitializedAsync() { duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("CanBo"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
 
 private void TaiDuLieu() => danhSachCanBo = DuLieu.LayDanhSachCanBo().Where(c => (MaKhoaPhamVi is null || c.MaKhoa == MaKhoaPhamVi) && (MaToPhamVi is null || c.MaTo == MaToPhamVi)).OrderBy(c => c.KhoaSapXepTen, StringComparer.Ordinal).ToList();
 
@@ -89,13 +93,18 @@ private void TaiDuLieu() => danhSachCanBo = DuLieu.LayDanhSachCanBo().Where(c =>
 
 private async Task BoLoc() { tuKhoa = string.Empty; maKhoaLoc = maToLoc = null; if (bang is not null) await bang.FirstPage(true); }
 
+private async Task NhapExcel()
+{
+    var kq = await HoiThoai.OpenAsync<NhapExcelChung>("Nhập {0} từ Excel".Replace("{0}", DichVuNhapExcel.TenLoai(LoaiNhap.CanBo)), new Dictionary<string, object> { [nameof(NhapExcelChung.Loai)] = LoaiNhap.CanBo }, new DialogOptions { Width = "980px", CloseDialogOnOverlayClick = false });
+    if (kq is KetQuaThaoTac daLuu) { TaiDuLieu(); await ThongBaoKetQua(daLuu); }
+}
 private async Task ThemCanBo() { var kq = await HoiThoai.OpenAsync<BieuMauCanBo>("Thêm cán bộ", new Dictionary<string, object> { [nameof(BieuMauCanBo.DuLieuBanDau)] = new CanBoModel { MaKhoa = MaKhoaPhamVi ?? "", MaTo = MaToPhamVi }, [nameof(BieuMauCanBo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauCanBo.DanhSachTo)] = DuLieu.LayDanhSachTo() }, new DialogOptions { Width = "780px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) { maKhoaLoc = maToLoc = null; tuKhoa = daLuu.MaBanGhi ?? string.Empty; await ThongBaoKetQua(daLuu); if (bang is not null) await bang.FirstPage(true); } }
 
 private async Task SuaCanBo(CanBoModel cb) { var kq = await HoiThoai.OpenAsync<BieuMauCanBo>("Sửa cán bộ", new Dictionary<string, object> { [nameof(BieuMauCanBo.DuLieuBanDau)] = cb.TaoBanSao(), [nameof(BieuMauCanBo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauCanBo.DanhSachTo)] = DuLieu.LayDanhSachTo(), [nameof(BieuMauCanBo.DangSua)] = true }, new DialogOptions { Width = "780px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
 
 private async Task XoaCanBo(CanBoModel cb) { var ok = await HoiThoai.Confirm($"Bạn sắp xóa hồ sơ {cb.HoTen} ({cb.MaCanBo}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaCanBoAsync(cb.MaCanBo)); }
 
-private async Task ThongBaoKetQua(KetQuaThaoTac kq) { ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
+private async Task ThongBaoKetQua(KetQuaThaoTac kq) { moRong = await TruongTuyChinh.LayBangAsync("CanBo"); ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 
 }
 

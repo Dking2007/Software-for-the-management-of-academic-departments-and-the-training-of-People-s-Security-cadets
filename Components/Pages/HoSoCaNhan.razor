@@ -1,0 +1,106 @@
+@page "/ho-so"
+@attribute [Authorize]
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuDaoTao DaoTao
+@inject DichVuTaiKhoan TaiKhoan
+@inject KhoDuLieuDemo Kho
+@inject AuthenticationStateProvider XacThuc
+
+<PageTitle>Hồ sơ cá nhân | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Hồ sơ cá nhân" MoTa="Thông tin tài khoản, hồ sơ gắn với tài khoản và đổi mật khẩu." />
+
+<section class="the-ca-nhan">
+    <span class="user-avatar phieu-avatar">@(nd.Ten.Length > 0 ? char.ToUpperInvariant(nd.Ten[0]) : '?')</span>
+    <div>
+        <strong>@nd.Ten</strong>
+        <span>@nd.TenVaiTro@(nd.LaQuanLy("Khoa") || nd.LaQuanLy("DaoTao") || nd.LaQuanLy("Lop") ? " · phạm vi: " + nd.TenVaiTro.Replace("Quản lý ", "") : "")</span>
+        @if (canBo is not null) { <span>Gắn với cán bộ @canBo.HoTen (@canBo.MaTraCuuNoiBo)</span> }
+        @if (hocVien is not null) { <span>Gắn với học viên @hocVien.HoTen, lớp @hocVien.MaLop</span> }
+    </div>
+</section>
+
+<div class="luoi-ca-nhan">
+    @if (canBo is not null)
+    {
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="badge" />Hồ sơ cán bộ</h2>
+            <ChiTietHoSo CacTruong="@TruongCanBo" DoiTuong="Cán bộ" />
+        </RadzenCard>
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="workspace_premium" />Lịch sử bổ nhiệm</h2>
+            @if (boNhiem.Count == 0) { <p class="phu-dong">Chưa giữ chức vụ lãnh đạo khoa/tổ.</p> }
+            <ul class="danh-sach-gon">@foreach (var b in boNhiem) { <li><span><strong>@b.ChucVu · @TenDonVi(b)</strong><span>Từ @b.TuNgay.ToString("dd/MM/yyyy")@(b.DenNgay is { } den ? $" đến {den:dd/MM/yyyy}" : "")</span></span><span class="nhan-trang-thai @(b.ConHieuLuc ? "hoat-dong" : "tam-dung")">@(b.ConHieuLuc ? "Đương nhiệm" : "Đã thôi")</span></li> }</ul>
+            <h2 class="mt-3"><RadzenIcon Icon="menu_book" />Chuyên đề đủ điều kiện dạy</h2>
+            <div class="tags-tin">@foreach (var cd in chuyenDe) { <span class="tag-tin">@cd</span> }@if (chuyenDe.Count == 0) { <span class="phu-dong">Chưa có.</span> }</div>
+        </RadzenCard>
+    }
+    @if (hocVien is not null)
+    {
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="school" />Hồ sơ học viên</h2>
+            <ChiTietHoSo CacTruong="@TruongHocVien" DoiTuong="Học viên" />
+        </RadzenCard>
+    }
+    <RadzenCard class="the-muc">
+        <h2><RadzenIcon Icon="lock_reset" />Đổi mật khẩu</h2>
+        <div class="form-grid">
+            <div class="toan-hang"><label for="mk-cu">Mật khẩu hiện tại</label><RadzenPassword id="mk-cu" @bind-Value="mkCu" autocomplete="current-password" Style="width:100%" /></div>
+            <div><label for="mk-moi">Mật khẩu mới</label><RadzenPassword id="mk-moi" @bind-Value="mkMoi" autocomplete="new-password" Style="width:100%" /></div>
+            <div><label for="mk-lai">Nhập lại mật khẩu mới</label><RadzenPassword id="mk-lai" @bind-Value="mkLai" autocomplete="new-password" Style="width:100%" /></div>
+        </div>
+        <p class="ghi-chu-bieu-mau">Mật khẩu phải có cả chữ và số. Đổi xong, mọi phiên đang mở của tài khoản sẽ hết hiệu lực.</p>
+        @if (thongBao is not null) { <RadzenAlert AlertStyle="@(thongBao.StartsWith("Đã") ? AlertStyle.Success : AlertStyle.Warning)" AllowClose="false">@thongBao</RadzenAlert> }
+        <RadzenButton Text="Đổi mật khẩu" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="DoiMatKhau" IsBusy="dangLuu" Disabled="@(mkCu == "" || mkMoi == "")" />
+        @if (thongBao?.StartsWith("Đã") == true) { <a class="ms-2" href="/dang-nhap">Đăng nhập lại</a> }
+    </RadzenCard>
+</div>
+
+@code {
+    private NguoiDungHienTai nd = NguoiDungHienTai.Khach;
+    private Nhom2_BTL.Models.CanBoGiangVien? canBo;
+    private Nhom2_BTL.Models.HocVien? hocVien;
+    private List<BoNhiem> boNhiem = [];
+    private List<string> chuyenDe = [];
+    private string mkCu = "", mkMoi = "", mkLai = "";
+    private string? thongBao;
+    private bool dangLuu;
+
+    protected override async Task OnInitializedAsync()
+    {
+        nd = await PhanQuyen.LayNguoiDungAsync();
+        if (nd.LaGiangVien)
+        {
+            canBo = DuLieu.LayDanhSachCanBo().FirstOrDefault(c => c.MaTraCuuNoiBo == nd.MaCanBo);
+            boNhiem = Kho.LayBoNhiem(nd.MaCanBo!);
+            var maCd = (await DaoTao.LayChuyenDeCuaCanBoAsync(nd.MaCanBo!)).ToHashSet();
+            chuyenDe = (await DaoTao.LayChuyenDeAsync()).Where(c => maCd.Contains(c.ChuyenDe.MaChuyenDe)).Select(c => c.ChuyenDe.TenChuyenDe).ToList();
+        }
+        if (nd.LaHocVien) hocVien = DuLieu.LayDanhSachHocVien().FirstOrDefault(h => h.MaHocVien == nd.MaHocVien);
+    }
+
+    private string TenDonVi(BoNhiem b) => b.LoaiDonVi == "Khoa" ? DuLieu.LayTenKhoa(b.MaDonVi) : $"{DuLieu.LayTenTo(b.MaDonVi)} ({b.MaDonVi})";
+
+    private Dictionary<string, string?> TruongCanBo => new()
+    {
+        ["Mã cán bộ"] = canBo!.MaCanBo, ["Họ tên"] = canBo.HoTen, ["Giới tính"] = canBo.GioiTinh, ["Ngày sinh"] = canBo.NgaySinh.ToString("dd/MM/yyyy"),
+        ["Chức vụ"] = canBo.ChucVu, ["Cấp bậc hàm"] = canBo.CapBacHam, ["Học hàm"] = canBo.HocHam, ["Học vị"] = canBo.HocVi,
+        ["Chuyên môn"] = canBo.ChuyenMon, ["Quê quán"] = canBo.QueQuan, ["Số CCCD"] = canBo.SoCCCD, ["Số điện thoại"] = canBo.SoDienThoai,
+        ["Email"] = canBo.Email, ["Khoa"] = canBo.TenKhoa, ["Tổ"] = canBo.TenTo
+    };
+    private Dictionary<string, string?> TruongHocVien => new()
+    {
+        ["Mã"] = hocVien!.MaHocVien, ["Họ tên"] = hocVien.HoTen, ["Chức vụ"] = hocVien.ChucVu, ["Ngày sinh"] = hocVien.NgaySinh.ToString("dd/MM/yyyy"),
+        ["Giới tính"] = hocVien.GioiTinh, ["Quê quán"] = hocVien.QueQuan, ["Lớp"] = hocVien.MaLop, ["Số CCCD"] = hocVien.SoCCCD,
+        ["Số điện thoại"] = hocVien.SoDienThoai, ["Email"] = hocVien.Email, ["Địa chỉ thường trú"] = hocVien.DiaChiThuongTru
+    };
+
+    private async Task DoiMatKhau()
+    {
+        thongBao = null;
+        if (mkMoi != mkLai) { thongBao = "Hai lần nhập mật khẩu mới chưa khớp."; return; }
+        dangLuu = true;
+        try { thongBao = await TaiKhoan.DoiMatKhau((await XacThuc.GetAuthenticationStateAsync()).User, mkCu, mkMoi); }
+        finally { dangLuu = false; mkCu = mkMoi = mkLai = ""; }
+    }
+}

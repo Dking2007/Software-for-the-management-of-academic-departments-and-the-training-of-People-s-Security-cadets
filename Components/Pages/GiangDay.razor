@@ -1,0 +1,92 @@
+@page "/giang-day"
+@attribute [Authorize(Roles = "GiangVien")]
+@implements IDisposable
+@inject DichVuDaoTao DaoTao
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuChuongTrinh ChuongTrinh
+
+<PageTitle>Giảng dạy của tôi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Giảng dạy của tôi" MoTa="Buổi dạy hôm nay, các lớp đang dạy và chuyên đề đủ điều kiện dạy. Điểm danh và nhập điểm cho lớp mình dạy." />
+
+@if (canBo is null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">Tài khoản chưa gắn với hồ sơ cán bộ hợp lệ. Liên hệ Quản lý đào tạo để kiểm tra.</RadzenAlert>
+}
+else
+{
+    <section class="the-ca-nhan">
+        <span class="user-avatar phieu-avatar">@canBo.HoTen.Split(' ')[^1][0]</span>
+        <div><strong>@canBo.CapBacHam @canBo.HoTen</strong><span>@canBo.ChucVu · @canBo.TenTo · @canBo.TenKhoa</span><span>@canBo.HocVi@(canBo.HocHam != "" ? $", {canBo.HocHam}" : "")</span></div>
+    </section>
+
+    <RadzenCard class="the-muc the-tu-diem-danh">
+        <h2><RadzenIcon Icon="work_history" />Điểm danh đi làm hôm nay</h2>
+        <div class="the-cham-cong">
+            @if (chamCong is { } cc) { <span class="trang-thai-cc">@cc.TrangThai</span><span class="phu-dong">Ghi lúc @cc.ThoiDiem.ToLocalTime().ToString("HH:mm") bởi @cc.NguoiGhi</span> }
+            else { <span class="phu-dong">Bạn chưa điểm danh hôm nay. Trước 07:30 ghi "Có mặt", sau đó ghi "Đi muộn".</span><RadzenButton Text="Điểm danh đi làm" Icon="how_to_reg" ButtonStyle="ButtonStyle.Primary" Click="ChamCongNgay" /> }
+            @if (thongBaoCong is not null) { <span class="phu-dong">@thongBaoCong</span> }
+        </div>
+    </RadzenCard>
+
+    <div class="luoi-ca-nhan">
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="today" />Hôm nay · @QuyTacHocVu.TenThu(DateTime.Today), @DateTime.Today.ToString("dd/MM")</h2>
+            @if (homNay is null) { <div class="khung-xuong dong-xuong"></div> }
+            else if (homNay.Count == 0) { <p class="phu-dong">Hôm nay không có buổi dạy.</p> }
+            else { <div class="danh-sach-buoi">@foreach (var b in homNay) { <TheBuoiHoc Buoi="b" DuocDiemDanh="true" DangDong="true" /> }</div> }
+        </RadzenCard>
+
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="school" />Lớp tôi dạy</h2>
+            @if (cacLop.Count == 0) { <p class="phu-dong">Chưa được xếp dạy lớp nào.</p> }
+            <ul class="danh-sach-gon">
+                @foreach (var l in cacLop)
+                {
+                    <li><a href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(l.MaLop)}")"><strong>@l.MaLop</strong><span>@l.ChuyenNganh · @l.SiSo học viên</span></a>
+                        <span class="lien-ket-nhanh"><a href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(l.MaLop)}?tab=diem-danh")">Điểm danh</a><a href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(l.MaLop)}?tab=diem")">Điểm</a></span></li>
+                }
+            </ul>
+        </RadzenCard>
+
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="warning" />Buổi đã qua chưa điểm danh</h2>
+            @if (chuaDiemDanh.Count == 0) { <p class="phu-dong">Không còn buổi nào. Tốt lắm!</p> }
+            else { <div class="danh-sach-buoi">@foreach (var b in chuaDiemDanh) { <TheBuoiHoc Buoi="b" DuocDiemDanh="true" DangDong="true" /> }</div> }
+        </RadzenCard>
+
+        <RadzenCard class="the-muc">
+            <h2><RadzenIcon Icon="menu_book" />Chuyên đề đủ điều kiện dạy</h2>
+            <ul class="danh-sach-gon">@foreach (var cd in chuyenDe) { <li><span><strong>@cd.ChuyenDe.TenChuyenDe</strong><span>@cd.ChuyenDe.MaChuyenDe · @cd.ChuyenDe.SoTiet tiết</span></span></li> }</ul>
+        </RadzenCard>
+    </div>
+    <p><RadzenLink Path="/dao-tao/lich" Text="Xem lịch dạy theo tuần" Icon="calendar_month" /></p>
+}
+
+@code {
+    private Nhom2_BTL.Models.CanBoGiangVien? canBo;
+    private List<BuoiHocHienThi>? homNay;
+    private List<BuoiHocHienThi> chuaDiemDanh = [];
+    private List<LopDaoTao> cacLop = [];
+    private List<DichVuDaoTao.DongChuyenDe> chuyenDe = [];
+    private ChamCong? chamCong;
+    private string? thongBaoCong;
+    private async Task ChamCongNgay() { thongBaoCong = (await ChuongTrinh.TuChamCongAsync()).ThongBao; chamCong = await ChuongTrinh.LayChamCongCuaToiAsync(); }
+
+    protected override async Task OnInitializedAsync() { await Tai(); DuLieu.DuLieuDaThayDoi += KhiDoi; }
+    private async Task Tai()
+    {
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        canBo = DuLieu.LayDanhSachCanBo().FirstOrDefault(c => c.MaTraCuuNoiBo == nd.MaCanBo);
+        if (canBo is null) return;
+        chamCong = await ChuongTrinh.LayChamCongCuaToiAsync();
+        var lich = await DaoTao.LayLichAsync(DateTime.Today.AddDays(-14), DateTime.Today);
+        homNay = lich.Where(b => b.Buoi.Ngay.Date == DateTime.Today).ToList();
+        chuaDiemDanh = lich.Where(b => b.Buoi.Ngay.Date < DateTime.Today && !b.DaDiemDanh).ToList();
+        cacLop = DuLieu.LayDanhSachLop().ToList();
+        var maCd = (await DaoTao.LayChuyenDeCuaCanBoAsync(nd.MaCanBo!)).ToHashSet();
+        chuyenDe = (await DaoTao.LayChuyenDeAsync()).Where(c => maCd.Contains(c.ChuyenDe.MaChuyenDe)).ToList();
+    }
+    private void KhiDoi() => _ = InvokeAsync(async () => { await Tai(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
+}

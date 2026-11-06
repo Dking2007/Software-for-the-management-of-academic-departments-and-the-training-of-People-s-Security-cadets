@@ -1,0 +1,67 @@
+@inject DichVuHocVu HocVu
+@inject NotificationService ThongBao
+
+@* Sổ đầu bài online: mỗi buổi đã diễn ra một dòng. Giảng viên dạy buổi đó ghi nội dung, nhận xét, xếp loại tiết;
+   Quản lý học viên, Quản lý đào tạo, Quản lý khoa xem để phối hợp (không chứa dữ liệu cá nhân học viên). *@
+@if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+else if (dong is null) { @for (var i = 0; i < 5; i++) { <div class="khung-xuong dong-xuong"></div> } }
+else if (dong.Count == 0) { <section class="empty-state"><RadzenIcon Icon="menu_book" class="empty-state-icon" /><h2>Chưa có buổi học nào diễn ra</h2></section> }
+else
+{
+    <div class="tom-tat-diem-danh">
+        <span class="o-tom-tat"><strong>@dong.Count</strong>buổi đã học</span>
+        <span class="o-tom-tat co-mat"><strong>@dong.Count(d => d.Ghi is not null)</strong>đã ghi sổ</span>
+        <span class="o-tom-tat di-muon"><strong>@dong.Count(d => d.Ghi is null)</strong>chưa ghi</span>
+        @foreach (var xl in SoDauBai.CacXepLoai) { <span class="o-tom-tat"><strong>@dong.Count(d => d.Ghi?.XepLoaiTiet == xl)</strong>tiết loại @xl</span> }
+    </div>
+    <div class="ds-so-dau-bai">
+        @foreach (var d in dong)
+        {
+            <article class="dong-sdb @(d.Ghi is null ? "chua" : "")">
+                <div class="ngay-sdb"><strong>@d.Buoi.Ngay.ToString("dd/MM")</strong><small>@QuyTacHocVu.TenThu(d.Buoi.Ngay)</small><small>Tiết @d.Buoi.TietBatDau–@d.Buoi.TietKetThuc</small></div>
+                <div class="noi-dung-sdb">
+                    <strong>@d.TenChuyenDe</strong>
+                    <small class="phu-dong">@d.TenGiangVien · có mặt @d.CoMat/@d.SiSo</small>
+                    @if (dangSua == d.Buoi.Id)
+                    {
+                        <input class="form-control" @bind="noiDung" placeholder="Nội dung bài giảng (bắt buộc)" maxlength="500" />
+                        <input class="form-control" @bind="nhanXet" placeholder="Nhận xét lớp" maxlength="500" />
+                        <div class="thanh-lich">
+                            <span class="phu-dong">Xếp loại tiết:</span>
+                            @foreach (var xl in SoDauBai.CacXepLoai) { <button type="button" class="nut-tt @(xepLoai == xl ? "dang-chon co-mat" : "")" @onclick="() => xepLoai = xl">@xl</button> }
+                            <RadzenButton Text="Lưu" Icon="save" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="() => Luu(d.Buoi.Id)" />
+                            <RadzenButton Text="Hủy" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="() => dangSua = null" />
+                        </div>
+                    }
+                    else if (d.Ghi is { } g)
+                    {
+                        <span>@g.NoiDung</span>
+                        @if (g.NhanXet != "") { <em class="phu-dong">Nhận xét: @g.NhanXet</em> }
+                    }
+                    else { <em class="phu-dong">Chưa ghi sổ đầu bài.</em> }
+                </div>
+                <div class="xep-loai-sdb">
+                    @if (d.Ghi is { } g2) { <span class="nhan-xep-loai @(g2.XepLoaiTiet switch { "A" => "gioi", "B" => "kha", "C" => "dat", _ => "khong-dat" })">Tiết loại @g2.XepLoaiTiet</span> }
+                    @if (d.DuocGhi && dangSua != d.Buoi.Id) { <button type="button" class="nut-nho" title="Ghi sổ đầu bài" @onclick="() => MoSua(d)"><RadzenIcon Icon="edit_note" /></button> }
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string MaLop { get; set; } = "";
+    private List<DichVuHocVu.DongSoDauBai>? dong;
+    private string? loi;
+    private int? dangSua;
+    private string noiDung = "", nhanXet = "", xepLoai = "A";
+    protected override async Task OnParametersSetAsync() => await Tai();
+    private async Task Tai() => (dong, loi) = await HocVu.LaySoDauBaiAsync(MaLop);
+    private void MoSua(DichVuHocVu.DongSoDauBai d) { dangSua = d.Buoi.Id; noiDung = d.Ghi?.NoiDung ?? ""; nhanXet = d.Ghi?.NhanXet ?? ""; xepLoai = d.Ghi?.XepLoaiTiet ?? "A"; }
+    private async Task Luu(int id)
+    {
+        var kq = await HocVu.GhiSoDauBaiAsync(id, noiDung, nhanXet, xepLoai);
+        ThongBao.Notify(kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, kq.ThanhCong ? "Đã lưu" : "Không lưu được", kq.ThongBao);
+        if (kq.ThanhCong) { dangSua = null; await Tai(); }
+    }
+}

@@ -1,0 +1,175 @@
+@implements IAsyncDisposable
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject IJSRuntime JavaScript
+
+@* Thẻ xem nhanh khi rê chuột / focus vào tên một đối tượng (cán bộ, học viên, lớp, khoa, tổ).
+   Dữ liệu lấy qua DichVuQuanLyDuLieuDemo nên đã cắt theo quyền của vai trò; không tìm thấy (bị cắt) thì chỉ hiện chữ.
+   Thẻ ở lớp trên cùng (popover) nên không bị bảng cuộn hoặc hộp thoại che. *@
+@if (string.IsNullOrWhiteSpace(Ma) || !CoDuLieu)
+{
+    @ChildContent
+}
+else
+{
+    <span @ref="neo" class="neo-xem-nhanh @Class" role="button" tabindex="0" @onmouseenter="ChoMo" @onmouseleave="RoiNeo"
+          @onfocus="ChoMo" @onblur="RoiNeo" @onclick="HienNgay" @onkeydown="NhanPhim"
+          aria-haspopup="dialog" aria-expanded="@(hien ? "true" : "false")" aria-controls="@maThe">@ChildContent</span>
+    <div @ref="the" id="@maThe" class="the-ho-so-noi the-xem-nhanh" popover="manual" role="dialog" aria-label="@TieuDe" hidden="@(!hien)" tabindex="0"
+         @onmouseenter="VaoThe" @onmouseleave="RoiThe" @onfocusin="GiuMo" @onfocusout="MatFocusTrongThe" @onkeydown="NhanPhim">
+        @if (hien)
+        {
+            <h2>@TieuDe</h2>
+            @switch (Loai)
+            {
+                case "CanBo":
+                    <HoSoCanBo MaCanBo="@Ma" />
+                    break;
+                case "HocVien" when hocVien is not null:
+                    <div class="xn-dau"><span class="xn-avatar">@ChuDau(hocVien.HoTen)</span><div><strong>@hocVien.HoTen</strong><small>@hocVien.ChucVu · Lớp @hocVien.MaLop</small></div></div>
+                    <dl class="xn-luoi">
+                        @if (hocVien.MaHocVien != "") { <div><dt>Mã học viên</dt><dd class="record-code">@hocVien.MaHocVien</dd></div> }
+                        @if (hocVien.GioiTinh != "") { <div><dt>Giới tính</dt><dd>@hocVien.GioiTinh</dd></div> }
+                        @if (hocVien.NgaySinh != default) { <div><dt>Ngày sinh</dt><dd>@hocVien.NgaySinh.ToString("dd/MM/yyyy")</dd></div> }
+                        @if (hocVien.QueQuan != "") { <div><dt>Quê quán</dt><dd>@hocVien.QueQuan</dd></div> }
+                        @if (lopCuaHv is not null) { <div class="toan-hang"><dt>Lớp</dt><dd>@lopCuaHv.MaLop · @lopCuaHv.ChuyenNganh · @lopCuaHv.HeDaoTao khoá @lopCuaHv.KhoaHoc</dd></div> }
+                    </dl>
+                    <ThongTinMoRong Loai="HocVien" Ma="@hocVien.MaHocVien" />
+                    <a class="xn-lien-ket" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(hocVien.MaLop)}")">Mở trang lớp @hocVien.MaLop ›</a>
+                    break;
+                case "Lop" when lop is not null:
+                    <div class="xn-dau"><span class="xn-avatar vuong"><RadzenIcon Icon="groups" /></span><div><strong>Lớp @lop.MaLop</strong><small>@lop.ChuyenNganh</small></div></div>
+                    <dl class="xn-luoi">
+                        <div><dt>Hệ đào tạo</dt><dd>@lop.HeDaoTao</dd></div><div><dt>Khoá</dt><dd>@lop.KhoaHoc</dd></div>
+                        <div><dt>Niên khoá</dt><dd>@lop.NienKhoa</dd></div><div><dt>Sĩ số</dt><dd>@lop.SiSo học viên</dd></div>
+                        <div class="toan-hang"><dt>GV chủ nhiệm</dt><dd>@(lop.GiaoVienChuNhiem == "" ? "Chưa phân công" : lop.GiaoVienChuNhiem)</dd></div>
+                    </dl>
+                    <ThongTinMoRong Loai="Lop" Ma="@lop.MaLop" />
+                    <a class="xn-lien-ket" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop.MaLop)}")">Mở trang lớp ›</a>
+                    break;
+                case "Khoa" when khoa is not null:
+                    <div class="xn-dau"><span class="xn-avatar vuong"><RadzenIcon Icon="domain" /></span><div><strong>@khoa.TenKhoa</strong><small class="record-code">@khoa.MaKhoa</small></div></div>
+                    <dl class="xn-luoi">
+                        <div class="toan-hang"><dt>Trưởng khoa</dt><dd>@DuLieu.LayTenCanBo(khoa.MaTruongKhoa)</dd></div>
+                        <div class="toan-hang"><dt>Phó khoa</dt><dd>@string.Join(", ", new[] { khoa.MaPhoKhoa, khoa.MaPhoKhoaThuHai }.Where(m => !string.IsNullOrEmpty(m)).Select(m => DuLieu.LayTenCanBo(m)).DefaultIfEmpty("Chưa phân công"))</dd></div>
+                        <div><dt>Tổ chuyên môn</dt><dd>@soTo</dd></div><div><dt>Cán bộ</dt><dd>@khoa.SiSo</dd></div>
+                    </dl>
+                    @if (khoa.MoTa != "") { <p class="phu-dong">@khoa.MoTa</p> }
+                    <ThongTinMoRong Loai="Khoa" Ma="@khoa.MaKhoa" />
+                    <a class="xn-lien-ket" href="@($"/khoa/{Uri.EscapeDataString(khoa.MaKhoa)}/to")">Mở trang khoa ›</a>
+                    break;
+                case "To" when to is not null:
+                    <div class="xn-dau"><span class="xn-avatar vuong"><RadzenIcon Icon="groups" /></span><div><strong>@to.TenTo</strong><small>@DuLieu.LayTenKhoa(to.MaKhoa)</small></div></div>
+                    <dl class="xn-luoi">
+                        <div><dt>Tổ trưởng</dt><dd>@DuLieu.LayTenCanBo(to.MaToTruong)</dd></div><div><dt>Tổ phó</dt><dd>@DuLieu.LayTenCanBo(to.MaToPho)</dd></div>
+                        <div><dt>Số cán bộ</dt><dd>@to.SiSo</dd></div><div><dt>Mã tổ</dt><dd class="record-code">@to.MaTo</dd></div>
+                    </dl>
+                    <ThongTinMoRong Loai="ToChuyenMon" Ma="@to.MaTo" />
+                    <a class="xn-lien-ket" href="@($"/khoa/{Uri.EscapeDataString(to.MaKhoa)}/to/{Uri.EscapeDataString(to.MaTo)}")">Mở trang tổ ›</a>
+                    break;
+            }
+        }
+    </div>
+}
+
+@code {
+    /// <summary>"CanBo" (mã cán bộ thật), "HocVien" (mã học viên), "Lop", "Khoa", "To".</summary>
+    [Parameter] public string Loai { get; set; } = "CanBo";
+    [Parameter] public string? Ma { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly string maThe = "xem-nhanh-" + Guid.NewGuid().ToString("N");
+    private ElementReference neo, the;
+    private CancellationTokenSource? cho;
+    private IJSObjectReference? module;
+    private bool hien, canDatViTri, daHuy, chuotTrongThe;
+    private HocVien? hocVien; private LopDaoTao? lop, lopCuaHv; private Nhom2_BTL.Models.Khoa? khoa; private ToChuyenMon? to; private int soTo;
+
+    private string TieuDe => Loai switch { "HocVien" => "Học viên", "Lop" => "Lớp đào tạo", "Khoa" => "Khoa", "To" => "Tổ chuyên môn", _ => "Hồ sơ cán bộ, giảng viên" };
+    private bool CoDuLieu => Loai switch
+    {
+        "CanBo" => true,
+        "HocVien" => DuLieu.LayDanhSachHocVien().Any(h => h.MaHocVien == Ma),
+        "Lop" => DuLieu.LayDanhSachLop().Any(l => l.MaLop == Ma),
+        "Khoa" => DuLieu.LayDanhSachKhoa().Any(k => k.MaKhoa == Ma),
+        "To" => DuLieu.LayDanhSachTo().Any(t => t.MaTo == Ma),
+        _ => false
+    };
+
+    private void TaiDuLieu()
+    {
+        switch (Loai)
+        {
+            case "HocVien":
+                hocVien = DuLieu.LayDanhSachHocVien().FirstOrDefault(h => h.MaHocVien == Ma);
+                lopCuaHv = hocVien is null ? null : DuLieu.LayDanhSachLop().FirstOrDefault(l => l.MaLop == hocVien.MaLop);
+                break;
+            case "Lop": lop = DuLieu.LayDanhSachLop().FirstOrDefault(l => l.MaLop == Ma); break;
+            case "Khoa": khoa = DuLieu.LayDanhSachKhoa().FirstOrDefault(k => k.MaKhoa == Ma); soTo = DuLieu.LayDanhSachTo().Count(t => t.MaKhoa == Ma); break;
+            case "To": to = DuLieu.LayDanhSachTo().FirstOrDefault(t => t.MaTo == Ma); break;
+        }
+    }
+
+    private static string ChuDau(string ten) { var tu = ten.Split(' ', StringSplitOptions.RemoveEmptyEntries); return tu.Length == 0 ? "?" : tu[^1][..1]; }
+
+    // Mở sau một nhịp ngắn; cho phép di chuột từ tên sang thẻ để đọc, cuộn, bấm "Hiện đủ".
+    private Task ChoMo() => SauKhoangCho(true, 250);
+    private Task RoiNeo() => chuotTrongThe ? Task.CompletedTask : SauKhoangCho(false, 180);
+    private void VaoThe() { chuotTrongThe = true; HuyCho(); }
+    private Task RoiThe() { chuotTrongThe = false; return SauKhoangCho(false, 180); }
+    private void GiuMo() => HuyCho();
+    // Mất focus trong thẻ (ví dụ nút "Hiện đủ" vừa biến mất sau khi bấm) không được đóng thẻ khi chuột vẫn ở trong thẻ.
+    private Task MatFocusTrongThe() => chuotTrongThe ? Task.CompletedTask : SauKhoangCho(false, 180);
+    private void HienNgay() { HuyCho(); DatHienThi(true); }
+    private void NhanPhim(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape") { HuyCho(); chuotTrongThe = false; DatHienThi(false); }
+        else if (e.Key is "Enter" or " ") HienNgay();
+    }
+
+    private async Task SauKhoangCho(bool mo, int miliGiay)
+    {
+        HuyCho();
+        using var tamDung = new CancellationTokenSource();
+        cho = tamDung;
+        try { await Task.Delay(miliGiay, tamDung.Token); if (!daHuy) DatHienThi(mo); }
+        catch (OperationCanceledException) { }
+        finally { if (ReferenceEquals(cho, tamDung)) cho = null; }
+    }
+
+    private void DatHienThi(bool mo)
+    {
+        if (daHuy || hien == mo) return;
+        if (mo) TaiDuLieu();
+        hien = mo;
+        canDatViTri = true;
+    }
+    private void HuyCho() { cho?.Cancel(); cho = null; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!canDatViTri || daHuy) return;
+        canDatViTri = false;
+        try
+        {
+            if (hien)
+            {
+                module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./ho-so-noi.js");
+                if (!daHuy && hien) await module.InvokeVoidAsync("mo", neo, the);
+            }
+            else if (module is not null) await module.InvokeVoidAsync("dong", the);
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        daHuy = true;
+        HuyCho();
+        if (module is null) return;
+        try { await module.InvokeVoidAsync("dong", the); await module.DisposeAsync(); }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+}

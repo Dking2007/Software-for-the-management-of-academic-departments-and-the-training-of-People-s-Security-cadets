@@ -1,4 +1,3 @@
-D:\T01\LTMT\Nhom2-BTL\KiemThu\NghiepVu.csproj : warning NU1900: Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.
 PASS: Cơ cấu ban đầu theo tài liệu
 PASS: Chuyên ngành mọi lớp và sĩ số ban đầu
 PASS: Cơ cấu bảy chức vụ trên mọi lớp
@@ -72,8 +71,8 @@ PASS: Xóa tổ trưởng không còn tham chiếu
 PASS: Xóa tổ rỗng | Đã xóa tổ.
 PASS: Xóa tổ đích rỗng | Đã xóa tổ.
 PASS: Xóa khoa rỗng | Đã xóa khoa.
+PASS: VB2 lớp số chẵn không được gán chuyên ngành Điều tra — dữ liệu không đổi
 PASS: Tạo lớp để kiểm tra phân công | Đã thêm lớp.
-PASS: Sửa chuyên ngành hợp lệ của Văn bằng 2 | Đã cập nhật lớp.
 PASS: Thêm B trưởng vào vị trí trống | Đã thêm học viên vào lớp B6K6.
 PASS: Tên không tự thay đổi giới tính người dùng nhập | Đã cập nhật học viên tại lớp B6K6.
 PASS: Sửa giữ giới tính đã chọn và thời điểm tạo
@@ -88,25 +87,356 @@ PASS: Mã rỗng trả lỗi thay vì ném ngoại lệ — dữ liệu không �
 PASS: Vé cũ bị thu hồi sau đăng xuất
 PASS: Khôi phục Admin để tiếp tục kiểm thử | Đăng nhập lại
 PASS: Phát thông báo thay đổi cho các tab
-PASS: Viewer không thêm/sửa học viên — dữ liệu không đổi
-PASS: Viewer không xóa học viên — dữ liệu không đổi
-PASS: Viewer không thêm/sửa cán bộ — dữ liệu không đổi
-PASS: Viewer không xóa cán bộ — dữ liệu không đổi
-PASS: Viewer không thêm/sửa khoa — dữ liệu không đổi
-PASS: Viewer không xóa khoa — dữ liệu không đổi
-PASS: Viewer không thêm/sửa tổ — dữ liệu không đổi
-PASS: Viewer không xóa tổ — dữ liệu không đổi
-PASS: Viewer không thêm/sửa lớp — dữ liệu không đổi
-PASS: Viewer không xóa lớp — dữ liệu không đổi
+PASS: Tài khoản xem (Guest) đăng nhập
+PASS: Guest không thêm/sửa học viên — dữ liệu không đổi
+PASS: Guest không xóa học viên — dữ liệu không đổi
+PASS: Guest không thêm/sửa cán bộ — dữ liệu không đổi
+PASS: Guest không xóa cán bộ — dữ liệu không đổi
+PASS: Guest không thêm/sửa khoa — dữ liệu không đổi
+PASS: Guest không xóa khoa — dữ liệu không đổi
+PASS: Guest không thêm/sửa tổ — dữ liệu không đổi
+PASS: Guest không xóa tổ — dữ liệu không đổi
+PASS: Guest không thêm/sửa lớp — dữ liệu không đổi
+PASS: Guest không xóa lớp — dữ liệu không đổi
 PASS: Phiên mới không thừa hưởng quyền của phiên khác
-PASS: Vé tab giữ đúng vai trò Viewer
+PASS: Vé tab giữ đúng vai trò Guest
 PASS: Không nâng quyền bằng vé tự đặt
-PASS: HTML Viewer có bảng học viên, không có điều khiển ghi
+PASS: HTML Guest có bảng học viên, không có điều khiển ghi
 PASS: HTML Admin có điều khiển quản lý học viên
-PASS: STT trang đầu là 1–20 khi Radzen dựng bảng
+PASS: STT trang đầu là 1–10 (mặc định 10 dòng/trang) khi Radzen dựng bảng
 PASS: HTML cán bộ có cả bộ lọc khoa và tổ
-PASS: HTML trang chủ có thống kê và liên kết tab mới
+PASS: HTML trang chủ chào đúng tài khoản và mở liên kết cùng tab
+PASS: Trang chủ có đủ năm thẻ số liệu (khoa, tổ, cán bộ, lớp, học viên)
+PASS: Guest đăng nhập lại
+PASS: Trang chủ chào đúng tài khoản Guest
+PASS: Chưa đăng nhập: trang chủ không chào tên ai
 PASS: HTML form học viên hiện đúng khóa/chuyên ngành và không chọn khoa
 PASS: HTML form cán bộ chọn khoa/tổ, không chọn lớp
 PASS: HTML nhãn Mới có thời hạn, không đổi hồ sơ
-HOÀN TẤT: 110 kiểm tra đạt.
+PASS: Tìm hệ đào tạo không phân biệt hoa thường và bỏ khoảng trắng ngoài
+PASS: Tìm hệ Văn bằng 2 trả đúng 16 lớp
+PASS: Tìm đúng mã lớp
+PASS: Từ khóa tự do không khớp trả danh sách trống
+PASS: Xóa từ khóa khôi phục toàn bộ lớp
+HOÀN TẤT: 120 kiểm tra đạt.
+PASS: Tab mới khôi phục Admin từ danh tính cookie
+PASS: Tab cũ được thông báo thu hồi và mất quyền
+PASS: Tab xem đăng nhập
+PASS: Phiên Guest mới không khôi phục quyền Admin cũ
+PASS: Tìm Anh khớp nguyên từ và không phân biệt hoa thường
+PASS: Tìm Anh không khớp Thanh
+PASS: Tìm Anh không khớp Anh Thư
+PASS: Tìm cụm tên và chuẩn hóa khoảng trắng
+PASS: Không khớp cụm tên còn dở
+PASS: Tìm tên vẫn phân biệt dấu tiếng Việt
+PASS: Xóa từ khóa khôi phục kết quả
+PASS: Tìm Anh không khớp tên đệm Anh
+PASS: Bộ lọc học viên chỉ trả tên Anh dù người khác quê Thanh Hóa
+PASS: Mỗi khoa mẫu có đúng một trưởng và hai phó khoa, liên kết đúng cán bộ
+PASS: Lãnh đạo tổ trỏ đúng hồ sơ trong tổ
+PASS: CCCD mẫu duy nhất ở cả học viên và cán bộ
+PASS: Khởi tạo — sĩ số hiển thị khớp hồ sơ và thống kê
+PASS: Thêm học viên kiểm tra trùng | Đã thêm học viên vào lớp B10D57.
+PASS: Sau thêm học viên — sĩ số hiển thị khớp hồ sơ và thống kê
+PASS: Học viên trùng mọi trường dù đổi mã — thông báo đúng
+PASS: Học viên trùng mọi trường dù đổi mã — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Học viên trùng sau chuẩn hóa hoa thường, khoảng trắng — thông báo đúng
+PASS: Học viên trùng sau chuẩn hóa hoa thường, khoảng trắng — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Trùng tên, CCCD, SĐT nhưng khác ngày sinh — thông báo đúng
+PASS: Trùng tên, CCCD, SĐT nhưng khác ngày sinh — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Khác tên nhưng trùng cả hai định danh — thông báo đúng
+PASS: Khác tên nhưng trùng cả hai định danh — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Học viên chỉ trùng CCCD — thông báo đúng
+PASS: Học viên chỉ trùng CCCD — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Học viên chỉ trùng SĐT — thông báo đúng
+PASS: Học viên chỉ trùng SĐT — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Học viên chỉ trùng họ tên được phép thêm | Đã thêm học viên vào lớp B10D57.
+PASS: Sửa học viên giữ nguyên định danh của chính mình | Đã cập nhật học viên tại lớp B10D57.
+PASS: Sửa học viên sang SĐT của người khác bị chặn — thông báo đúng
+PASS: Sửa học viên sang SĐT của người khác bị chặn — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Sửa học viên thành bản sao của hồ sơ khác bị chặn — thông báo đúng
+PASS: Sửa học viên thành bản sao của hồ sơ khác bị chặn — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Thêm cán bộ kiểm tra trùng | Đã thêm cán bộ vào Tổ 2, Khoa Luật.
+PASS: Sau thêm cán bộ — sĩ số hiển thị khớp hồ sơ và thống kê
+PASS: Cán bộ trùng mọi trường dù đổi mã — thông báo đúng
+PASS: Cán bộ trùng mọi trường dù đổi mã — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Trùng tên, CCCD, SĐT cán bộ nhưng khác học vị — thông báo đúng
+PASS: Trùng tên, CCCD, SĐT cán bộ nhưng khác học vị — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Cán bộ khác tên nhưng trùng cả hai định danh — thông báo đúng
+PASS: Cán bộ khác tên nhưng trùng cả hai định danh — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Cán bộ chỉ trùng CCCD — thông báo đúng
+PASS: Cán bộ chỉ trùng CCCD — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Cán bộ chỉ trùng SĐT — thông báo đúng
+PASS: Cán bộ chỉ trùng SĐT — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Cán bộ chỉ trùng họ tên được phép thêm | Đã thêm cán bộ vào Tổ 2, Khoa Luật.
+PASS: Sửa cán bộ giữ nguyên CCCD và SĐT của chính mình | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Sửa cán bộ sang SĐT người khác bị chặn — thông báo đúng
+PASS: Sửa cán bộ sang SĐT người khác bị chặn — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Sửa cán bộ thành bản sao của người khác bị chặn — thông báo đúng
+PASS: Sửa cán bộ thành bản sao của người khác bị chặn — hồ sơ, sĩ số và sự kiện không đổi
+PASS: CCCD cán bộ sai định dạng — thông báo đúng
+PASS: CCCD cán bộ sai định dạng — hồ sơ, sĩ số và sự kiện không đổi
+PASS: CCCD cán bộ không trùng CCCD học viên — thông báo đúng
+PASS: CCCD cán bộ không trùng CCCD học viên — hồ sơ, sĩ số và sự kiện không đổi
+PASS: SĐT cán bộ không trùng SĐT học viên — thông báo đúng
+PASS: SĐT cán bộ không trùng SĐT học viên — hồ sơ, sĩ số và sự kiện không đổi
+PASS: CCCD học viên không trùng CCCD cán bộ — thông báo đúng
+PASS: CCCD học viên không trùng CCCD cán bộ — hồ sơ, sĩ số và sự kiện không đổi
+PASS: SĐT học viên không trùng SĐT cán bộ — thông báo đúng
+PASS: SĐT học viên không trùng SĐT cán bộ — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Hai định danh trùng hai hồ sơ khác nhau vẫn bị chặn — thông báo đúng
+PASS: Hai định danh trùng hai hồ sơ khác nhau vẫn bị chặn — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Chuyển học viên kiểm thử sang hệ khác | Đã cập nhật học viên tại lớp B1K6.
+PASS: Cột sĩ số lớp cũ giảm, lớp mới tăng đúng một
+PASS: Xóa học viên sau chuyển lớp | Đã xóa học viên.
+PASS: Xóa học viên giảm đúng sĩ số lớp mới
+PASS: Chuyển cán bộ kiểm thử sang khoa và tổ khác | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Cột sĩ số hai khoa và hai tổ thay đổi đúng một
+PASS: Xóa cán bộ sau chuyển đơn vị | Đã xóa cán bộ, giảng viên.
+PASS: Xóa cán bộ giảm sĩ số cả tổ và khoa đích
+PASS: Sau chuyển và xóa — sĩ số hiển thị khớp hồ sơ và thống kê
+PASS: Tạo khoa kiểm thử lãnh đạo | Đã thêm khoa.
+PASS: Tạo tổ kiểm thử lãnh đạo | Đã thêm tổ.
+PASS: Phân công Trưởng khoa 1 | Đã thêm cán bộ vào Tổ kiểm thử, Khoa kiểm thử.
+PASS: Phân công Phó khoa 2 | Đã thêm cán bộ vào Tổ kiểm thử, Khoa kiểm thử.
+PASS: Phân công Phó khoa 3 | Đã thêm cán bộ vào Tổ kiểm thử, Khoa kiểm thử.
+PASS: Không cho thêm phó khoa thứ ba — thông báo đúng
+PASS: Không cho thêm phó khoa thứ ba — hồ sơ, sĩ số và sự kiện không đổi
+PASS: Ba lãnh đạo có đúng liên kết và sĩ số
+PASS: Sửa khoa giữ nguyên phân công | Đã cập nhật khoa.
+PASS: Sửa khoa không mất phó khoa thứ hai
+PASS: Sửa thông tin phó khoa thứ hai | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Tên lãnh đạo luôn lấy từ hồ sơ cán bộ đã sửa
+PASS: Xóa phó khoa thứ nhất | Đã xóa cán bộ, giảng viên.
+PASS: Xóa một phó không làm mất phó còn lại
+PASS: Thêm phó khoa vào chỗ vừa trống | Đã thêm cán bộ vào Tổ kiểm thử, Khoa kiểm thử.
+PASS: Phó mới nhận đúng vị trí trống
+PASS: Đổi phó khoa thành tổ trưởng | Đã cập nhật thông tin và đơn vị công tác của cán bộ.
+PASS: Đổi chức vụ xóa phân công cũ và gán đúng tổ trưởng
+PASS: Xóa tổ trưởng sau đổi chức vụ | Đã xóa cán bộ, giảng viên.
+PASS: Xóa tổ trưởng không còn liên kết hồ sơ đã xóa
+PASS: Sau vòng đời lãnh đạo — sĩ số hiển thị khớp hồ sơ và thống kê
+PASS: Hai yêu cầu lưu đồng thời chỉ tạo một hồ sơ và tăng sĩ số một lần
+PASS: Sau lưu đồng thời — sĩ số hiển thị khớp hồ sơ và thống kê
+PASS: Dialog lãnh đạo dùng đúng hồ sơ cán bộ và đơn vị
+PASS: Hồ sơ che CCCD, SĐT theo mặc định và có nút Hiện đủ
+PASS: Bảng khoa có sĩ số cán bộ; tổ chuyên môn nhóm theo khoa (12 khối, 24 tổ)
+PASS: Tên lãnh đạo khoa và tổ có điều khiển mở hồ sơ
+PASS: CSDL trống: sinh đủ 12/24/108/106/4.240 bản ghi
+PASS: Mở lại: còn học viên mới thêm, mất học viên đã xoá
+PASS: Mở lại: giữ thay đổi tên khoa
+PASS: Mở lại: giữ đúng thứ tự hiển thị ban đầu
+PASS: Bản ghi mới nằm cuối danh sách
+PASS: Mở lại: giữ phân công trưởng khoa
+PASS: CSDL chặn trùng CCCD và bộ nhớ quay về lần lưu gần nhất
+PASS: Dữ liệu đào tạo mẫu: 24 chuyên đề, giảng viên mẫu dạy B1D58
+PASS: Đăng nhập admin
+PASS: Đăng nhập quanlykhoa
+PASS: Đăng nhập quanlydaotao
+PASS: Đăng nhập quanlyhocvien
+PASS: Đăng nhập giangvien
+PASS: Đăng nhập hocvien
+PASS: Đăng nhập nguoixem
+PASS: Admin thấy đủ học viên và cán bộ kể cả CCCD
+PASS: Hàng rào 2: Quản lý khoa không nhận danh sách từng học viên
+PASS: Hàng rào 2: Quản lý đào tạo không nhận danh sách từng học viên
+PASS: Quản lý khoa thấy dữ liệu cá nhân cán bộ
+PASS: Quản lý đào tạo không nhận CCCD cán bộ
+PASS: Hàng rào 3: Quản lý học viên thấy đủ học viên, không thấy CCCD cán bộ
+PASS: Giảng viên chỉ thấy lớp mình dạy
+PASS: Hàng rào 4: giảng viên thấy học viên lớp mình, không có CCCD/SĐT/địa chỉ
+PASS: Giảng viên thấy hồ sơ của mình, không thấy dữ liệu cá nhân đồng nghiệp
+PASS: Học viên chỉ thấy lớp của mình
+PASS: Hàng rào 5: học viên thấy đủ hồ sơ mình, bạn cùng lớp chỉ họ tên và lớp
+PASS: Học viên chỉ thấy giảng viên dạy lớp mình, không có CCCD
+PASS: Người xem không nhận CCCD học viên
+PASS: Quản lý đào tạo không sửa được học viên
+PASS: Quản lý học viên không thêm được chuyên đề
+PASS: Giảng viên không xoá được phòng
+PASS: Quản lý đào tạo không sửa chuyên môn giảng dạy (dữ liệu của mảng khoa)
+PASS: Quản lý đào tạo thêm chuyên đề
+PASS: Quản lý khoa đặt giáo viên đủ điều kiện
+PASS: Danh sách đủ điều kiện được lưu
+PASS: Chặn giảng viên dạy hai nơi cùng giờ, nêu lớp đang dạy
+PASS: Chặn phòng bị đặt chồng
+PASS: Phòng bảo trì không xếp được
+PASS: Sĩ số vượt sức chứa bị chặn, nêu số chỗ
+PASS: Giảng viên chưa đủ điều kiện dạy chuyên đề bị chặn
+PASS: Buổi học không được vắt qua ranh giới sáng/chiều
+PASS: Buổi học hợp lệ không có lý do chặn
+PASS: Xếp buổi học hợp lệ
+PASS: Giảng viên không tự xếp lịch
+PASS: Giảng viên xem điểm danh buổi mình dạy (đủ 40 học viên)
+PASS: Giảng viên không điểm danh buổi của người khác
+PASS: Giảng viên sửa điểm danh
+PASS: Điểm danh đã lưu
+PASS: Không điểm danh buổi chưa diễn ra
+PASS: Quản lý đào tạo không xem điểm danh từng học viên
+PASS: Tự điểm danh trước 30 phút bị từ chối, nêu giờ mở cổng
+PASS: Tự điểm danh sau 15 phút bị từ chối
+PASS: Học viên thấy buổi đang mở cổng tự điểm danh
+PASS: Tự điểm danh trong khung giờ: có mặt
+PASS: Không tự điểm danh hai lần
+PASS: Không tự điểm danh buổi của lớp khác
+PASS: Tự điểm danh sau 5 phút ghi đi muộn
+PASS: Tổng kết = 30% chuyên cần + 70% kiểm tra (10 và 7 → 7,9)
+PASS: Làm tròn 1 chữ số (8,5 và 4,6 → 5,77 → 5,8)
+PASS: Thiếu điểm nói rõ thiếu điểm nào
+PASS: Ngưỡng xếp loại 5,0 / 6,5 / 8,0 / 9,0
+PASS: Chuyên cần tính từ điểm danh (1 + 0,75 + 0,5 + 0)/4 × 10 = 5,6
+PASS: Giảng viên xem và sửa bảng điểm chuyên đề mình dạy
+PASS: Giảng viên nhập điểm kiểm tra
+PASS: Điểm kiểm tra làm tròn 1 chữ số khi lưu
+PASS: Điểm ngoài 0–10 bị từ chối
+PASS: Giảng viên không nhập điểm chuyên đề người khác dạy
+PASS: Học viên chỉ thấy dòng điểm của mình
+PASS: Quản lý khoa không xem điểm từng học viên
+PASS: Quản lý học viên sửa tên học viên
+PASS: Nhật ký ghi người sửa, chỉ trường đổi, giá trị cũ → mới
+PASS: Nhật ký ghi điểm danh và nhập điểm
+PASS: Nhật ký ghi buổi học mới kèm mã tự tăng
+PASS: Ghi nhật ký khi bấm Hiện đủ dữ liệu cá nhân
+PASS: Chỉ Admin xem nhật ký
+PASS: Hàng rào 7: CSDL chặn sửa và xoá nhật ký
+PASS: Quản lý đào tạo cấp tài khoản giảng viên (gắn mã cán bộ)
+PASS: Quản lý đào tạo không cấp vai trò ngang hàng
+PASS: Quản lý đào tạo không cấp tài khoản học viên
+PASS: Tài khoản học viên phải gắn mã học viên có thật
+PASS: Quản lý học viên chỉ thấy tài khoản học viên
+PASS: Giảng viên không cấp tài khoản
+PASS: Tài khoản giảng viên mới chỉ thấy lớp của CB010
+PASS: Không xoá học viên đã có điểm danh, nói rõ lý do
+PASS: Không xoá phòng, chuyên đề đã dùng trong lịch
+PASS: Xoá buổi học chưa điểm danh
+PASS: Admin tìm học viên bằng tên không dấu
+PASS: Quản lý đào tạo tìm không ra từng học viên
+PASS: Học viên chỉ tìm thấy bạn cùng lớp
+PASS: Tìm được trang theo tên
+PASS: Sơ đồ: khoa có trưởng/phó khoa, tổ có giới thiệu
+PASS: Sơ đồ tổ chức: 12 khoa, 24 tổ, đủ cán bộ
+PASS: Sơ đồ đào tạo: hệ → khoá → lớp đủ số lớp
+PASS: Canvas: mỗi nhánh tối đa 8 thẻ, phần dư gom thành “+ N mục nữa”
+PASS: Sơ đồ đào tạo của giảng viên chỉ có lớp mình dạy
+PASS: Bổ nhiệm ban đầu cho trưởng khoa đương nhiệm
+PASS: Thôi giữ chức trưởng khoa
+PASS: Bổ nhiệm trưởng khoa mới được ghi lịch sử từ hôm nay
+PASS: Bổ nhiệm cũ được đóng (có ngày kết thúc)
+PASS: Thông báo mẫu có thể thức hành chính (số/ký hiệu, ghim)
+PASS: Gợi ý số/ký hiệu tăng dần theo loại (126/KH-HV)
+PASS: Không cho hai văn bản trùng số/ký hiệu
+PASS: Học viên chỉ nhận văn bản chung và văn bản gửi tới lớp/khoá/hệ của mình
+PASS: Quản lý thấy mọi văn bản
+PASS: Mở văn bản giảm số chưa đọc đúng một (ghi một lần)
+PASS: Admin xem được ai đã đọc
+PASS: Học viên không xem danh sách người đã đọc
+PASS: Văn bản hết hiệu lực ẩn với người xem, Admin vẫn thấy
+PASS: Thông báo lưu bền trong CSDL (mở lại còn đủ thể thức và nơi nhận)
+PASS: Văn bản ưu tiên ở trang chủ: ghim lên đầu
+PASS: Xuất Excel dùng đúng mặt cắt: Quản lý đào tạo không nhận CCCD cán bộ
+PASS: Quản lý khoa xuất học viên: tệp rỗng (chỉ số liệu tổng hợp)
+PASS: CCCD giữ nguyên số 0 đầu khi xuất
+PASS: Không xuất được bảng điểm khi không có quyền xem
+PASS: Nhập Excel: dòng hợp lệ, mã tự sinh, bỏ qua dòng ví dụ
+PASS: Xem trước nêu rõ từng lỗi (ngày sinh, lớp, số điện thoại)
+PASS: Phát hiện trùng CCCD giữa các dòng trong tệp
+PASS: Xem trước không ghi gì
+PASS: Xác nhận chỉ ghi dòng hợp lệ
+PASS: Quản lý đào tạo không nhập được học viên
+PASS: Xuất, nhập Excel được ghi nhật ký
+PASS: Liên thông: mã B16–20 + khoá D, niên khoá như chính quy
+PASS: Thêm lớp liên thông, chặn chuyên ngành ngoài danh mục
+PASS: Tài khoản mẫu không đổi được mật khẩu
+PASS: Đổi mật khẩu: sai mật khẩu hiện tại bị từ chối
+PASS: Đổi mật khẩu thành công, phiên cũ hết hiệu lực
+PASS: Đăng nhập bằng mật khẩu mới
+PASS: Cần chú ý: đếm phòng bảo trì, lượt thiếu điểm
+PASS: Cần chú ý theo vai trò: Quản lý khoa không thấy mục điểm học viên
+PASS: Hoạt động gần đây chỉ Admin thấy
+PASS: Chương trình lớp: chuyên đề, khoa phụ trách, giảng viên phân công, trạng thái
+PASS: Lọc chương trình theo khoa phụ trách
+PASS: Lớp liên thông mới tạo chưa có phân công
+PASS: Quản lý học viên không phân công giảng dạy
+PASS: Không phân công giảng viên chưa đủ điều kiện
+PASS: Phân công lớp mới: chưa xếp lịch
+PASS: Biểu mẫu xếp lịch lấy được giảng viên phân công
+PASS: Hôm nay: lớp đi học + lớp nghỉ = tổng số lớp
+PASS: Chuyên cần từng học viên: buổi học, buổi nghỉ khớp tổng
+PASS: Quản lý khoa không xem chuyên cần từng học viên
+PASS: Quy tắc tư cách thi: vắng ≤ 20% số buổi đã điểm danh
+PASS: Khoa không tự gửi đề xuất tư cách thi
+PASS: Quản lý học viên gửi đề xuất danh sách tư cách thi
+PASS: Phòng đào tạo không duyệt trước khi khoa xác nhận
+PASS: Khoa thấy hồ sơ chờ xác nhận, chỉ danh sách không đủ tư cách
+PASS: Trả lại phải có lý do
+PASS: Khoa xác nhận
+PASS: Phòng đào tạo trả lại hồ sơ kèm lý do
+PASS: Gửi lại → khoa xác nhận → đào tạo duyệt
+PASS: Lịch thi: phòng phải đủ chỗ cho học viên dự thi
+PASS: Lịch thi do Phòng đào tạo sắp xếp (Quản lý học viên không xếp)
+PASS: Phòng đào tạo xếp lịch thi sau khi duyệt
+PASS: Chưa duyệt tư cách thì không xếp lịch thi
+PASS: Học viên thấy lịch thi của mình
+PASS: Giảng viên tự điểm danh đi làm trước 7:30: có mặt
+PASS: Mỗi ngày chỉ tự điểm danh đi làm một lần
+PASS: Quản lý khoa ghi chấm công; quản lý học viên không ghi được
+PASS: Bảng chấm công theo khoa hiện đúng trạng thái
+PASS: Bản tin mẫu đủ các chuyên mục
+PASS: Mở bài tăng lượt xem
+PASS: Chỉ Admin đăng bài bản tin
+PASS: Admin đăng bài, bài mới lên đầu
+PASS: Sổ đầu bài: giảng viên dạy lớp xem được, có dữ liệu mẫu
+PASS: Giảng viên chỉ được ghi buổi mình dạy
+PASS: Giảng viên ghi sổ đầu bài buổi mình dạy
+PASS: Xếp loại tiết ngoài A–D bị từ chối
+PASS: Quản lý học viên chỉ xem, không ghi sổ đầu bài
+PASS: Quản lý khoa xem được sổ đầu bài vừa ghi
+PASS: Học viên, người xem không mở sổ đầu bài
+PASS: Nhập Excel theo mảng sở hữu (QLHV không nhập cán bộ, QL khoa không nhập phòng)
+PASS: Đọc tệp nhập CanBo không lỗi tệp ()
+PASS: Nhập cán bộ: xem trước nêu lỗi tổ, chức vụ
+PASS: Nhập cán bộ: chỉ ghi dòng hợp lệ
+PASS: Đọc tệp nhập Phong không lỗi tệp ()
+PASS: Nhập phòng học: dòng hợp lệ được ghi, dòng sai loại/sức chứa bị loại
+PASS: Đọc tệp nhập ChuyenDe không lỗi tệp ()
+PASS: Nhập chuyên đề: phát hiện mã đã tồn tại
+PASS: Đọc tệp nhập Lop không lỗi tệp ()
+PASS: Nhập lớp: lớp mới hợp lệ, lớp trùng bị loại
+PASS: Quản lý khoa không nhập điểm
+PASS: Đọc tệp nhập Diem không lỗi tệp ()
+PASS: Nhập điểm: kiểm tra thang điểm và học viên thuộc lớp
+PASS: Nhập điểm từ Excel ghi đúng điểm
+PASS: Huỷ lịch thi: chỉ Phòng đào tạo
+PASS: Bảng điểm toàn khoá: học viên có học kỳ hiện tại, vai trò khác rỗng
+PASS: Bảng công tuần: Quản lý khoa xem, Quản lý đào tạo không
+PASS: Từ điển giao diện có tiếng Anh và tiếng Lào
+PASS: Ảnh minh hoạ văn bản là SVG nhúng
+PASS: Lớp năm cuối B1D55 có lịch học hiện hành (tài khoản học viên duy nhất có đủ các năm)
+PASS: Lịch bổ sung không trùng giảng viên, phòng với lịch có sẵn
+PASS: Quy đổi điểm chữ, hệ 4 và học lực
+PASS: Bảng điểm có số tiết từng môn và thứ tự học kỳ trong khoá
+PASS: Có hồ sơ xét tư cách chưa gửi để thử điều chỉnh
+PASS: Chỉ Quản lý học viên điều chỉnh tư cách
+PASS: Điều chỉnh bắt buộc lý do đủ dài
+PASS: Điều chỉnh được áp dụng và ghi rõ người, lý do
+PASS: Gửi hàng loạt chốt danh sách kèm điều chỉnh và ghi lịch sử
+PASS: Không điều chỉnh sau khi đã gửi
+PASS: Hàng loạt vẫn kiểm quyền từng bước (đào tạo không xác nhận thay khoa)
+PASS: Bài thi: chỉ Phòng đào tạo nhập, kiểm tra thời lượng
+PASS: Phòng đào tạo lưu thông tin bài thi
+PASS: Chưa có lịch thi thì chưa gửi được thông báo
+PASS: Xếp lại lịch thi sau khi huỷ
+PASS: Gửi thông báo thi một lần, gửi lại thì cập nhật thay vì tạo trùng
+PASS: Thông báo thi có thời lượng, phạm vi ôn tập, không chứa dữ liệu cá nhân
+PASS: Học viên lớp nhận thông báo thi
+PASS: Học viên thấy thông tin bài thi trong lịch thi của mình
+PASS: Quản lý học viên không định nghĩa trường cho Khoa
+PASS: Kiểu danh sách cần ít nhất 2 lựa chọn
+PASS: Quản lý khoa thêm trường Sáp nhập; chặn trùng tên
+PASS: Giá trị danh sách phải nằm trong lựa chọn
+PASS: Quản lý khoa nhập giá trị; vai trò khác không sửa được
+PASS: Trường thường ai cũng xem; trường chỉ chủ sở hữu ẩn với vai trò khác
+PASS: Kiểm tra kiểu ngày, số, bắt buộc
+PASS: Xoá trường xoá luôn giá trị
+PASS: Định nghĩa trường được ghi nhật ký
+PASS: Mở lại: giữ sửa học viên và chuyên đề mới, không sinh lại dữ liệu đào tạo
+HOÀN TẤT TOÀN BỘ: 440 kiểm tra đạt.
