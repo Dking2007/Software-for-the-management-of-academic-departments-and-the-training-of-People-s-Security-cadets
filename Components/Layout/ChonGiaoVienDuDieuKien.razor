@@ -42,10 +42,9 @@ else
     private string tim = "";
     private string? loi;
 
-    private IEnumerable<CanBoGiangVien> HienThi => cacCanBo
-        .Where(c => !chiKhoaPhuTrach || c.MaKhoa == ChuyenDe.MaKhoa || daChon.Contains(c.MaTraCuuNoiBo))
-        .Where(c => tim.Trim() == "" || DichVuTimKiem.BoDau(c.HoTen).Contains(DichVuTimKiem.BoDau(tim)))
-        .OrderByDescending(c => daChon.Contains(c.MaTraCuuNoiBo)).ThenBy(c => c.KhoaSapXepTen, StringComparer.Ordinal);
+    private IEnumerable<CanBoGiangVien> HienThi => TimKiemMo.Loc(cacCanBo
+        .Where(c => !chiKhoaPhuTrach || c.MaKhoa == ChuyenDe.MaKhoa || daChon.Contains(c.MaTraCuuNoiBo)), tim, c => [c.HoTen, c.TenKhoa, c.TenTo, c.ChuyenMon])
+        .OrderByDescending(c => daChon.Contains(c.MaTraCuuNoiBo)).ThenBy(c => tim.Trim() == "" ? c.KhoaSapXepTen : "", StringComparer.Ordinal);
 
     protected override async Task OnInitializedAsync()
     {

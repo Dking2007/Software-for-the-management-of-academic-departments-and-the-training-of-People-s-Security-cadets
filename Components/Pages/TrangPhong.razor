@@ -4,13 +4,14 @@
 @inject DichVuDaoTao DaoTao
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuBaoCaoExcel BaoCao
 @inject DialogService HoiThoai
 @inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
 
 <PageTitle>Phòng học | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
 <DauTrang TieuDe="Phòng học" MoTa="Giảng đường, phòng máy, phòng thi và sân tập. Phòng bảo trì không xếp được lịch.">
-    <ThaoTac>@if (duocSua) { <RadzenButton Icon="upload_file" Text="Nhập Excel" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" /><RadzenButton Icon="add" Text="Thêm phòng" ButtonStyle="ButtonStyle.Primary" Click="Them" /> }</ThaoTac>
+    <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await BaoCao.XuatPhongAsync())" TenTep="phong-hoc" />@if (duocSua) { <RadzenButton Icon="upload_file" Text="Nhập Excel" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" /><RadzenButton Icon="add" Text="Thêm phòng" ButtonStyle="ButtonStyle.Primary" Click="Them" /> }</ThaoTac>
 </DauTrang>
 
 <RadzenCard class="directory-panel">
@@ -58,7 +59,7 @@
     private string? loaiLoc;
     private bool duocSua;
     private IEnumerable<Phong> HienThi => (danhSach ?? []).Where(p => (loaiLoc is null || p.LoaiPhong == loaiLoc) &&
-        (tuKhoa.Trim() == "" || DichVuTimKiem.BoDau(p.MaPhong + " " + p.TenPhong).Contains(DichVuTimKiem.BoDau(tuKhoa))));
+        TimKiemMo.Khop(tuKhoa, p.TenPhong, p.MaPhong, p.LoaiPhong));
 
     protected override async Task OnInitializedAsync()
     { moRong = await TruongTuyChinh.LayBangAsync("Phong");

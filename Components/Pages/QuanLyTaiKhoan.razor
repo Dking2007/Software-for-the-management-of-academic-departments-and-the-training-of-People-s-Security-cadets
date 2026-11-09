@@ -118,7 +118,7 @@ else
     private string tim = "", locVaiTro = "", thongBao = "", ten = "", matKhau = "", vaiTro = "Guest", phamVi = "";
     private string? maSua;
     private bool dangLuu, dangSua, khoa;
-    private IEnumerable<TaiKhoan> KetQua => (danhSach ?? []).Where(u => (u.Id.Contains(tim.Trim(), StringComparison.OrdinalIgnoreCase) || (u.UserName ?? "").Contains(tim.Trim(), StringComparison.OrdinalIgnoreCase)) && (locVaiTro == "" || u.VaiTro == locVaiTro));
+    private IEnumerable<TaiKhoan> KetQua => (danhSach ?? []).Where(u => TimKiemMo.Khop(tim, u.UserName, u.Id) && (locVaiTro == "" || u.VaiTro == locVaiTro));
     protected override async Task OnInitializedAsync()
     {
         vaiTroDuoc = DichVuTaiKhoan.VaiTroDuocQuanLy((await XacThuc.GetAuthenticationStateAsync()).User);

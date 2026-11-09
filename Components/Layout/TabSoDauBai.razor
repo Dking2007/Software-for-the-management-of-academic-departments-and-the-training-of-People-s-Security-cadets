@@ -1,67 +1,230 @@
 @inject DichVuHocVu HocVu
+@inject DichVuBaoCaoExcel BaoCao
 @inject NotificationService ThongBao
+@inject DialogService HoiThoai
 
 @* Sổ đầu bài online: mỗi buổi đã diễn ra một dòng. Giảng viên dạy buổi đó ghi nội dung, nhận xét, xếp loại tiết;
-   Quản lý học viên, Quản lý đào tạo, Quản lý khoa xem để phối hợp (không chứa dữ liệu cá nhân học viên). *@
+   Quản lý học viên, Quản lý đào tạo, Quản lý khoa xem để phối hợp (không chứa dữ liệu cá nhân học viên).
+   Bốn cách xem: từng tuần như một trang sổ giấy, lịch tháng, nhóm theo chuyên đề, danh sách toàn bộ. *@
 @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
 else if (dong is null) { @for (var i = 0; i < 5; i++) { <div class="khung-xuong dong-xuong"></div> } }
 else if (dong.Count == 0) { <section class="empty-state"><RadzenIcon Icon="menu_book" class="empty-state-icon" /><h2>Chưa có buổi học nào diễn ra</h2></section> }
 else
 {
-    <div class="tom-tat-diem-danh">
-        <span class="o-tom-tat"><strong>@dong.Count</strong>buổi đã học</span>
-        <span class="o-tom-tat co-mat"><strong>@dong.Count(d => d.Ghi is not null)</strong>đã ghi sổ</span>
-        <span class="o-tom-tat di-muon"><strong>@dong.Count(d => d.Ghi is null)</strong>chưa ghi</span>
-        @foreach (var xl in SoDauBai.CacXepLoai) { <span class="o-tom-tat"><strong>@dong.Count(d => d.Ghi?.XepLoaiTiet == xl)</strong>tiết loại @xl</span> }
-    </div>
-    <div class="ds-so-dau-bai">
-        @foreach (var d in dong)
+    <div class="lich-tab">
+        <div class="thanh-lich lich-dong-chinh">
+            @if (cheDo == "tuan")
+            {
+                <div class="dieu-khien-tuan">
+                    <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="() => dauTuan = dauTuan.AddDays(-7)" Disabled="@(dauTuan <= TuanDau)" aria-label="Tuần trước" />
+                    <strong class="ten-tuan">Tuần @dauTuan.ToString("dd/MM") – @dauTuan.AddDays(5).ToString("dd/MM/yyyy")</strong>
+                    <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => dauTuan = dauTuan.AddDays(7)" Disabled="@(dauTuan >= TuanCuoi)" aria-label="Tuần sau" />
+                    @if (dauTuan != TuanCuoi) { <RadzenButton Text="Tuần mới nhất" Icon="today" ButtonStyle="ButtonStyle.Light" Click="() => dauTuan = TuanCuoi" /> }
+                </div>
+            }
+            else if (cheDo == "thang")
+            {
+                <div class="dieu-khien-tuan">
+                    <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="() => thang = thang.AddMonths(-1)" Disabled="@(thang <= ThangDau)" aria-label="Tháng trước" />
+                    <strong class="ten-tuan">Tháng @thang.ToString("MM/yyyy")</strong>
+                    <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => thang = thang.AddMonths(1)" Disabled="@(thang >= ThangCuoi)" aria-label="Tháng sau" />
+                </div>
+            }
+            <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị">
+                @foreach (var (ma, ten, bieuTuong) in CacCheDo)
+                {
+                    <button type="button" class="@(cheDo == ma ? "dang-chon" : "")" aria-pressed="@(cheDo == ma ? "true" : "false")" @onclick="() => cheDo = ma"><RadzenIcon Icon="@bieuTuong" />@ten</button>
+                }
+            </div>
+        </div>
+        <div class="thanh-lich lich-dong-loc">
+            <div class="search-box">
+                <RadzenIcon Icon="search" aria-hidden="true" />
+                <input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="e => tuKhoa = e.Value?.ToString() ?? string.Empty" placeholder="Gõ tự do: chuyên đề, giảng viên, nội dung bài…" aria-label="Tìm trong sổ đầu bài" spellcheck="false" />
+            </div>
+            <p class="ket-qua-tim-kiem"><strong>@HienThi.Count</strong> / @dong.Count buổi</p>
+            <NutXuatExcel TaoTep="@(() => BaoCao.XuatSoDauBaiAsync(MaLop))" TenTep="@($"so-dau-bai-{MaLop}")" KichThuoc="ButtonSize.Small" />
+        </div>
+
+        <div class="tom-tat-diem-danh sdb-loc" role="group" aria-label="Lọc nhanh">
+            <button type="button" class="o-tom-tat @LopLoc(null)" aria-pressed="@(locNhanh is null ? "true" : "false")" @onclick="() => locNhanh = null"><strong>@dong.Count</strong>buổi đã học</button>
+            <button type="button" class="o-tom-tat co-mat @LopLoc("da")" aria-pressed="@(locNhanh == "da" ? "true" : "false")" @onclick="@(() => DoiLoc("da"))"><strong>@dong.Count(d => d.Ghi is not null)</strong>đã ghi sổ</button>
+            <button type="button" class="o-tom-tat di-muon @LopLoc("chua")" aria-pressed="@(locNhanh == "chua" ? "true" : "false")" @onclick="@(() => DoiLoc("chua"))"><strong>@dong.Count(d => d.Ghi is null)</strong>chưa ghi</button>
+            @foreach (var xl in SoDauBai.CacXepLoai) { <button type="button" class="o-tom-tat @LopLoc(xl)" aria-pressed="@(locNhanh == xl ? "true" : "false")" @onclick="() => DoiLoc(xl)"><strong>@dong.Count(d => d.Ghi?.XepLoaiTiet == xl)</strong>tiết loại @xl</button> }
+        </div>
+
+        @if (HienThi.Count == 0)
         {
-            <article class="dong-sdb @(d.Ghi is null ? "chua" : "")">
-                <div class="ngay-sdb"><strong>@d.Buoi.Ngay.ToString("dd/MM")</strong><small>@QuyTacHocVu.TenThu(d.Buoi.Ngay)</small><small>Tiết @d.Buoi.TietBatDau–@d.Buoi.TietKetThuc</small></div>
-                <div class="noi-dung-sdb">
-                    <strong>@d.TenChuyenDe</strong>
-                    <small class="phu-dong">@d.TenGiangVien · có mặt @d.CoMat/@d.SiSo</small>
-                    @if (dangSua == d.Buoi.Id)
-                    {
-                        <input class="form-control" @bind="noiDung" placeholder="Nội dung bài giảng (bắt buộc)" maxlength="500" />
-                        <input class="form-control" @bind="nhanXet" placeholder="Nhận xét lớp" maxlength="500" />
-                        <div class="thanh-lich">
-                            <span class="phu-dong">Xếp loại tiết:</span>
-                            @foreach (var xl in SoDauBai.CacXepLoai) { <button type="button" class="nut-tt @(xepLoai == xl ? "dang-chon co-mat" : "")" @onclick="() => xepLoai = xl">@xl</button> }
-                            <RadzenButton Text="Lưu" Icon="save" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Primary" Click="() => Luu(d.Buoi.Id)" />
-                            <RadzenButton Text="Hủy" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light" Click="() => dangSua = null" />
+            <section class="empty-state"><RadzenIcon Icon="search_off" class="empty-state-icon" /><h2>Không có buổi phù hợp</h2><p>Thử từ khoá khác hoặc bỏ lọc nhanh.</p></section>
+        }
+        else if (cheDo == "tuan")
+        {
+            var trongTuan = HienThi.Where(d => QuyTacHocVu.DauTuan(d.Buoi.Ngay) == dauTuan).OrderBy(d => d.Buoi.Ngay).ThenBy(d => d.Buoi.TietBatDau).ToList();
+            @if (trongTuan.Count == 0)
+            {
+                <section class="empty-state"><RadzenIcon Icon="event_busy" class="empty-state-icon" /><h2>Tuần này không có buổi phù hợp</h2><p>Chuyển sang tuần khác hoặc xem dạng Tháng.</p></section>
+            }
+            else
+            {
+                <div class="bang-cuon">
+                    <table class="sdb-bang">
+                        <thead><tr><th>Ngày</th><th>Tiết</th><th>Chuyên đề</th><th>Giảng viên</th><th>Có mặt</th><th>Nội dung, nhận xét</th><th>Xếp loại</th><th><span class="an-chu">Thao tác</span></th></tr></thead>
+                        <tbody>@foreach (var d in trongTuan) { @HangSo(d, true) }</tbody>
+                    </table>
+                </div>
+            }
+        }
+        else if (cheDo == "thang")
+        {
+            var dauLuoi = QuyTacHocVu.DauTuan(thang);
+            var cuoiLuoi = QuyTacHocVu.DauTuan(thang.AddMonths(1).AddDays(-1)).AddDays(5);
+            <div class="sdb-chu-giai">
+                <span class="sdb-mau chua">Chưa ghi</span>@foreach (var xl in SoDauBai.CacXepLoai) { <span class="sdb-mau loai-@xl">Loại @xl</span> }
+                <span class="phu-dong">Bấm một buổi để mở tuần đó.</span>
+            </div>
+            <div class="lt2-luoi" role="grid" aria-label="Sổ đầu bài tháng @thang.ToString("MM/yyyy")">
+                @for (var i = 0; i < 6; i++) { <div class="lt2-thu" role="columnheader">@QuyTacHocVu.TenThu(dauLuoi.AddDays(i))</div> }
+                @for (var n = dauLuoi; n <= cuoiLuoi; n = n.AddDays(1))
+                {
+                    if (n.DayOfWeek == DayOfWeek.Sunday) continue;
+                    var ngay = n;
+                    <div role="gridcell" class="lt2-o sdb-o @(ngay.Month != thang.Month ? "ngoai-thang" : "") @(ngay == DateTime.Today ? "hom-nay" : "")">
+                        <span class="lt2-so">@ngay.Day</span>
+                        @foreach (var d in HienThi.Where(x => x.Buoi.Ngay.Date == ngay).OrderBy(x => x.Buoi.TietBatDau))
+                        {
+                            <button type="button" class="sdb-buoi @LopXepLoai(d)" title="@MoTa(d)" aria-label="@MoTa(d)" @onclick="() => MoTuan(ngay)"><b>T@(d.Buoi.TietBatDau)–@d.Buoi.TietKetThuc</b> @d.TenChuyenDe</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else if (cheDo == "chuyen-de")
+        {
+            <div class="sdb-nhom">
+                @foreach (var nhom in HienThi.GroupBy(d => d.TenChuyenDe).OrderBy(g => g.Key, QuyTacDuLieu.SoSanhTiengViet))
+                {
+                    var daGhi = nhom.Count(d => d.Ghi is not null);
+                    var dangMo = NhomDangMo(nhom.Key, daGhi < nhom.Count());
+                    <section class="sdb-mot-nhom">
+                        <button type="button" class="sdb-dau-nhom" aria-expanded="@(dangMo ? "true" : "false")" @onclick="() => DoiNhom(nhom.Key, dangMo)">
+                            <RadzenIcon Icon="@(dangMo ? "expand_more" : "chevron_right")" />
+                            <strong>@nhom.Key</strong>
+                            <span class="phu-dong">@nhom.Count() buổi · @nhom.Sum(d => d.Buoi.SoTiet) tiết · đã ghi @daGhi/@nhom.Count()</span>
+                            <span class="thanh-ti-le-nho"><span style="width:@(100 * daGhi / nhom.Count())%"></span></span>
+                        </button>
+                        @if (dangMo)
+                        {
+                            <div class="bang-cuon">
+                                <table class="sdb-bang">
+                                    <thead><tr><th>Ngày</th><th>Tiết</th><th>Giảng viên</th><th>Có mặt</th><th>Nội dung, nhận xét</th><th>Xếp loại</th><th><span class="an-chu">Thao tác</span></th></tr></thead>
+                                    <tbody>@foreach (var d in nhom.OrderBy(x => x.Buoi.Ngay).ThenBy(x => x.Buoi.TietBatDau)) { @HangSo(d, false) }</tbody>
+                                </table>
+                            </div>
+                        }
+                    </section>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="ds-so-dau-bai">
+                @foreach (var d in HienThi)
+                {
+                    <article class="dong-sdb @(d.Ghi is null ? "chua" : "")">
+                        <div class="ngay-sdb"><strong>@d.Buoi.Ngay.ToString("dd/MM")</strong><small>@QuyTacHocVu.TenThu(d.Buoi.Ngay)</small><small>Tiết @d.Buoi.TietBatDau–@d.Buoi.TietKetThuc</small></div>
+                        <div class="noi-dung-sdb">
+                            <strong>@d.TenChuyenDe</strong>
+                            <small class="phu-dong">@d.TenGiangVien · có mặt @d.CoMat/@d.SiSo</small>
+                            @NoiDung(d)
                         </div>
-                    }
-                    else if (d.Ghi is { } g)
-                    {
-                        <span>@g.NoiDung</span>
-                        @if (g.NhanXet != "") { <em class="phu-dong">Nhận xét: @g.NhanXet</em> }
-                    }
-                    else { <em class="phu-dong">Chưa ghi sổ đầu bài.</em> }
-                </div>
-                <div class="xep-loai-sdb">
-                    @if (d.Ghi is { } g2) { <span class="nhan-xep-loai @(g2.XepLoaiTiet switch { "A" => "gioi", "B" => "kha", "C" => "dat", _ => "khong-dat" })">Tiết loại @g2.XepLoaiTiet</span> }
-                    @if (d.DuocGhi && dangSua != d.Buoi.Id) { <button type="button" class="nut-nho" title="Ghi sổ đầu bài" @onclick="() => MoSua(d)"><RadzenIcon Icon="edit_note" /></button> }
-                </div>
-            </article>
+                        <div class="xep-loai-sdb">@NhanVaNut(d)</div>
+                    </article>
+                }
+            </div>
         }
     </div>
 }
 
 @code {
+    private static readonly (string Ma, string Ten, string BieuTuong)[] CacCheDo =
+        [("tuan", "Theo tuần", "view_week"), ("thang", "Tháng", "calendar_month"), ("chuyen-de", "Theo chuyên đề", "menu_book"), ("ds", "Danh sách", "view_list")];
+
     [Parameter] public string MaLop { get; set; } = "";
     private List<DichVuHocVu.DongSoDauBai>? dong;
-    private string? loi;
-    private int? dangSua;
-    private string noiDung = "", nhanXet = "", xepLoai = "A";
-    protected override async Task OnParametersSetAsync() => await Tai();
-    private async Task Tai() => (dong, loi) = await HocVu.LaySoDauBaiAsync(MaLop);
-    private void MoSua(DichVuHocVu.DongSoDauBai d) { dangSua = d.Buoi.Id; noiDung = d.Ghi?.NoiDung ?? ""; nhanXet = d.Ghi?.NhanXet ?? ""; xepLoai = d.Ghi?.XepLoaiTiet ?? "A"; }
-    private async Task Luu(int id)
+    private string? loi, locNhanh, lopDaTai;
+    private string cheDo = "tuan", tuKhoa = "";
+    private DateTime dauTuan, thang;
+    private readonly HashSet<string> nhomDaMo = [], nhomDaDong = [];
+
+    private List<DichVuHocVu.DongSoDauBai> HienThi => TimKiemMo.Loc((dong ?? []).Where(KhopLoc), tuKhoa,
+        d => [d.TenChuyenDe, d.TenGiangVien, d.Ghi?.NoiDung, d.Ghi?.NhanXet, QuyTacHocVu.TenThu(d.Buoi.Ngay), d.Buoi.Ngay.ToString("dd/MM")]);
+    private DateTime TuanDau => QuyTacHocVu.DauTuan(dong!.Min(d => d.Buoi.Ngay));
+    private DateTime TuanCuoi => QuyTacHocVu.DauTuan(dong!.Max(d => d.Buoi.Ngay));
+    private DateTime ThangDau => DauThang(dong!.Min(d => d.Buoi.Ngay));
+    private DateTime ThangCuoi => DauThang(dong!.Max(d => d.Buoi.Ngay));
+    private static DateTime DauThang(DateTime d) => new(d.Year, d.Month, 1);
+
+    private bool KhopLoc(DichVuHocVu.DongSoDauBai d) => locNhanh switch
     {
-        var kq = await HocVu.GhiSoDauBaiAsync(id, noiDung, nhanXet, xepLoai);
-        ThongBao.Notify(kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, kq.ThanhCong ? "Đã lưu" : "Không lưu được", kq.ThongBao);
-        if (kq.ThanhCong) { dangSua = null; await Tai(); }
+        null => true,
+        "da" => d.Ghi is not null,
+        "chua" => d.Ghi is null,
+        _ => d.Ghi?.XepLoaiTiet == locNhanh
+    };
+    private string LopLoc(string? ma) => locNhanh == ma ? "dang-chon" : "";
+    private void DoiLoc(string ma) => locNhanh = locNhanh == ma ? null : ma;
+    private static string LopXepLoai(DichVuHocVu.DongSoDauBai d) => d.Ghi is { } g ? $"loai-{g.XepLoaiTiet}" : "chua";
+    private static string MoTa(DichVuHocVu.DongSoDauBai d) => $"{QuyTacHocVu.TenThu(d.Buoi.Ngay)} {d.Buoi.Ngay:dd/MM}, tiết {d.Buoi.TietBatDau}–{d.Buoi.TietKetThuc}, {d.TenChuyenDe}, {(d.Ghi is { } g ? $"tiết loại {g.XepLoaiTiet}" : "chưa ghi sổ")}";
+    private void MoTuan(DateTime ngay) { dauTuan = QuyTacHocVu.DauTuan(ngay); cheDo = "tuan"; }
+
+    // Mặc định mở chuyên đề còn buổi chưa ghi; người dùng đã đóng hoặc mở thì giữ nguyên lựa chọn.
+    private bool NhomDangMo(string ten, bool conThieu) => nhomDaMo.Contains(ten) || (conThieu && !nhomDaDong.Contains(ten));
+    private void DoiNhom(string ten, bool dangMo)
+    {
+        if (dangMo) { nhomDaMo.Remove(ten); nhomDaDong.Add(ten); }
+        else { nhomDaDong.Remove(ten); nhomDaMo.Add(ten); }
     }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (lopDaTai == MaLop) return;
+        lopDaTai = MaLop;
+        await Tai();
+        if (dong is { Count: > 0 }) { dauTuan = TuanCuoi; thang = ThangCuoi; }
+    }
+    private async Task Tai() => (dong, loi) = await HocVu.LaySoDauBaiAsync(MaLop);
+
+    private async Task MoSua(DichVuHocVu.DongSoDauBai d)
+    {
+        var kq = await HoiThoai.OpenAsync<BieuMauSoDauBai>("Ghi sổ đầu bài", new Dictionary<string, object> { [nameof(BieuMauSoDauBai.Dong)] = d }, new DialogOptions { Width = "640px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac k)
+        {
+            ThongBao.Notify(NotificationSeverity.Success, "Đã lưu", k.ThongBao);
+            await Tai();
+        }
+    }
+
+    private RenderFragment NoiDung(DichVuHocVu.DongSoDauBai d) => @<text>
+        @if (d.Ghi is { } g)
+        {
+            <span>@g.NoiDung</span>
+            @if (g.NhanXet != "") { <em class="phu-dong">Nhận xét: @g.NhanXet</em> }
+        }
+        else { <em class="phu-dong">Chưa ghi sổ đầu bài.</em> }
+    </text>;
+
+    private RenderFragment NhanVaNut(DichVuHocVu.DongSoDauBai d) => @<text>
+        @if (d.Ghi is { } g) { <span class="nhan-xep-loai @(g.XepLoaiTiet switch { "A" => "gioi", "B" => "kha", "C" => "dat", _ => "khong-dat" })">Tiết loại @g.XepLoaiTiet</span> }
+        @if (d.DuocGhi) { <button type="button" class="nut-nho" title="Ghi sổ đầu bài" aria-label="Ghi sổ đầu bài" @onclick="() => MoSua(d)"><RadzenIcon Icon="edit_note" /></button> }
+    </text>;
+
+    private RenderFragment HangSo(DichVuHocVu.DongSoDauBai d, bool hienChuyenDe) => @<tr class="@(d.Ghi is null ? "chua" : "")">
+        <td class="sdb-ngay"><strong>@d.Buoi.Ngay.ToString("dd/MM")</strong><small>@QuyTacHocVu.TenThu(d.Buoi.Ngay)</small></td>
+        <td class="sdb-tiet">@d.Buoi.TietBatDau–@d.Buoi.TietKetThuc</td>
+        @if (hienChuyenDe) { <td class="ln-cd">@d.TenChuyenDe</td> }
+        <td>@d.TenGiangVien</td>
+        <td class="so">@d.CoMat/@d.SiSo</td>
+        <td class="sdb-noi-dung">@NoiDung(d)</td>
+        <td class="sdb-loai" colspan="2"><span class="sdb-cum">@NhanVaNut(d)</span></td>
+    </tr>;
 }

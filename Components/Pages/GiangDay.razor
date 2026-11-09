@@ -5,9 +5,12 @@
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuBaoCaoExcel BaoCao
 
 <PageTitle>Giảng dạy của tôi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Giảng dạy của tôi" MoTa="Buổi dạy hôm nay, các lớp đang dạy và chuyên đề đủ điều kiện dạy. Điểm danh và nhập điểm cho lớp mình dạy." />
+<DauTrang TieuDe="Giảng dạy của tôi" MoTa="Buổi dạy hôm nay, các lớp đang dạy và chuyên đề đủ điều kiện dạy. Điểm danh và nhập điểm cho lớp mình dạy.">
+    <ThaoTac>@if (canBo is not null) { <span data-hd="ca-nhan-excel"><NutXuatTheoNgay Nhan="Xuất báo cáo giảng dạy" TieuDe="Xuất báo cáo giảng dạy ra Excel" TenTep="bao-cao-giang-day" MoTa="Chọn khoảng ngày bất kỳ và các nội dung cần lấy. Bảng điểm, điểm danh từng lớp xuất tại trang lớp." CacPhan="@DichVuBaoCaoExcel.PhanGiangDay" TaoTep="@((t, d, phan) => BaoCao.XuatGiangDayCuaToiAsync(t, d, phan))" /></span> }<RadzenLink Path="/dao-tao/lich" Text="Lịch dạy nâng cao" Icon="calendar_month" class="lien-ket-dau-trang" /></ThaoTac>
+</DauTrang>
 
 @if (canBo is null)
 {
@@ -60,7 +63,7 @@ else
             <ul class="danh-sach-gon">@foreach (var cd in chuyenDe) { <li><span><strong>@cd.ChuyenDe.TenChuyenDe</strong><span>@cd.ChuyenDe.MaChuyenDe · @cd.ChuyenDe.SoTiet tiết</span></span></li> }</ul>
         </RadzenCard>
     </div>
-    <p><RadzenLink Path="/dao-tao/lich" Text="Xem lịch dạy theo tuần" Icon="calendar_month" /></p>
+    
 }
 
 @code {

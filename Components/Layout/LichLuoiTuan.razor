@@ -1,0 +1,33 @@
+@* Lưới tuần: cột là thứ Hai đến thứ Bảy, hàng là buổi sáng, chiều, tối. Dùng chung cho trang Lịch đào tạo và tab Lịch học của lớp. *@
+<div class="luoi-lich" role="grid" aria-label="Lịch tuần">
+    <div class="o-goc"></div>
+    @for (var d = 0; d < 6; d++)
+    {
+        var ngay = DauTuan.AddDays(d);
+        <div class="dau-ngay @(ngay == DateTime.Today ? "hom-nay" : "")" role="columnheader"><span>@QuyTacHocVu.TenThu(ngay)</span><strong>@ngay.ToString("dd/MM")</strong></div>
+    }
+    @foreach (var buoi in new[] { "Sáng", "Chiều", "Tối" })
+    {
+        if (buoi == "Tối" && !Buoi.Any(b => QuyTacHocVu.Buoi(b.Buoi.TietBatDau) == "Tối")) continue;
+        <div class="ten-buoi" role="rowheader">@buoi</div>
+        @for (var d = 0; d < 6; d++)
+        {
+            var ngay = DauTuan.AddDays(d);
+            <div class="o-lich @(ngay == DateTime.Today ? "hom-nay" : "")" role="gridcell">
+                @foreach (var b in Buoi.Where(b => b.Buoi.Ngay.Date == ngay && QuyTacHocVu.Buoi(b.Buoi.TietBatDau) == buoi))
+                {
+                    <TheBuoiHoc Buoi="b" DuocSua="DuocSua" DuocDiemDanh="ChoPhepDiemDanh(b.Buoi)" KhiSua="KhiSua" KhiXoa="KhiXoa" />
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
+    [Parameter, EditorRequired] public DateTime DauTuan { get; set; }
+    [Parameter] public bool DuocSua { get; set; }
+    [Parameter] public Func<BuoiHoc, bool> ChoPhepDiemDanh { get; set; } = _ => false;
+    [Parameter] public EventCallback<BuoiHoc> KhiSua { get; set; }
+    [Parameter] public EventCallback<BuoiHoc> KhiXoa { get; set; }
+}

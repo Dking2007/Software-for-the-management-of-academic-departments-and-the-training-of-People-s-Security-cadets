@@ -1,10 +1,12 @@
 @inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuBaoCaoExcel BaoCao
 
 @* Buổi học / buổi nghỉ của từng học viên (mọi chuyên đề), tính từ điểm danh. Tỉ lệ vắng vượt 20% thì có nguy cơ không đủ tư cách thi. *@
 @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
 else if (dong is null) { @for (var i = 0; i < 5; i++) { <div class="khung-xuong dong-xuong"></div> } }
 else
 {
+    <div class="thanh-lich"><span class="ket-qua-tim-kiem"><strong>@dong.Count</strong> học viên</span><NutXuatExcel TaoTep="@(() => BaoCao.XuatChuyenCanLopAsync(MaLop))" TenTep="@($"chuyen-can-{MaLop}")" KichThuoc="ButtonSize.Small" /></div>
     <div class="tom-tat-diem-danh">
         <span class="o-tom-tat co-mat"><strong>@dong.Sum(d => d.CoMat)</strong>lượt có mặt</span>
         <span class="o-tom-tat di-muon"><strong>@dong.Sum(d => d.DiMuon)</strong>lượt đi muộn</span>

@@ -27,6 +27,9 @@
                 <Authorized Context="nguoiDung">
                     <div class="cong-cu-tai-khoan">
                         <TimKiemNhanh />
+                        @* Thông tin để hướng dẫn nhập môn chọn đúng nội dung; chỉ là tên và vai trò đang hiển thị trên trang. *@
+                        <span hidden data-huong-dan-nguoi="@nguoiDung.User.Identity?.Name" data-huong-dan-vai-tro="@MaVaiTroHuongDan(nguoiDung.User)"></span>
+                        <button type="button" class="nut-huong-dan" data-mo-huong-dan title="@TuyChon.Dich("Hướng dẫn nhanh")" aria-label="@TuyChon.Dich("Hướng dẫn nhanh")"><RadzenIcon Icon="flag" /></button>
                         <ChuongThongBao />
                         <CaiDatGiaoDien />
                         <div class="menu-nguoi-dung" @onkeydown="PhimTrongMenu">
@@ -68,6 +71,9 @@
     </div>
 </div>
 
+@* Nút về đầu trang: wwwroot/hieu-ung.js bật lớp "hien" khi đã cuộn tới gần cuối trang. *@
+<button type="button" id="nut-len-dau" class="nut-len-dau" title="@TuyChon.Dich("Về đầu trang")" aria-label="@TuyChon.Dich("Về đầu trang")"><RadzenIcon Icon="keyboard_arrow_up" /></button>
+
 <div id="blazor-error-ui">
     @* Giữ bộ chọn CSS của Blazor nhưng dùng Radzen cho điều khiển trong thông báo lỗi. *@
     Đã xảy ra lỗi. <RadzenLink Path="" class="reload">Tải lại trang</RadzenLink>
@@ -82,11 +88,29 @@
     private void KhiDoiTuyChon() => _ = InvokeAsync(StateHasChanged);
     public void Dispose() => TuyChon.DaThayDoi -= KhiDoiTuyChon;
 
-    [Inject] private NhaCungCapTrangThaiXacThucDemo XacThuc { get; set; } = default!;
     [Inject] private NavigationManager DieuHuong { get; set; } = default!;
 
+    [Inject] private IJSRuntime JavaScript { get; set; } = default!;
+
     private bool sidebarThuGon;
-    private void DoiTrangThaiSidebar() => sidebarThuGon = !sidebarThuGon;
+    private async Task DoiTrangThaiSidebar()
+    {
+        sidebarThuGon = !sidebarThuGon;
+        try { await JavaScript.InvokeVoidAsync("thuGonMenu.luu", sidebarThuGon); } catch (JSException) { } catch (InvalidOperationException) { }
+    }
+
+    // Đọc lựa chọn đã lưu sau lần hiển thị đầu (JS interop chỉ dùng được khi trang đã dựng xong ở trình duyệt).
+    protected override async Task OnAfterRenderAsync(bool lanDau)
+    {
+        if (!lanDau) return;
+        try
+        {
+            var thuGon = await JavaScript.InvokeAsync<bool>("thuGonMenu.doc");
+            if (thuGon != sidebarThuGon) { sidebarThuGon = thuGon; StateHasChanged(); }
+        }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+    }
 
     private bool menuNguoiDungMo;
     private void DoiMenuNguoiDung() => menuNguoiDungMo = !menuNguoiDungMo;
@@ -95,13 +119,6 @@
 
     private string DuongDanHienTai => DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0].Trim('/');
     private bool LaTrangChu => string.IsNullOrEmpty(DuongDanHienTai);
-
-    private async Task DangXuat()
-    {
-        // Xóa trạng thái xác thực trước khi điều hướng về trang đăng nhập.
-        await XacThuc.DangXuatAsync();
-        DieuHuong.NavigateTo("/dang-nhap", replace: true);
-    }
 
     private sealed record MucDuongDan(string Ten, string? DuongDan = null, string? BieuTuong = null);
 
@@ -155,15 +172,13 @@
     private static string LayTenVaiTro(System.Security.Claims.ClaimsPrincipal nguoiDung)
         => NguoiDungHienTai.Tu(nguoiDung).TenVaiTro;
 
+    private static string MaVaiTroHuongDan(System.Security.Claims.ClaimsPrincipal nguoiDung)
+    {
+        var nd = NguoiDungHienTai.Tu(nguoiDung);
+        return nd.VaiTro == "Manager" ? nd.VaiTro + nd.PhamVi : nd.VaiTro;
+    }
+
     // Lấy ký tự đầu làm chữ viết tắt; dùng dấu hỏi nếu tên chưa có giá trị.
     private static string LayInitial(string? ten)
         => string.IsNullOrWhiteSpace(ten) ? "?" : ten.Trim()[0].ToString().ToUpperInvariant();
 }
-
-
-
-
-
-
-
-

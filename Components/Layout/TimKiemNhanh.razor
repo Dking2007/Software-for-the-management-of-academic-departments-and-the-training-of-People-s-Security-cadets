@@ -13,13 +13,13 @@
     <div class="hop-tim-nhanh" role="dialog" aria-modal="true" aria-label="Tìm kiếm nhanh" @onkeydown="Phim">
         <div class="o-tim-nhanh">
             <RadzenIcon Icon="search" />
-            <input data-o-tim-nhanh data-tim-kiem value="@tuKhoa" @onchange="Nhap" placeholder="Gõ tên khoa, lớp, cán bộ, học viên, chuyên đề, phòng hoặc trang…" aria-label="Từ khoá tìm kiếm" autocomplete="off" />
+            <input data-o-tim-nhanh data-tim-kiem value="@tuKhoa" @onchange="Nhap" placeholder="Gõ tự do: duy b10, duy-b10, tổ 1 châu…" aria-label="Từ khoá tìm kiếm" autocomplete="off" spellcheck="false" />
             <kbd>Esc</kbd>
         </div>
         <div class="ket-qua-tim-nhanh" role="listbox">
             @if (tuKhoa.Trim().Length < 2)
             {
-                <p class="goi-y-tim-nhanh">Gõ ít nhất 2 ký tự. Không cần dấu: "nguyen van" vẫn khớp "Nguyễn Văn".</p>
+                <p class="goi-y-tim-nhanh">Gõ ít nhất 2 ký tự, không cần dấu và không cần đúng thứ tự: "duy b10", "b10 duy", "duy-b10" đều ra cùng kết quả. Gõ sai một chữ vẫn tìm được.</p>
             }
             else if (dangTim)
             {
@@ -31,6 +31,7 @@
             }
             else
             {
+                @if (ketQua[0].GanDung) { <p class="goi-y-tim-nhanh gan-dung"><RadzenIcon Icon="tips_and_updates" />Không có kết quả khớp đủ mọi từ. Đây là các kết quả gần đúng.</p> }
                 @foreach (var nhom in ketQua.GroupBy(k => k.Loai))
                 {
                     <div class="nhom-tim-nhanh">@nhom.Key</div>

@@ -50,7 +50,7 @@
         <RadzenTabsItem Text="@($"Cán bộ ({CanBo.Count(c => "k:" + c.MaKhoa == Khoa.Khoa)})")" Icon="badge">
             <div class="search-box" style="max-width:none;margin-bottom:.5rem"><RadzenIcon Icon="search" /><input class="form-control" @bind="tim" @bind:event="oninput" placeholder="Tìm tên cán bộ" /></div>
             <ul class="danh-sach-gon" style="max-height:52vh;overflow-y:auto">
-                @foreach (var cb in CanBo.Where(c => "k:" + c.MaKhoa == Khoa.Khoa && (tim.Trim() == "" || DichVuTimKiem.BoDau(c.HoTen).Contains(DichVuTimKiem.BoDau(tim)))).OrderBy(c => c.KhoaSapXepTen, StringComparer.Ordinal))
+                @foreach (var cb in TimKiemMo.LocNguoi(CanBo.Where(c => "k:" + c.MaKhoa == Khoa.Khoa).OrderBy(c => c.KhoaSapXepTen, StringComparer.Ordinal), tim, c => [c.HoTen, c.CapBacHam, c.ChucVu, c.TenTo]))
                 {
                     <li><span><strong><TheXemNhanh Loai="CanBo" Ma="@cb.MaTraCuuNoiBo">@cb.CapBacHam @cb.HoTen</TheXemNhanh></strong><span>@cb.ChucVu · @cb.TenTo · @cb.HocVi</span></span></li>
                 }

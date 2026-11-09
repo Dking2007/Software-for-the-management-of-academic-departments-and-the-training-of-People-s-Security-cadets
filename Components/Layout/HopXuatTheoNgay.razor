@@ -1,0 +1,107 @@
+@inject DialogService HoiThoai
+@inject IJSRuntime JS
+@inject NotificationService ThongBao
+
+@* Hộp thoại xuất Excel theo khoảng ngày tự chọn: có nút chọn nhanh (tuần, tháng, học kỳ…) hoặc nhập từ ngày – đến ngày bất kỳ,
+   không cần chuyển lịch về đúng tháng cần xuất. Tệp tạo ở máy chủ theo đúng mặt cắt quyền của người đang xem. *@
+@if (!string.IsNullOrWhiteSpace(MoTa)) { <p class="hx-mo-ta">@MoTa</p> }
+
+<div class="hx-chon-nhanh" role="group" aria-label="Chọn nhanh khoảng thời gian">
+    @foreach (var m in cacMoc)
+    {
+        <button type="button" class="@(mocChon == m.Ten ? "dang-chon" : "")" aria-pressed="@(mocChon == m.Ten ? "true" : "false")" @onclick="() => ChonMoc(m)">@m.Ten</button>
+    }
+</div>
+
+<div class="hx-khoang">
+    <RadzenFormField Text="Từ ngày" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" @bind-Value="tu" DateFormat="dd/MM/yyyy" ShowCalendarWeek="false" Change="DoiNgay" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Đến ngày" Variant="Variant.Outlined"><RadzenDatePicker TValue="DateTime" @bind-Value="den" DateFormat="dd/MM/yyyy" ShowCalendarWeek="false" Change="DoiNgay" Style="width:100%" /></RadzenFormField>
+</div>
+
+@if (CacPhan is { Count: > 0 })
+{
+    <fieldset class="hx-phan">
+        <legend>Nội dung đưa vào tệp</legend>
+        @foreach (var p in CacPhan)
+        {
+            <label class="chon-khoa"><input type="checkbox" checked="@phanChon.Contains(p.Ma)" @onchange="e => DoiPhan(p.Ma, e.Value is true)" /> @p.Ten</label>
+        }
+    </fieldset>
+}
+
+<div class="hx-xem-truoc" role="status" aria-live="polite">
+    @if (Loi is { } l) { <span class="hx-loi"><RadzenIcon Icon="error" />@l</span> }
+    else if (xemTruoc is not null) { <RadzenIcon Icon="info" /><span>Sẽ xuất: @xemTruoc</span> }
+    else { <RadzenIcon Icon="event" /><span>@((den.Date - tu.Date).Days + 1) ngày, từ @tu.ToString("dd/MM/yyyy") đến @den.ToString("dd/MM/yyyy").</span> }
+</div>
+
+<div class="thao-tac-bieu-mau">
+    <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" Disabled="dangTao" />
+    <RadzenButton Text="Tải tệp Excel" Icon="download" ButtonStyle="ButtonStyle.Primary" Click="Tai" IsBusy="dangTao" BusyText="Đang tạo tệp…" Disabled="@(Loi is not null)" />
+</div>
+
+@code {
+    private sealed record MocNhanh(string Ten, DateTime Tu, DateTime Den);
+
+    [Parameter, EditorRequired] public Func<DateTime, DateTime, IReadOnlySet<string>, Task<byte[]?>> TaoTep { get; set; } = default!;
+    [Parameter, EditorRequired] public string TenTep { get; set; } = "du-lieu";
+    [Parameter] public string? MoTa { get; set; }
+    [Parameter] public DateTime TuMacDinh { get; set; } = DateTime.Today;
+    [Parameter] public DateTime DenMacDinh { get; set; } = DateTime.Today;
+    [Parameter] public IReadOnlyList<PhanXuat>? CacPhan { get; set; }
+    /// <summary>Dòng mô tả sẽ xuất bao nhiêu dữ liệu; để trống thì chỉ hiện số ngày.</summary>
+    [Parameter] public Func<DateTime, DateTime, Task<string?>>? XemTruoc { get; set; }
+
+    private DateTime tu, den;
+    private string? mocChon, xemTruoc;
+    private bool dangTao;
+    private List<MocNhanh> cacMoc = [];
+    private readonly HashSet<string> phanChon = [];
+
+    private string? Loi => DichVuBaoCaoExcel.KiemTraKhoang(tu, den) ?? (CacPhan is { Count: > 0 } && phanChon.Count == 0 ? "Hãy chọn ít nhất một nội dung để xuất." : null);
+
+    protected override async Task OnInitializedAsync()
+    {
+        tu = TuMacDinh.Date; den = DenMacDinh.Date;
+        var homNay = DateTime.Today;
+        var dauTuan = QuyTacHocVu.DauTuan(homNay);
+        var dauThang = new DateTime(homNay.Year, homNay.Month, 1);
+        var (namHoc, hocKy) = QuyTacHocVu.NamHocHocKy(homNay);
+        var namDau = int.Parse(namHoc[..4]);
+        var dauHk = hocKy == 1 ? new DateTime(namDau, 9, 1) : new DateTime(namDau + 1, 2, 1);
+        var cuoiHk = hocKy == 1 ? new DateTime(namDau + 1, 1, 31) : new DateTime(namDau + 1, 8, 31);
+        cacMoc =
+        [
+            new("Hôm nay", homNay, homNay),
+            new("Tuần này", dauTuan, dauTuan.AddDays(5)),
+            new("Tuần trước", dauTuan.AddDays(-7), dauTuan.AddDays(-2)),
+            new("Tháng này", dauThang, dauThang.AddMonths(1).AddDays(-1)),
+            new("Tháng trước", dauThang.AddMonths(-1), dauThang.AddDays(-1)),
+            new("Học kỳ này", dauHk, cuoiHk),
+            new("Năm học này", new DateTime(namDau, 9, 1), new DateTime(namDau + 1, 8, 31))
+        ];
+        mocChon = cacMoc.FirstOrDefault(m => m.Tu == tu && m.Den == den)?.Ten;
+        if (CacPhan is not null) foreach (var p in CacPhan) phanChon.Add(p.Ma);
+        await CapNhatXemTruoc();
+    }
+
+    private async Task ChonMoc(MocNhanh m) { tu = m.Tu; den = m.Den; mocChon = m.Ten; await CapNhatXemTruoc(); }
+    private async Task DoiNgay() { mocChon = cacMoc.FirstOrDefault(m => m.Tu == tu.Date && m.Den == den.Date)?.Ten; await CapNhatXemTruoc(); }
+    private void DoiPhan(string ma, bool chon) { if (chon) phanChon.Add(ma); else phanChon.Remove(ma); }
+    private async Task CapNhatXemTruoc() => xemTruoc = XemTruoc is null || DichVuBaoCaoExcel.KiemTraKhoang(tu, den) is not null ? null : await XemTruoc(tu, den);
+
+    private async Task Tai()
+    {
+        if (Loi is not null) return;
+        dangTao = true;
+        try
+        {
+            var tep = await TaoTep(tu, den, phanChon);
+            if (tep is null) { ThongBao.Notify(NotificationSeverity.Warning, "Không xuất được", "Bạn không có quyền xem dữ liệu này hoặc chưa chọn nội dung."); return; }
+            await JS.InvokeVoidAsync("taiTep", $"{TenTep}-{tu:yyyyMMdd}-{den:yyyyMMdd}.xlsx", DichVuExcel.MimeXlsx, Convert.ToBase64String(tep));
+            HoiThoai.Close(true);
+        }
+        catch (Exception ex) when (ex is not JSDisconnectedException) { ThongBao.Notify(NotificationSeverity.Error, "Không xuất được", "Có lỗi khi tạo tệp Excel. Vui lòng thử lại."); }
+        finally { dangTao = false; }
+    }
+}

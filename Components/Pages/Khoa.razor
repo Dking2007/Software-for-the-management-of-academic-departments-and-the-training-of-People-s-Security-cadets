@@ -5,6 +5,7 @@
 @using ToModel = Nhom2_BTL.Models.ToChuyenMon
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuBaoCaoExcel BaoCao
 @inject DialogService HoiThoai
 @inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
@@ -12,7 +13,7 @@
 @* Danh sách khoa hiển thị lãnh đạo và số tổ; hồ sơ tổ, cán bộ có mục riêng trong sidebar. *@
 <PageTitle>Khoa | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
 <DauTrang TieuDe="Danh sách khoa" MoTa="Quản lý khoa và các vị trí lãnh đạo trực thuộc.">
-    <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="add" Text="@TuyChon.Dich("Thêm khoa")" ButtonStyle="ButtonStyle.Primary" Click="ThemKhoa" /> }</ThaoTac>
+    <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await BaoCao.XuatKhoaAsync())" TenTep="danh-sach-khoa" />@if (duocChinhSua) { <RadzenButton Icon="add" Text="@TuyChon.Dich("Thêm khoa")" ButtonStyle="ButtonStyle.Primary" Click="ThemKhoa" /> }</ThaoTac>
 </DauTrang>
 <RadzenCard class="directory-panel">
     <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="Tìm theo mã hoặc tên khoa" NhanTimKiem="Tìm khoa" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachKhoa.Count" />
@@ -53,8 +54,7 @@
     private string tuKhoa = string.Empty;
     private bool duocChinhSua;
 
-    private IEnumerable<KhoaModel> DanhSachHienThi => string.IsNullOrWhiteSpace(tuKhoa) ? danhSachKhoa : danhSachKhoa.Where(khoa =>
-        khoa.MaKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || khoa.TenKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase));
+    private IEnumerable<KhoaModel> DanhSachHienThi => TimKiemMo.Loc(danhSachKhoa, tuKhoa, khoa => [khoa.TenKhoa, khoa.MaKhoa]);
 
     protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("Khoa"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
     private void TaiDuLieu() { danhSachKhoa = DuLieu.LayDanhSachKhoa().ToList(); cacTo = DuLieu.LayDanhSachTo().ToList(); }
@@ -80,7 +80,3 @@
         TaiDuLieu(); await InvokeAsync(StateHasChanged);
     }
 }
-
-
-
-

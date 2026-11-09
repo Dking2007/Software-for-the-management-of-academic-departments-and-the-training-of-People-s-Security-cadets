@@ -35,13 +35,17 @@
 <div class="thanh-lich sd-thanh-cong-cu">
     <div class="search-box">
         <RadzenIcon Icon="search" />
-        <input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="Tim" placeholder="@(nhanh == "to-chuc" ? "Tìm khoa, tổ hoặc tên cán bộ…" : "Tìm hệ, khoá, mã lớp, tên học viên hoặc GV chủ nhiệm…")" aria-label="Tìm trên sơ đồ" />
+        <input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="Tim" placeholder="@(nhanh == "to-chuc" ? "Gõ tự do: khoa, tổ, tên cán bộ (vd: tổ 1 châu)" : "Gõ tự do: hệ, khoá, lớp, tên học viên (vd: duy b10)")" aria-label="Tìm trên sơ đồ" spellcheck="false" />
         @if (tuKhoa != "") { <button type="button" class="sd-xoa-tim" title="Xoá từ khoá" aria-label="Xoá từ khoá" @onclick="XoaTim"><RadzenIcon Icon="close" /></button> }
     </div>
     @if (DangTim)
     {
-        <span class="ket-qua-tim-kiem" role="status"><strong>@ketQuaNguoi.Count</strong> người · <strong>@donViKhop.Count</strong> đơn vị khớp</span>
+        <span class="ket-qua-tim-kiem" role="status"><strong>@ketQuaNguoi.Count</strong> người · <strong>@donViKhop.Count</strong> đơn vị @(tuKhoaGanDung ? "gần đúng" : "khớp")</span>
         <label class="chon-khoa sd-chi-nhanh-khop"><input type="checkbox" checked="@chiNhanhKhop" @onchange="e => chiNhanhKhop = e.Value is true" /> Chỉ hiện nhánh có kết quả</label>
+    }
+    @if (cheDoCot && CacCot.Count() > 1)
+    {
+        <button type="button" class="nut-chu sd-thu-cot-ngoai" @onclick="DoiThuCotNgoai"><RadzenIcon Icon="@(cotGon.Count > 0 ? "unfold_more_double" : "unfold_less_double")" />@(cotGon.Count > 0 ? "Mở lại các cột" : "Thu gọn cột ngoài")</button>
     }
     <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị">
         <button type="button" class="@(cheDoCot ? "dang-chon" : "")" @onclick="() => DoiCheDo(true)" title="Mỗi cấp một cột: dễ theo dõi nhất"><RadzenIcon Icon="view_column" />Dạng cột</button>
@@ -54,7 +58,7 @@
         @if (cheDoCot)
         {
             @* Dạng cột (kiểu Finder): mỗi cấp một cột, chọn mục thì cột kế tiếp hiện con của mục đó. *@
-            <div class="sd-cot-wrap" role="tree" aria-label="Duyệt theo cấp">
+            <div class="sd-cot-wrap" role="tree" aria-label="Duyệt theo cấp" @ref="vungCot">
                 @if (DangTim)
                 {
                     @* Cột kết quả: người khớp tên (kèm nơi đang ở) và đơn vị khớp; bấm để nhảy tới đúng vị trí trên sơ đồ. *@
@@ -98,8 +102,16 @@
                 }
                 @foreach (var cot in CacCot)
                 {
+                    @if (cotGon.Contains(cot.Ten))
+                    {
+                        var dangChonTrongCot = cot.Muc.FirstOrDefault(m => duongChon.Contains(m.Khoa));
+                        <button type="button" class="sd-cot-kq-gon sd-cot-gon" title="@($"Mở cột {cot.Ten}")" aria-label="@($"Mở cột {cot.Ten}")" @onclick="() => DoiGonCot(cot.Ten)">
+                            <RadzenIcon Icon="keyboard_double_arrow_right" /><span>@cot.Ten@(dangChonTrongCot is null ? "" : $" · {dangChonTrongCot.Ten}")</span><strong>@cot.Muc.Count</strong>
+                        </button>
+                        continue;
+                    }
                     <div class="sd-cot" role="group">
-                        <div class="sd-dau-cot">@cot.Ten <small>@cot.Muc.Count</small></div>
+                        <div class="sd-dau-cot">@cot.Ten <span class="sd-dau-cot-phai"><small>@cot.Muc.Count</small><button type="button" class="sd-nut-thu-cot" title="@($"Thu gọn cột {cot.Ten}")" aria-label="@($"Thu gọn cột {cot.Ten}")" @onclick="() => DoiGonCot(cot.Ten)"><RadzenIcon Icon="keyboard_double_arrow_left" /></button></span></div>
                         @foreach (var muc in cot.Muc.Where(m => !DangTim || !chiNhanhKhop || soKhop.ContainsKey(m.Khoa) || khop.Contains(m.Khoa) || duongChon.Contains(m.Khoa) || m.TatCa().Any(x => khop.Contains(x.Khoa))))
                         {
                             var trenDuong = duongChon.Contains(muc.Khoa);
@@ -113,20 +125,36 @@
                         }
                     </div>
                 }
-                @if (DangTim && KhopTrongNutChon is { Count: > 0 } khopTrong)
+                @if (DanhSachNguoi is { } thanhVien)
                 {
-                    @* Cột cuối: người khớp từ khoá thuộc đúng lớp/tổ đang chọn, để đối chiếu ngay cạnh cây. *@
-                    <div class="sd-cot sd-cot-khop-trong" role="group" aria-label="@($"Khớp trong {nutChon.Ten}")">
-                        <div class="sd-dau-cot">Khớp trong @nutChon.Ten <small>@khopTrong.Count</small></div>
-                        @foreach (var r in khopTrong)
-                        {
-                            <div class="sd-kq tinh @(r == nguoiDangXem ? "dang-chon" : "")">
-                                <span class="sd-avatar mau-@(Math.Abs(r.Ten.GetHashCode()) % 5)">@ChuDau(r.Ten)</span>
-                                <span class="sd-chu-muc"><strong><TheXemNhanh Loai="@r.LoaiXn" Ma="@r.MaXn">@DanhDau(r.Ten)</TheXemNhanh></strong><small>@r.Phu</small></span>
-                                @if (r.Nhan != "") { <span class="nhan-trang-thai hoat-dong">@r.Nhan</span> }
-                            </div>
-                        }
-                    </div>
+                    @* Cột thành viên của tổ/lớp đang chọn. Rê chuột vào một người để xem thẻ thông tin khái quát; đang tìm thì người khớp xếp lên đầu. *@
+                    var tenCotNguoi = nutChon.Loai == "Lớp" ? "Học viên" : "Cán bộ";
+                    @if (cotGon.Contains(CotThanhVien))
+                    {
+                        <button type="button" class="sd-cot-kq-gon sd-cot-gon" title="@($"Mở cột {tenCotNguoi}")" aria-label="@($"Mở cột {tenCotNguoi}")" @onclick="() => DoiGonCot(CotThanhVien)">
+                            <RadzenIcon Icon="keyboard_double_arrow_right" /><span>@tenCotNguoi · @nutChon.Ten</span><strong>@thanhVien.Count</strong>
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="sd-cot sd-cot-thanh-vien" role="group" aria-label="@($"{tenCotNguoi} của {nutChon.Ten}")">
+                            <div class="sd-dau-cot">@tenCotNguoi <span class="sd-dau-cot-phai"><small>@thanhVien.Count</small><button type="button" class="sd-nut-thu-cot" title="@($"Thu gọn cột {tenCotNguoi}")" aria-label="@($"Thu gọn cột {tenCotNguoi}")" @onclick="() => DoiGonCot(CotThanhVien)"><RadzenIcon Icon="keyboard_double_arrow_left" /></button></span></div>
+                            @if (thanhVien.Count == 0)
+                            {
+                                <p class="phu-dong sd-kq-trong">@(nhanh == "dao-tao" && DuLieu.LayDanhSachHocVien().Count == 0 ? "Vai trò của bạn chỉ xem số liệu tổng hợp, không xem danh sách từng học viên." : "Chưa có dữ liệu.")</p>
+                            }
+                            @foreach (var x in thanhVien.OrderByDescending(x => DangTim && KhopNguoi(x.Ma)))
+                            {
+                                <div class="sd-kq tinh sd-thanh-vien @(DangTim && KhopNguoi(x.Ma) ? "khop" : "")">
+                                    <TheXemNhanh Loai="@x.Loai" Ma="@x.Ma" Class="sd-tv-neo">
+                                        <span class="sd-avatar mau-@(Math.Abs(string.GetHashCode(x.Ten, StringComparison.Ordinal)) % 5)">@ChuDau(x.Ten)</span>
+                                        <span class="sd-chu-muc"><strong>@(DangTim ? DanhDau(x.Ten) : (RenderFragment)(b => b.AddContent(0, x.Ten)))</strong><small>@x.Phu</small></span>
+                                    </TheXemNhanh>
+                                    @if (x.Nhan != "" && x.Loai == "HocVien") { <span class="nhan-trang-thai hoat-dong">@x.Nhan</span> }
+                                </div>
+                            }
+                        </div>
+                    }
                 }
             </div>
         }
@@ -256,9 +284,9 @@
                     <label class="chon-khoa sd-chi-khop"><input type="checkbox" checked="@panelChiKhop" @onchange="e => panelChiKhop = e.Value is true" /> Chỉ người khớp “@tuKhoa” (@kt.Count)</label>
                 }
                 <ul class="danh-sach-gon sd-danh-sach">
-                    @foreach (var x in nguoi.Where(x => timNguoi.Trim() == "" ? !(DangTim && panelChiKhop && (KhopTrongNutChon?.Count ?? 0) > 0) || KhopTen(x.Ten) : DichVuTimKiem.BoDau(x.Ten).Contains(DichVuTimKiem.BoDau(timNguoi))).Take(80))
+                    @foreach (var x in nguoi.Where(x => timNguoi.Trim() == "" ? !(DangTim && panelChiKhop && (KhopTrongNutChon?.Count ?? 0) > 0) || KhopNguoi(x.Ma) : TimKiemMo.Khop(timNguoi, x.Ten, x.Phu)).Take(80))
                     {
-                        <li class="@(DangTim && KhopTen(x.Ten) ? "sd-li-khop" : "")"><span><strong><TheXemNhanh Loai="@x.Loai" Ma="@x.Ma">@(DangTim ? DanhDau(x.Ten) : (RenderFragment)(b => b.AddContent(0, x.Ten)))</TheXemNhanh></strong><span>@x.Phu</span></span>@if (x.Nhan != "") { <span class="nhan-trang-thai hoat-dong">@x.Nhan</span> }</li>
+                        <li class="@(DangTim && KhopNguoi(x.Ma) ? "sd-li-khop" : "")"><span><strong><TheXemNhanh Loai="@x.Loai" Ma="@x.Ma">@(DangTim ? DanhDau(x.Ten) : (RenderFragment)(b => b.AddContent(0, x.Ten)))</TheXemNhanh></strong><span>@x.Phu</span></span>@if (x.Nhan != "") { <span class="nhan-trang-thai hoat-dong">@x.Nhan</span> }</li>
                     }
                 </ul>
             }
@@ -286,7 +314,11 @@
     private HashSet<string> duongChon = [], dangMo = [], moHet = [], khop = [];
     private string tuKhoa = "", timNguoi = "";
     private sealed record KetQuaNguoi(string Ten, string Phu, string Nhan, NutSoDo Nut, string TimTrongDanhSach, string LoaiXn, string MaXn);
-    private sealed record MucChiMuc(string BoDau, string Ten, string Phu, string Nhan, string KhoaNut, string TimTrongDanhSach, string LoaiXn, string MaXn);
+    private sealed record MucChiMuc(string?[] Truong, string Ten, string Phu, string Nhan, string KhoaNut, string TimTrongDanhSach, string LoaiXn, string MaXn);
+    private const string CotThanhVien = "#thanh-vien";
+    private HashSet<string> cotGon = [], maNguoiKhop = [];
+    private bool tuKhoaGanDung, canCuonCot;
+    private ElementReference vungCot;
     private bool kqThuGon, chiNhanhKhop, panelChiKhop = true;
     private List<MucChiMuc> chiMucNguoi = [];
     private Dictionary<string, NutSoDo> theoKhoa = [];
@@ -308,14 +340,14 @@
     {
         goc = nhanh == "to-chuc" ? await SoDo.LayCayToChucAsync() : SoDo.LayCayDaoTao();
         canBo = nhanh == "to-chuc" ? DuLieu.LayDanhSachCanBo().ToList() : [];
-        dangMo = [goc.Khoa]; moHet = []; khop = []; tuKhoa = ""; chiRaSoat = false;
-        ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null;
+        dangMo = [goc.Khoa]; moHet = []; khop = []; tuKhoa = ""; chiRaSoat = false; cotGon = [];
+        ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null; maNguoiKhop = []; tuKhoaGanDung = false;
         theoKhoa = goc.TatCa().GroupBy(n => n.Khoa).ToDictionary(g => g.Key, g => g.First());
         // Chỉ mục tên người (đã bỏ dấu) dựng một lần; danh sách lấy qua dịch vụ nên đã lọc theo quyền của vai trò.
         chiMucNguoi = nhanh == "to-chuc"
-            ? canBo.Select(c => new MucChiMuc(DichVuTimKiem.BoDau(c.HoTen), $"{c.CapBacHam} {c.HoTen}", $"{c.ChucVu} · {c.TenTo}", "", "t:" + c.MaTo, c.HoTen, "CanBo", c.MaTraCuuNoiBo)).ToList()
-            : DuLieu.LayDanhSachHocVien().Select(h => new MucChiMuc(DichVuTimKiem.BoDau(h.HoTen), h.HoTen, $"{h.MaHocVien} · Lớp {h.MaLop}", h.ChucVu == "Học viên" ? "" : h.ChucVu, "l:" + h.MaLop, h.HoTen, "HocVien", h.MaHocVien))
-                .Concat(DuLieu.LayDanhSachLop().Where(l => l.GiaoVienChuNhiem != "").Select(l => new MucChiMuc(DichVuTimKiem.BoDau(l.GiaoVienChuNhiem), l.GiaoVienChuNhiem, $"GV chủ nhiệm · Lớp {l.MaLop}", "GVCN", "l:" + l.MaLop, "", "Lop", l.MaLop)))
+            ? canBo.Select(c => new MucChiMuc([c.HoTen, c.CapBacHam, c.ChucVu, c.TenTo, c.TenKhoa, c.MaCanBo], $"{c.CapBacHam} {c.HoTen}", $"{c.ChucVu} · {c.TenTo}", "", "t:" + c.MaTo, c.HoTen, "CanBo", c.MaTraCuuNoiBo)).ToList()
+            : DuLieu.LayDanhSachHocVien().Select(h => new MucChiMuc([h.HoTen, h.MaHocVien, h.MaLop, h.ChucVu], h.HoTen, $"{h.MaHocVien} · Lớp {h.MaLop}", h.ChucVu == "Học viên" ? "" : h.ChucVu, "l:" + h.MaLop, h.HoTen, "HocVien", h.MaHocVien))
+                .Concat(DuLieu.LayDanhSachLop().Where(l => l.GiaoVienChuNhiem != "").Select(l => new MucChiMuc([l.GiaoVienChuNhiem, "GVCN chủ nhiệm", l.MaLop], l.GiaoVienChuNhiem, $"GV chủ nhiệm · Lớp {l.MaLop}", "GVCN", "l:" + l.MaLop, "", "Lop", l.MaLop)))
                 .ToList();
         Chon(goc);
         lanCanKhung++;
@@ -326,7 +358,7 @@
 
     private void Chon(NutSoDo n)
     {
-        nutChon = n; timNguoi = "";
+        nutChon = n; timNguoi = ""; canCuonCot = true;
         if (nguoiDangXem is not null && nguoiDangXem.Nut != n) nguoiDangXem = null;
         duongChon = n.DuongDiTuGoc().Select(x => x.Khoa).ToHashSet();
         // Trên canvas: mở các cấp cha để mục đang chọn luôn hiện.
@@ -349,24 +381,44 @@
     private void Tim(ChangeEventArgs e)
     {
         tuKhoa = e.Value?.ToString() ?? "";
-        var k = DichVuTimKiem.BoDau(tuKhoa);
-        khop = []; ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null;
-        if (k.Length < 2) return;
-        donViKhop = goc.TatCa().Where(n => n != goc && DichVuTimKiem.BoDau($"{n.Ten} {n.Ma} {n.MoTa}").Contains(k)).ToList();
+        khop = []; ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null; maNguoiKhop = []; tuKhoaGanDung = false;
+        if (!DangTim) return;
+        // Gõ tự do: mỗi từ khớp ở tên hoặc ở đơn vị của người đó ("duy b10", "tổ 1 châu"), thứ tự và dấu phân cách không quan trọng.
+        var (donVi, mucDonVi) = TimKiemMo.LocChiTiet(goc.TatCa().Where(n => n != goc), tuKhoa, n => [n.Ten, n.Ma, n.MoTa, .. n.DuongDiTuGoc().Skip(1).SkipLast(1).Select(x => x.Ten)]);
+        var (nguoi, mucNguoi) = TimKiemMo.LocChiTiet(chiMucNguoi, tuKhoa, m => m.Truong);
+        var coKhopDu = (donVi.Count > 0 && mucDonVi == MucKhop.ChinhXac) || (nguoi.Count > 0 && mucNguoi == MucKhop.ChinhXac);
+        if (coKhopDu && mucDonVi != MucKhop.ChinhXac) donVi = [];
+        if (coKhopDu && mucNguoi != MucKhop.ChinhXac) nguoi = [];
+        tuKhoaGanDung = !coKhopDu && (donVi.Count > 0 || nguoi.Count > 0);
+        donViKhop = donVi;
         foreach (var n in donViKhop) khop.Add(n.Khoa);
-        // Người khớp tên: liệt kê ở cột kết quả, đếm dồn lên mọi cấp cha để hiện huy hiệu trên từng cột.
-        foreach (var m in chiMucNguoi.Where(m => m.BoDau.Contains(k)))
+        // Người khớp: liệt kê ở cột kết quả (đã xếp theo độ khớp), đếm dồn lên mọi cấp cha để hiện huy hiệu trên từng cột.
+        foreach (var m in nguoi)
         {
             if (!theoKhoa.TryGetValue(m.KhoaNut, out var nut)) continue;
             ketQuaNguoi.Add(new(m.Ten, m.Phu, m.Nhan, nut, m.TimTrongDanhSach, m.LoaiXn, m.MaXn));
+            if (m.Nhan != "GVCN") maNguoiKhop.Add(m.MaXn);
             foreach (var cha in nut.DuongDiTuGoc().Skip(1)) soKhop[cha.Khoa] = soKhop.GetValueOrDefault(cha.Khoa) + 1;
         }
-        ketQuaNguoi = ketQuaNguoi.OrderBy(r => DichVuTimKiem.BoDau(r.Ten).StartsWith(k) ? 0 : 1).ThenBy(r => r.Ten, QuyTacDuLieu.SoSanhTiengViet).ToList();
         // Trên canvas không có cột kết quả: tự chọn mục khớp đầu tiên.
         if (!cheDoCot && (ketQuaNguoi.FirstOrDefault()?.Nut ?? donViKhop.FirstOrDefault()) is { } dau) Chon(dau);
     }
 
-    private void XoaTim() { tuKhoa = ""; khop = []; ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null; timNguoi = ""; }
+    private void XoaTim() { tuKhoa = ""; khop = []; ketQuaNguoi = []; donViKhop = []; soKhop = []; nguoiDangXem = null; timNguoi = ""; maNguoiKhop = []; tuKhoaGanDung = false; }
+
+    private void DoiGonCot(string ten) { if (!cotGon.Remove(ten)) cotGon.Add(ten); canCuonCot = true; }
+
+    /// <summary>Thu gọn mọi cột trừ cột cuối để chừa chỗ cho danh sách thành viên; bấm lần nữa để mở lại.</summary>
+    private void DoiThuCotNgoai()
+    {
+        if (cotGon.Count > 0) cotGon = [];
+        else
+        {
+            cotGon = CacCot.Select(c => c.Ten).SkipLast(DanhSachNguoi is null ? 1 : 0).ToHashSet();
+            if (DangTim) kqThuGon = true;
+        }
+        canCuonCot = true;
+    }
 
     private void XemNguoi(KetQuaNguoi r)
     {
@@ -385,13 +437,14 @@
     /// <summary>Tô sáng phần khớp từ khoá (so khớp không dấu, tô trên chữ gốc có dấu).</summary>
     private RenderFragment DanhDau(string ten) => b =>
     {
-        var k = DichVuTimKiem.BoDau(tuKhoa);
-        var boDau = DichVuTimKiem.BoDau(ten);
-        var i = k.Length < 2 || boDau.Length != ten.Length ? -1 : boDau.IndexOf(k, StringComparison.Ordinal);
-        if (i < 0) { b.AddContent(0, ten); return; }
-        b.AddContent(1, ten[..i]);
-        b.OpenElement(2, "mark"); b.AddAttribute(3, "class", "sd-mark"); b.AddContent(4, ten.Substring(i, k.Length)); b.CloseElement();
-        b.AddContent(5, ten[(i + k.Length)..]);
+        var viTri = 0; var seq = 0;
+        foreach (var (dau, dai) in TimKiemMo.VungKhop(ten, tuKhoa))
+        {
+            b.AddContent(seq++, ten[viTri..dau]);
+            b.OpenElement(seq++, "mark"); b.AddAttribute(seq++, "class", "sd-mark"); b.AddContent(seq++, ten.Substring(dau, dai)); b.CloseElement();
+            viTri = dau + dai;
+        }
+        b.AddContent(seq, ten[viTri..]);
     };
 
     private IEnumerable<Cot> CacCot
@@ -428,7 +481,7 @@
             .Select(h => (h.HoTen, h.MaHocVien == "" ? "Học viên" : $"{h.MaHocVien} · {h.GioiTinh}", h.ChucVu == "Học viên" ? "" : h.ChucVu, "HocVien", h.MaHocVien)).ToList(),
         _ => null
     };
-    private bool KhopTen(string ten) => DangTim && DichVuTimKiem.BoDau(ten).Contains(DichVuTimKiem.BoDau(tuKhoa));
+    private bool KhopNguoi(string ma) => DangTim && maNguoiKhop.Contains(ma);
     /// <summary>Người khớp từ khoá thuộc đúng lớp/tổ đang chọn (null khi mục đang chọn không phải lớp/tổ).</summary>
     private List<KetQuaNguoi>? KhopTrongNutChon => nutChon.Loai is "Lớp" or "Tổ chuyên môn" ? ketQuaNguoi.Where(r => r.Nut == nutChon && r.Nhan != "GVCN").ToList() : null;
 
@@ -444,7 +497,15 @@
 
     protected override async Task OnAfterRenderAsync(bool lanDau)
     {
-        if (cheDoCot) return;
+        if (cheDoCot)
+        {
+            if (!canCuonCot) return;
+            canCuonCot = false;
+            try { await JS.InvokeVoidAsync("cuonCotCuoi", vungCot); }
+            catch (JSDisconnectedException) { }
+            catch (InvalidOperationException) { }
+            return;
+        }
         try
         {
             if (canvas is null || canKhoiTaoCanvas)

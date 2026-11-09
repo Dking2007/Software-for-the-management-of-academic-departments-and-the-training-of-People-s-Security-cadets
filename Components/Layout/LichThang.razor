@@ -1,0 +1,37 @@
+@* Xem theo tháng (thứ Hai đến thứ Bảy). Ngày ít buổi hiện từng buổi; ngày nhiều buổi hiện số buổi theo sáng/chiều/tối. Bấm một ngày để mở "Theo ngày". *@
+<div class="lt2-luoi" role="grid" aria-label="Lịch tháng @Moc.ToString("MM/yyyy")">
+    @for (var i = 0; i < 6; i++) { <div class="lt2-thu" role="columnheader">@QuyTacHocVu.TenThu(DauLuoi.AddDays(i))</div> }
+    @for (var n = DauLuoi; n <= CuoiLuoi; n = n.AddDays(1))
+    {
+        if (n.DayOfWeek == DayOfWeek.Sunday) continue;
+        var ngay = n;
+        var trongNgay = Buoi.Where(b => b.Buoi.Ngay.Date == ngay).OrderBy(b => b.Buoi.TietBatDau).ToList();
+        <button type="button" role="gridcell" class="lt2-o @(ngay.Month != Moc.Month ? "ngoai-thang" : "") @(ngay == DateTime.Today ? "hom-nay" : "") @(trongNgay.Count == 0 ? "trong" : "")" aria-label="@($"{QuyTacHocVu.TenThu(ngay)} {ngay:dd/MM}: {trongNgay.Count} buổi")" @onclick="() => KhiChonNgay.InvokeAsync(ngay)">
+            <span class="lt2-so">@ngay.Day</span>
+            @if (trongNgay.Count is > 0 and <= 3)
+            {
+                @foreach (var b in trongNgay)
+                {
+                    <span class="lt2-buoi @LichMaTranLop.LopTrangThai(b)" title="@LichMaTranLop.MoTaBuoi(b)"><b>T@(b.Buoi.TietBatDau)–@b.Buoi.TietKetThuc</b> @b.TenChuyenDe</span>
+                }
+            }
+            else if (trongNgay.Count > 3)
+            {
+                <strong class="lt2-tong">@trongNgay.Count buổi</strong>
+                <span class="lt2-ca">@string.Join(" · ", trongNgay.GroupBy(b => QuyTacHocVu.Buoi(b.Buoi.TietBatDau)).Select(g => $"{g.Key} {g.Count()}"))</span>
+                <span class="thanh-ti-le-nho"><span style="width:@(trongNgay.Count * 100 / NhieuNhat)%"></span></span>
+            }
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
+    [Parameter, EditorRequired] public DateTime Moc { get; set; }
+    [Parameter] public EventCallback<DateTime> KhiChonNgay { get; set; }
+
+    private DateTime DauThang => new(Moc.Year, Moc.Month, 1);
+    private DateTime DauLuoi => QuyTacHocVu.DauTuan(DauThang);
+    private DateTime CuoiLuoi => QuyTacHocVu.DauTuan(DauThang.AddMonths(1).AddDays(-1)).AddDays(5);
+    private int NhieuNhat => Math.Max(1, Buoi.GroupBy(b => b.Buoi.Ngay.Date).Select(g => g.Count()).DefaultIfEmpty(1).Max());
+}

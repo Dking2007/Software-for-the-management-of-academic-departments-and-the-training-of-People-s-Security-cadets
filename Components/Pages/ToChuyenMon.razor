@@ -4,6 +4,7 @@
 @using ToModel = Nhom2_BTL.Models.ToChuyenMon
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuBaoCaoExcel BaoCao
 @inject DialogService HoiThoai
 @inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
@@ -12,7 +13,7 @@
 @* Danh sách tổ hiển thị quan hệ với khoa, tổ trưởng và tổ phó. *@
 @if (MaKhoaPhamVi is null) { <PageTitle>Tổ chuyên môn | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle> }
 <DauTrang TieuDe="Tổ chuyên môn" MoTa="Các tổ trực thuộc từng khoa và người phụ trách. Chọn khoa để xem các tổ, bấm tên tổ để xem chi tiết.">
-    <ThaoTac>@if (duocChinhSua) { <RadzenButton Icon="add" Text="@TuyChon.Dich("Thêm tổ")" ButtonStyle="ButtonStyle.Primary" Click="ThemTo" /> }</ThaoTac>
+    <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await BaoCao.XuatToAsync())" TenTep="to-chuyen-mon" />@if (duocChinhSua) { <RadzenButton Icon="add" Text="@TuyChon.Dich("Thêm tổ")" ButtonStyle="ButtonStyle.Primary" Click="ThemTo" /> }</ThaoTac>
 </DauTrang>
 @if (MaKhoaPhamVi is null)
 {
@@ -102,10 +103,10 @@ private async Task MoKhoa(string maKhoa)
     await HoiThoai.OpenAsync<HopThoaiKhoa>(nut.Ten, new Dictionary<string, object> { [nameof(HopThoaiKhoa.Khoa)] = nut, [nameof(HopThoaiKhoa.CanBo)] = cb }, new DialogOptions { Width = "980px", Height = "82vh" });
 }
 // Khoa hiện khi khớp từ khoá hoặc có tổ khớp (tìm theo tên khoa, tên/mã tổ, tên tổ trưởng).
-private IEnumerable<Nhom2_BTL.Models.Khoa> CacKhoaHienThi => danhSachKhoa.Where(k => string.IsNullOrWhiteSpace(tuKhoa) || k.TenKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DanhSachHienThi.Any(t => t.MaKhoa == k.MaKhoa));
+private IEnumerable<Nhom2_BTL.Models.Khoa> CacKhoaHienThi => danhSachKhoa.Where(k => string.IsNullOrWhiteSpace(tuKhoa) || TimKiemMo.Khop(tuKhoa, k.TenKhoa, k.MaKhoa) || DanhSachHienThi.Any(t => t.MaKhoa == k.MaKhoa));
 private string tuKhoa = string.Empty;
 private bool duocChinhSua;
-private IEnumerable<ToModel> DanhSachHienThi => danhSachTo.Where(to => string.IsNullOrWhiteSpace(tuKhoa) || to.MaTo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || to.TenTo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DuLieu.LayTenKhoa(to.MaKhoa).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || DuLieu.LayTenCanBo(to.MaToTruong).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase));
+private IEnumerable<ToModel> DanhSachHienThi => danhSachTo.Where(to => TimKiemMo.Khop(tuKhoa, to.TenTo, to.MaTo, DuLieu.LayTenKhoa(to.MaKhoa), DuLieu.LayTenCanBo(to.MaToTruong)));
 protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("ToChuyenMon"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
 private void TaiDuLieu()
 {

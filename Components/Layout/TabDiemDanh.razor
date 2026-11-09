@@ -1,5 +1,6 @@
 @inject DichVuDaoTao DaoTao
 @inject DichVuHocVu HocVu
+@inject DichVuPhanQuyenDemo PhanQuyen
 @inject DichVuExcel Excel
 @inject NotificationService ThongBao
 
@@ -75,6 +76,7 @@ else if (buoi is not null)
 
     protected override async Task OnParametersSetAsync()
     {
+        laGiangVien = (await PhanQuyen.LayNguoiDungAsync()).LaGiangVien;
         var lich = await DaoTao.LayLichAsync(DateTime.Today.AddDays(-35), DateTime.Today, MaLop);
         cacBuoi = lich.OrderByDescending(b => b.Buoi.Ngay).ThenByDescending(b => b.Buoi.TietBatDau)
             .Select(b => new LuaChonBuoi(b.Buoi.Id, $"{b.Buoi.Ngay:dd/MM} · tiết {b.Buoi.TietBatDau}–{b.Buoi.TietKetThuc} · {b.TenChuyenDe}{(b.DaDiemDanh ? " ✓" : "")}")).ToList();

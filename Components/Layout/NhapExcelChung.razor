@@ -5,11 +5,11 @@
 @* Nhập Excel dùng chung (cán bộ, lớp, chuyên đề, phòng, điểm): tải mẫu → chọn tệp, xem trước lỗi từng dòng → xác nhận.
    Không ghi gì trước khi bấm Xác nhận; khi ghi, dịch vụ nghiệp vụ kiểm quyền và quy tắc lại từng dòng. *@
 <ol class="buoc-nhap">
-    <li class="@(dong is null ? "dang" : "xong")"><strong>1. Tải tệp mẫu</strong><span>@(Loai == LoaiNhap.Diem ? "Đã điền sẵn danh sách lớp và điểm hiện có; chỉ sửa cột điểm." : "Giữ nguyên dòng tiêu đề; có danh sách chọn cho các cột mã, loại.")</span>
+    <li class="@(dong is null ? "dang" : "xong")"><strong>1. Tải tệp mẫu</strong><span>@(Loai == LoaiNhap.Diem ? "Đã điền sẵn danh sách lớp và điểm hiện có; chỉ sửa cột điểm." : Loai == LoaiNhap.LichHoc ? "Giữ nguyên dòng tiêu đề; có danh sách chọn cho lớp, chuyên đề, cán bộ, phòng. Mỗi dòng là một buổi học." : "Giữ nguyên dòng tiêu đề; có danh sách chọn cho các cột mã, loại.")</span>
         <RadzenButton Text="Tải tệp mẫu" Icon="description" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="TaiMau" /></li>
     <li class="@(dong is null ? "dang" : "xong")"><strong>2. Chọn tệp đã điền</strong><span>Tệp .xlsx, tối đa 2.000 dòng, 5 MB.</span>
         <InputFile OnChange="ChonTep" accept=".xlsx" disabled="@dangDoc" /></li>
-    <li class="@(dong is { Count: > 0 } ? "dang" : "")"><strong>3. Xem trước và xác nhận</strong><span>Chỉ các dòng hợp lệ được ghi.</span></li>
+    <li class="@(dong is { Count: > 0 } ? "dang" : "")"><strong>3. Xem trước và xác nhận</strong><span>@(Loai == LoaiNhap.LichHoc ? "Hệ thống chặn trùng giờ giảng viên, phòng, lớp như khi xếp tay, nêu rõ lý do từng dòng." : "Chỉ các dòng hợp lệ được ghi.")</span></li>
 </ol>
 
 @if (dangDoc) { <div class="khung-xuong dong-xuong"></div> }
@@ -68,7 +68,7 @@
     {
         var tep = await Nhap.TaoMauAsync(Loai, MaLop, MaChuyenDe);
         if (tep is null) { loi = await Nhap.KiemQuyenAsync(Loai, MaLop, MaChuyenDe); return; }
-        var ten = Loai switch { LoaiNhap.CanBo => "can-bo", LoaiNhap.Lop => "lop", LoaiNhap.ChuyenDe => "chuyen-de", LoaiNhap.Phong => "phong", _ => $"diem-{MaLop}-{MaChuyenDe}" };
+        var ten = Loai switch { LoaiNhap.CanBo => "can-bo", LoaiNhap.Lop => "lop", LoaiNhap.ChuyenDe => "chuyen-de", LoaiNhap.Phong => "phong", LoaiNhap.LichHoc => "lich-dao-tao", _ => $"diem-{MaLop}-{MaChuyenDe}" };
         await JS.InvokeVoidAsync("taiTep", $"mau-nhap-{ten}.xlsx", DichVuExcel.MimeXlsx, Convert.ToBase64String(tep));
     }
 

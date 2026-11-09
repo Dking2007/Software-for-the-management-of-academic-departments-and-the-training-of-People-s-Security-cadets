@@ -1,0 +1,32 @@
+@inject DialogService HoiThoai
+
+@* Nút "Xuất Excel" mở hộp chọn khoảng ngày (HopXuatTheoNgay). *@
+<RadzenButton Text="@Nhan" Icon="download" ButtonStyle="ButtonStyle.Light" Size="@KichThuoc" Click="Mo" title="Chọn khoảng ngày rồi tải tệp Excel (.xlsx) đúng phạm vi dữ liệu bạn được xem" />
+
+@code {
+    [Parameter, EditorRequired] public Func<DateTime, DateTime, IReadOnlySet<string>, Task<byte[]?>> TaoTep { get; set; } = default!;
+    [Parameter, EditorRequired] public string TenTep { get; set; } = "du-lieu";
+    [Parameter] public string Nhan { get; set; } = "Xuất Excel";
+    [Parameter] public string TieuDe { get; set; } = "Xuất Excel theo khoảng ngày";
+    [Parameter] public string? MoTa { get; set; }
+    [Parameter] public DateTime? TuNgay { get; set; }
+    [Parameter] public DateTime? DenNgay { get; set; }
+    [Parameter] public IReadOnlyList<PhanXuat>? CacPhan { get; set; }
+    [Parameter] public Func<DateTime, DateTime, Task<string?>>? XemTruoc { get; set; }
+    [Parameter] public ButtonSize KichThuoc { get; set; } = ButtonSize.Medium;
+
+    private async Task Mo()
+    {
+        var thamSo = new Dictionary<string, object>
+        {
+            [nameof(HopXuatTheoNgay.TaoTep)] = TaoTep,
+            [nameof(HopXuatTheoNgay.TenTep)] = TenTep,
+            [nameof(HopXuatTheoNgay.TuMacDinh)] = TuNgay ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1),
+            [nameof(HopXuatTheoNgay.DenMacDinh)] = DenNgay ?? new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1).AddDays(-1)
+        };
+        if (MoTa is not null) thamSo[nameof(HopXuatTheoNgay.MoTa)] = MoTa;
+        if (CacPhan is not null) thamSo[nameof(HopXuatTheoNgay.CacPhan)] = CacPhan;
+        if (XemTruoc is not null) thamSo[nameof(HopXuatTheoNgay.XemTruoc)] = XemTruoc;
+        await HoiThoai.OpenAsync<HopXuatTheoNgay>(TieuDe, thamSo, new DialogOptions { Width = "640px", CloseDialogOnOverlayClick = false });
+    }
+}

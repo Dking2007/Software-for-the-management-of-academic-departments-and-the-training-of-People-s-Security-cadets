@@ -145,8 +145,7 @@ else
     private void ThuGonTatCa() => nhomMo = [];
     private IEnumerable<LopDaoTao> DanhSachHienThi => danhSachLop.Where(lop => boLocCap.Khop(lop) &&
         (string.IsNullOrWhiteSpace(khoaLoc) || lop.KhoaHoc == khoaLoc) &&
-        (string.IsNullOrWhiteSpace(heDaoTaoLoc) || lop.HeDaoTao == heDaoTaoLoc) &&
-        (string.IsNullOrWhiteSpace(tuKhoa) || lop.MaLop.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.HeDaoTao.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.KhoaHoc.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.ChuyenNganh.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.GiaoVienChuNhiem.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || lop.NienKhoa.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase)));
+        (string.IsNullOrWhiteSpace(heDaoTaoLoc) || lop.HeDaoTao == heDaoTaoLoc)).Where(lop => TimKiemMo.Khop(tuKhoa, lop.MaLop, lop.ChuyenNganh, lop.KhoaHoc, lop.HeDaoTao, lop.GiaoVienChuNhiem, lop.NienKhoa));
 
     protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("Lop"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Lop"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
     private void TaiDuLieu() { danhSachLop = DuLieu.LayDanhSachLop().ToList(); }
@@ -172,7 +171,3 @@ private async Task NhapExcel()
     }
     private async Task ThongBaoKetQua(KetQuaThaoTac kq) { moRong = await TruongTuyChinh.LayBangAsync("Lop"); ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 }
-
-
-
-

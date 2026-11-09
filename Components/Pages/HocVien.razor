@@ -27,7 +27,7 @@
     <RadzenCard class="directory-panel"><BoChonCapLop CacLop="@cacLop" KhiDoi="DoiCap" /></RadzenCard>
 }
 <RadzenCard class="directory-panel">
-    <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="@(duocChinhSua ? "Tìm tên chính xác hoặc mã học viên" : "Tìm tên học viên")" NhanTimKiem="Tìm học viên" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachHocVien.Count">
+    <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="Gõ tự do: tên, mã, lớp (vd: duy b10)" NhanTimKiem="Tìm học viên" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachHocVien.Count">
         <CacBoLoc>
             <RadzenDropDown TValue="string" Data="@cacLop" TextProperty="MaLop" ValueProperty="MaLop" @bind-Value="maLopLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="@(MaLopPhamVi ?? "Tất cả lớp")" class="filter-dropdown" Disabled="@(MaLopPhamVi is not null)" />
             <RadzenButton Text="@TuyChon.Dich("Bỏ bộ lọc")" Icon="filter_alt_off" ButtonStyle="ButtonStyle.Light" Click="BoLoc" />
@@ -99,12 +99,9 @@
         lopTheoCap = loc.Nam is null ? null : cacLop.Where(loc.Khop).Select(l => l.MaLop).ToHashSet();
         if (bang is not null) await bang.FirstPage(true);
     }
-    private IEnumerable<HocVienModel> DanhSachHienThi => danhSachHocVien.Where(hv =>
-
+    private IEnumerable<HocVienModel> DanhSachHienThi => TimKiemMo.LocNguoi(danhSachHocVien.Where(hv =>
         (lopTheoCap is null || lopTheoCap.Contains(hv.MaLop)) &&
-        (string.IsNullOrWhiteSpace(maLopLoc) || hv.MaLop == maLopLoc) &&
-
-        (string.IsNullOrWhiteSpace(tuKhoa) || hv.MaHocVien.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || QuyTacDuLieu.TenKhopTuKhoa(hv.HoTen, tuKhoa)));
+        (string.IsNullOrWhiteSpace(maLopLoc) || hv.MaLop == maLopLoc)), tuKhoa, hv => [hv.HoTen, hv.MaHocVien, hv.MaLop, hv.ChucVu]);
 
     private bool chiXemTongHop;
     protected override async Task OnInitializedAsync()

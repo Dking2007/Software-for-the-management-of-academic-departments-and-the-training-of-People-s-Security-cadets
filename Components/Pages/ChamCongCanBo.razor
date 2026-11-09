@@ -3,10 +3,13 @@
 @inject DichVuChuongTrinh ChuongTrinh
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject NotificationService ThongBao
+@inject DichVuBaoCaoExcel BaoCao
 
 @* Điểm danh đi làm: bảng công theo tuần, sắp theo khoa → tổ; mỗi ô là một ngày làm việc. *@
 <PageTitle>Điểm danh đi làm | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Điểm danh đi làm" MoTa="Bảng công theo tuần của từng khoa, từng tổ. Giảng viên tự điểm danh ở trang Giảng dạy của tôi; Quản lý khoa bấm vào ô để ghi bổ sung (công tác, nghỉ phép…)." />
+<DauTrang TieuDe="Điểm danh đi làm" MoTa="Bảng công theo tuần của từng khoa, từng tổ. Giảng viên tự điểm danh ở trang Giảng dạy của tôi; Quản lý khoa bấm vào ô để ghi bổ sung (công tác, nghỉ phép…).">
+    <ThaoTac>@if (loi is null) { <span data-hd="cong-excel"><NutXuatTheoNgay Nhan="Xuất báo cáo" TieuDe="@($"Báo cáo điểm danh đi làm · {(maKhoa ?? "toàn Học viện")}")" TenTep="@($"bao-cao-diem-danh-di-lam{(maKhoa is null ? "" : "-" + maKhoa)}")" MoTa="Báo cáo gồm: tổng quan và phần cần chú ý, theo cán bộ, theo ngày, bảng công. Chọn khoảng ngày bất kỳ; chỉ tính ngày làm việc đã qua." TaoTep="@((t, d, _) => BaoCao.XuatBaoCaoChamCongAsync(t, d, maKhoa))" XemTruoc="@((t, d) => BaoCao.XemTruocChamCongAsync(t, d, maKhoa))" /></span> }</ThaoTac>
+</DauTrang>
 
 @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
 else

@@ -5,10 +5,13 @@
 @inject DichVuDaoTao DaoTao
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
+@inject DichVuBaoCaoExcel BaoCao
 @inject NotificationService ThongBao
 
 <PageTitle>Chương trình & phân công | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Chương trình & phân công giảng dạy" MoTa="Khoa nào phụ trách lớp nào, trong thời gian nào; lớp đang học chuyên đề gì; giảng viên được phân công. Lớp mới cần phân công trước khi xếp lịch." />
+<DauTrang TieuDe="Chương trình & phân công giảng dạy" MoTa="Khoa nào phụ trách lớp nào, trong thời gian nào; lớp đang học chuyên đề gì; giảng viên được phân công. Lớp mới cần phân công trước khi xếp lịch.">
+    <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await BaoCao.XuatPhanCongAsync(HienThi.ToList()))" TenTep="chuong-trinh-phan-cong" /></ThaoTac>
+</DauTrang>
 
 @if (lopChuaPc.Count > 0 && duocSua)
 {

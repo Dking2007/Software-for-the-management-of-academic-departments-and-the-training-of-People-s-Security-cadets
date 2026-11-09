@@ -1,0 +1,38 @@
+@inject DichVuHocVu HocVu
+@inject DialogService HoiThoai
+
+@* Ghi sổ đầu bài cho một buổi. Dịch vụ kiểm tra lại quyền: chỉ giảng viên dạy buổi đó hoặc Admin được ghi. *@
+<p class="hx-mo-ta"><strong>@Dong.TenChuyenDe</strong> · @QuyTacHocVu.TenThu(Dong.Buoi.Ngay) @Dong.Buoi.Ngay.ToString("dd/MM/yyyy"), tiết @Dong.Buoi.TietBatDau–@Dong.Buoi.TietKetThuc · @Dong.TenGiangVien · có mặt @Dong.CoMat/@Dong.SiSo</p>
+<div class="sdb-bieu-mau">
+    <RadzenFormField Text="Nội dung bài giảng (bắt buộc)" Variant="Variant.Outlined"><RadzenTextArea @bind-Value="noiDung" MaxLength="500" Rows="3" Style="width:100%" /></RadzenFormField>
+    <RadzenFormField Text="Nhận xét lớp" Variant="Variant.Outlined"><RadzenTextArea @bind-Value="nhanXet" MaxLength="500" Rows="2" Style="width:100%" /></RadzenFormField>
+    <div class="hx-chon-nhanh sdb-chon-loai" role="group" aria-label="Xếp loại tiết">
+        <span class="phu-dong">Xếp loại tiết:</span>
+        @foreach (var xl in SoDauBai.CacXepLoai) { <button type="button" class="@(xepLoai == xl ? "dang-chon" : "")" aria-pressed="@(xepLoai == xl ? "true" : "false")" @onclick="() => xepLoai = xl">Loại @xl</button> }
+    </div>
+</div>
+@if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+<div class="thao-tac-bieu-mau">
+    <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" Disabled="dangLuu" />
+    <RadzenButton Text="Lưu" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DichVuHocVu.DongSoDauBai Dong { get; set; } = default!;
+    private string noiDung = "", nhanXet = "", xepLoai = "A";
+    private string? loi;
+    private bool dangLuu;
+
+    protected override void OnInitialized() { noiDung = Dong.Ghi?.NoiDung ?? ""; nhanXet = Dong.Ghi?.NhanXet ?? ""; xepLoai = Dong.Ghi?.XepLoaiTiet ?? "A"; }
+
+    private async Task Luu()
+    {
+        dangLuu = true; loi = null;
+        try
+        {
+            var kq = await HocVu.GhiSoDauBaiAsync(Dong.Buoi.Id, noiDung, nhanXet, xepLoai);
+            if (kq.ThanhCong) HoiThoai.Close(kq); else loi = kq.ThongBao;
+        }
+        finally { dangLuu = false; }
+    }
+}

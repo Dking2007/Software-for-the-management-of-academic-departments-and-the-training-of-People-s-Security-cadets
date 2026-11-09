@@ -11,6 +11,29 @@
         setTimeout(() => URL.revokeObjectURL(url), 2000);
     };
 
+    // Sơ đồ dạng cột: cuộn tới cột mới nhất sau khi chọn một mục.
+    window.cuonCotCuoi = el => el?.scrollTo?.({ left: el.scrollWidth, behavior: giamChuyenDong() ? "auto" : "smooth" });
+
+    // Nút quay về đầu trang: chỉ hiện khi trang đủ dài và đã cuộn tới gần cuối.
+    const NGUONG_CUOI_TRANG = 220, CHIEU_CAO_TOI_THIEU = 320;
+    function capNhatNutLenDau() {
+        const nut = document.getElementById("nut-len-dau");
+        if (!nut) return;
+        const conLai = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+        nut.classList.toggle("hien", window.scrollY >= CHIEU_CAO_TOI_THIEU && conLai <= NGUONG_CUOI_TRANG);
+    }
+    let choKhungHinh = false;
+    const henCapNhat = () => { if (choKhungHinh) return; choKhungHinh = true; requestAnimationFrame(() => { choKhungHinh = false; capNhatNutLenDau(); }); };
+    window.addEventListener("scroll", henCapNhat, { passive: true });
+    window.addEventListener("resize", henCapNhat);
+    new ResizeObserver(henCapNhat).observe(document.documentElement);
+    document.addEventListener("click", e => {
+        if (!e.target.closest?.("#nut-len-dau")) return;
+        window.scrollTo({ top: 0, behavior: giamChuyenDong() ? "auto" : "smooth" });
+        document.querySelector(".content h1")?.setAttribute("tabindex", "-1");
+        document.querySelector(".content h1")?.focus({ preventScroll: true });
+    });
+
     // Ctrl+K / Cmd+K: mở tìm kiếm nhanh bằng cách bấm hộ nút trên thanh trên, rồi đưa con trỏ vào ô tìm.
     document.addEventListener("keydown", e => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {

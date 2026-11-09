@@ -145,7 +145,7 @@
     private List<ThongBao> KetQua => danhSach.Where(x =>
         (loaiLoc == "" || x.LoaiVanBan == loaiLoc) && (!chiChuaDoc || !daDoc.Contains(x.Ma)) &&
         (tagLoc == "" || (tagLoc == "chung" ? x.Tags.Count == 0 : tagLoc == "lop:*" ? DichVuThongBao.KhopPhamVi(x.Tags, phamViLoc, cacLop) : x.Tags.Contains(tagLoc))) &&
-        string.Join(" ", x.SoKyHieu, x.TieuDe, x.TrichYeu, x.NoiDung, x.TacGia, x.NguoiKy, string.Join(" ", x.Tags.Select(TenTag))).Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+        TimKiemMo.Khop(tuKhoa, x.TieuDe, x.SoKyHieu, x.TrichYeu, x.NoiDung, x.TacGia, x.NguoiKy, string.Join(" ", x.Tags.Select(TenTag)))).ToList();
     private ThongBao? BaiDangXem => KetQua.FirstOrDefault(x => x.Ma == maDangXem) ?? KetQua.FirstOrDefault();
     protected override async Task OnInitializedAsync()
     {

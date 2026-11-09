@@ -2,13 +2,16 @@
 @attribute [Authorize(Roles = "Admin,Manager,GiangVien")]
 @implements IDisposable
 @inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuBaoCaoExcel BaoCao
 @inject DichVuDaoTao DaoTao
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject NotificationService ThongBao
 @inject DialogService HoiThoai
 
 <PageTitle>Xét tư cách & lịch thi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Xét tư cách thi & lịch thi" MoTa="Quy trình: Quản lý học viên đề xuất danh sách → Khoa xác nhận → Phòng đào tạo duyệt → Phòng đào tạo sắp xếp lịch thi. Đủ tư cách khi vắng không quá 20% số buổi đã điểm danh." />
+<DauTrang TieuDe="Xét tư cách thi & lịch thi" MoTa="Quy trình: Quản lý học viên đề xuất danh sách → Khoa xác nhận → Phòng đào tạo duyệt → Phòng đào tạo sắp xếp lịch thi. Đủ tư cách khi vắng không quá 20% số buổi đã điểm danh.">
+    <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await BaoCao.XuatXetThiAsync(HienThi.ToList()))" TenTep="xet-tu-cach-thi" /></ThaoTac>
+</DauTrang>
 
 @* Tổng quan tiến độ cả quy trình và thao tác hàng loạt theo đúng bước của vai trò đang đăng nhập. *@
 <div class="xt-tong-quan">

@@ -7,9 +7,12 @@
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject NotificationService ThongBao
 @inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuBaoCaoExcel BaoCao
 
 <PageTitle>Học tập của tôi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Học tập của tôi" MoTa="Lịch học, tự điểm danh trong khung giờ, kết quả học tập và lịch sử chuyên cần của bạn." />
+<DauTrang TieuDe="Học tập của tôi" MoTa="Lịch học, tự điểm danh trong khung giờ, kết quả học tập và lịch sử chuyên cần của bạn.">
+    <ThaoTac>@if (toi is not null) { <span data-hd="ca-nhan-excel"><NutXuatTheoNgay Nhan="Xuất kết quả học tập" TieuDe="Xuất kết quả học tập ra Excel" TenTep="@($"hoc-tap-{toi.MaHocVien}")" MoTa="Khoảng ngày áp dụng cho lịch học và lịch sử điểm danh. Bảng điểm và lịch thi luôn xuất đầy đủ." CacPhan="@DichVuBaoCaoExcel.PhanHocTap" TaoTep="@((t, d, phan) => BaoCao.XuatHocTapCuaToiAsync(t, d, phan))" TuNgay="@NgayDauHocKy" DenNgay="@NgayCuoiHocKy" /></span> }<RadzenLink Path="/dao-tao/lich" Text="Lịch học nâng cao" Icon="calendar_month" class="lien-ket-dau-trang" /></ThaoTac>
+</DauTrang>
 
 @if (toi is null)
 {
@@ -78,7 +81,7 @@ else
             <h2><RadzenIcon Icon="calendar_month" />Lịch học tuần này</h2>
             @if (lichTuan.Count == 0) { <p class="phu-dong">Tuần này không có buổi học.</p> }
             <div class="danh-sach-buoi">@foreach (var b in lichTuan) { <TheBuoiHoc Buoi="b" DangDong="true" /> }</div>
-            <RadzenLink Path="/dao-tao/lich" Text="Xem lịch theo tuần" Icon="open_in_new" />
+            <RadzenLink Path="/dao-tao/lich" Text="Xem lịch theo tuần, ngày, tháng" Icon="open_in_new" />
         </RadzenCard>
 
         <RadzenCard class="the-muc">
@@ -106,6 +109,8 @@ else
     private KetQuaThaoTac? thongBaoDd;
     private List<DichVuChuongTrinh.LichThiCuaToi> lichThi = [];
     private bool dangGui;
+    private static DateTime NgayDauHocKy => QuyTacHocVu.NamHocHocKy(DateTime.Today) is var (nam, hk) ? (hk == 1 ? new DateTime(int.Parse(nam[..4]), 9, 1) : new DateTime(int.Parse(nam[..4]) + 1, 2, 1)) : DateTime.Today;
+    private static DateTime NgayCuoiHocKy => QuyTacHocVu.NamHocHocKy(DateTime.Today) is var (nam, hk) ? (hk == 1 ? new DateTime(int.Parse(nam[..4]) + 1, 1, 31) : new DateTime(int.Parse(nam[..4]) + 1, 8, 31)) : DateTime.Today;
 
     protected override async Task OnInitializedAsync() { await Tai(); DuLieu.DuLieuDaThayDoi += KhiDoi; }
     private async Task Tai()

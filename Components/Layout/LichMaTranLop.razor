@@ -1,0 +1,119 @@
+@* Ma trận lớp × ngày: mỗi lớp một hàng, nhóm theo khoá, nhóm có thể thu gọn. Một màn hình thấy được cả tuần của nhiều lớp,
+   thay cho danh sách hàng chục thẻ. Bấm một buổi để xem chi tiết, sửa hoặc xoá. *@
+@{
+    var cacNgay = Enumerable.Range(0, 6).Select(i => DauTuan.AddDays(i)).ToArray();
+    var cacNhom = TaoNhom();
+}
+<div class="mt-cong-cu">
+    <span class="phu-dong">@Buoi.Select(b => b.Buoi.MaLop).Distinct().Count() lớp có lịch · @Buoi.Count buổi · @cacNhom.Count khoá</span>
+    <span class="mt-nut-nhom">
+        <button type="button" class="nut-chu" @onclick="() => DatTatCa(cacNhom, true)">Mở tất cả</button>
+        <button type="button" class="nut-chu" @onclick="() => DatTatCa(cacNhom, false)">Thu gọn tất cả</button>
+    </span>
+    @if (CacLop.Count > 0)
+    {
+        <label class="chon-khoa"><input type="checkbox" checked="@hienLopNghi" @onchange="e => hienLopNghi = e.Value is true" /> Hiện cả lớp không có lịch</label>
+    }
+</div>
+<div class="bang-cuon mt-khung">
+    <table class="mt-bang">
+        <thead>
+            <tr>
+                <th scope="col">Lớp</th>
+                @foreach (var n in cacNgay)
+                {
+                    <th scope="col" class="@(n == DateTime.Today ? "hom-nay" : "")">@QuyTacHocVu.TenThu(n)<small>@n.ToString("dd/MM") · @Buoi.Count(b => b.Buoi.Ngay.Date == n) buổi</small></th>
+                }
+            </tr>
+        </thead>
+        @foreach (var nhom in cacNhom)
+        {
+            var dangMo = nhomMo.Contains(nhom.Ten);
+            <tbody>
+                <tr class="mt-dong-nhom">
+                    <td colspan="7">
+                        <button type="button" aria-expanded="@(dangMo ? "true" : "false")" @onclick="() => DoiNhom(nhom.Ten)">
+                            <RadzenIcon Icon="@(dangMo ? "expand_more" : "chevron_right")" /><strong>Khoá @nhom.Ten</strong>
+                            <span>@nhom.CacLop.Count(l => Buoi.Any(b => b.Buoi.MaLop == l)) / @nhom.CacLop.Count lớp có lịch · @nhom.SoBuoi buổi</span>
+                        </button>
+                    </td>
+                </tr>
+                @if (dangMo)
+                {
+                    @foreach (var lop in nhom.CacLop)
+                    {
+                        <tr>
+                            <th scope="row"><a class="record-code" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop)}?tab=lich")">@lop</a></th>
+                            @foreach (var n in cacNgay)
+                            {
+                                <td class="@(n == DateTime.Today ? "hom-nay" : "")">
+                                    @foreach (var b in Buoi.Where(x => x.Buoi.MaLop == lop && x.Buoi.Ngay.Date == n).OrderBy(x => x.Buoi.TietBatDau))
+                                    {
+                                        <button type="button" class="mt-buoi @LopTrangThai(b)" title="@MoTaBuoi(b)" aria-label="@MoTaBuoi(b)" @onclick="() => KhiChon.InvokeAsync(b)">
+                                            <b>@QuyTacHocVu.Buoi(b.Buoi.TietBatDau) · T@(b.Buoi.TietBatDau)–@b.Buoi.TietKetThuc</b>
+                                            <span>@b.TenChuyenDe</span>
+                                            <small>@b.TenPhong</small>
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+        }
+    </table>
+</div>
+
+@code {
+    private sealed record NhomLop(string Ten, List<string> CacLop, int SoBuoi);
+
+    [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
+    [Parameter, EditorRequired] public DateTime DauTuan { get; set; }
+    [Parameter] public IReadOnlyList<string> CacLop { get; set; } = [];
+    [Parameter] public EventCallback<BuoiHocHienThi> KhiChon { get; set; }
+
+    private HashSet<string> nhomMo = [];
+    private DateTime? tuanDaMo;
+    private bool hienLopNghi;
+
+    /// <summary>Khoá học suy ra từ mã lớp theo quy tắc B{số lớp}{khoá}: B10D58 → D58, B3K6 → K6.</summary>
+    public static string KhoaCuaLop(string maLop)
+    {
+        var i = 1;
+        while (i < maLop.Length && char.IsDigit(maLop[i])) i++;
+        return i < maLop.Length ? maLop[i..] : maLop;
+    }
+
+    public static string LopTrangThai(BuoiHocHienThi b)
+        => b.DaDiemDanh ? "da-diem-danh" : b.Buoi.Ngay.Date < DateTime.Today ? "chua-diem-danh" : b.Buoi.Ngay.Date == DateTime.Today ? "hom-nay" : "sap-toi";
+
+    public static string MoTaBuoi(BuoiHocHienThi b)
+        => $"Lớp {b.Buoi.MaLop}, {QuyTacHocVu.TenThu(b.Buoi.Ngay)} {b.Buoi.Ngay:dd/MM}, tiết {b.Buoi.TietBatDau}–{b.Buoi.TietKetThuc} ({QuyTacHocVu.KhungGio(b.Buoi)}), {b.TenChuyenDe}, {b.TenGiangVien}, {b.TenPhong}, {DichVuBaoCaoExcel.TrangThaiBuoi(b)}";
+
+    private List<NhomLop> TaoNhom()
+    {
+        var lop = Buoi.Select(b => b.Buoi.MaLop).Concat(hienLopNghi ? CacLop : []).Distinct();
+        return lop.GroupBy(KhoaCuaLop)
+            .OrderBy(g => g.Key.StartsWith('D') ? 0 : 1).ThenByDescending(g => g.Key)
+            .Select(g => new NhomLop(g.Key, g.OrderBy(x => x.Length).ThenBy(x => x).ToList(), Buoi.Count(b => KhoaCuaLop(b.Buoi.MaLop) == g.Key)))
+            .ToList();
+    }
+
+    // Mở sẵn các khoá có lịch hôm nay; ít lớp thì mở hết. Chỉ tính lại khi đổi tuần để không làm mất thao tác đóng/mở của người dùng.
+    protected override void OnParametersSet()
+    {
+        if (tuanDaMo == DauTuan) return;
+        tuanDaMo = DauTuan;
+        var cacNhom = TaoNhom();
+        if (Buoi.Select(b => b.Buoi.MaLop).Distinct().Count() <= 12) nhomMo = cacNhom.Select(n => n.Ten).ToHashSet();
+        else
+        {
+            nhomMo = Buoi.Where(b => b.Buoi.Ngay.Date == DateTime.Today).Select(b => KhoaCuaLop(b.Buoi.MaLop)).ToHashSet();
+            if (nhomMo.Count == 0 && cacNhom.Count > 0) nhomMo.Add(cacNhom[0].Ten);
+        }
+    }
+
+    private void DoiNhom(string ten) { if (!nhomMo.Remove(ten)) nhomMo.Add(ten); }
+    private void DatTatCa(List<NhomLop> cacNhom, bool mo) => nhomMo = mo ? cacNhom.Select(n => n.Ten).ToHashSet() : [];
+}

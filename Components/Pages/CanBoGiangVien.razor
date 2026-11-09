@@ -83,7 +83,7 @@ private bool duocChinhSua;
 
 private string? maKhoaLoc, maToLoc;
 
-private IEnumerable<CanBoModel> DanhSachHienThi => danhSachCanBo.Where(cb => (string.IsNullOrEmpty(maKhoaLoc) || cb.MaKhoa == maKhoaLoc) && (string.IsNullOrEmpty(maToLoc) || cb.MaTo == maToLoc) && (string.IsNullOrWhiteSpace(tuKhoa) || cb.MaCanBo.Contains(tuKhoa.Trim(), StringComparison.OrdinalIgnoreCase) || QuyTacDuLieu.TenKhopTuKhoa(cb.HoTen, tuKhoa)));
+private IEnumerable<CanBoModel> DanhSachHienThi => TimKiemMo.LocNguoi(danhSachCanBo.Where(cb => (string.IsNullOrEmpty(maKhoaLoc) || cb.MaKhoa == maKhoaLoc) && (string.IsNullOrEmpty(maToLoc) || cb.MaTo == maToLoc)), tuKhoa, cb => [cb.HoTen, cb.MaCanBo, cb.CapBacHam, cb.ChucVu, cb.TenTo, cb.TenKhoa, cb.ChuyenMon]);
 
 protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("CanBo"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
 

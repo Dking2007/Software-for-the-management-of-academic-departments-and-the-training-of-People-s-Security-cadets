@@ -184,7 +184,7 @@
         soLopHomNay = homNay.Select(b => b.Buoi.MaLop).Distinct().Count();
     }
     private IEnumerable<TinTuc> Loc() => cacBai.Where(b => (chuyenMuc is null || b.ChuyenMuc == chuyenMuc)
-        && (tuKhoa.Trim() == "" || DichVuTimKiem.BoDau($"{b.TieuDe} {b.Sapo}").Contains(DichVuTimKiem.BoDau(tuKhoa))));
+        && TimKiemMo.Khop(tuKhoa, b.TieuDe, b.Sapo));
     private void VeTrangNhat() { chuyenMuc = null; tuKhoa = string.Empty; }
     private void ChonChuyenMuc(string cm) { chuyenMuc = cm; tuKhoa = ""; if (baiMo is not null) { baiMo = null; DieuHuong.NavigateTo("/ban-tin"); chuyenMuc = cm; } }
     private void Tim(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; if (baiMo is not null) { baiMo = null; DieuHuong.NavigateTo("/ban-tin"); } }

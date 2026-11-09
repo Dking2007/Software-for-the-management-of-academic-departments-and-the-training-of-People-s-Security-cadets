@@ -1,0 +1,78 @@
+@* Xem theo ngày: thanh chọn ngày kèm số buổi, nội dung là bảng gọn nhóm theo buổi sáng/chiều/tối, mỗi buổi học một dòng. *@
+@if (!AnChonNgay)
+{
+<div class="ln-cac-ngay" role="tablist" aria-label="Chọn ngày">
+    <button type="button" role="tab" aria-selected="@(Ngay is null ? "true" : "false")" class="@(Ngay is null ? "dang-chon" : "")" @onclick="() => KhiDoiNgay.InvokeAsync(null)">
+        <span>Cả tuần</span><strong>@Buoi.Count</strong><small>buổi</small>
+    </button>
+    @for (var i = 0; i < 6; i++)
+    {
+        var n = DauTuan.AddDays(i);
+        <button type="button" role="tab" aria-selected="@(Ngay == n ? "true" : "false")" class="@(Ngay == n ? "dang-chon" : "") @(n == DateTime.Today ? "hom-nay" : "")" @onclick="() => KhiDoiNgay.InvokeAsync(n)">
+            <span>@QuyTacHocVu.TenThu(n)</span><strong>@Buoi.Count(b => b.Buoi.Ngay.Date == n)</strong><small>@n.ToString("dd/MM")</small>
+        </button>
+    }
+</div>
+}
+
+@{ var hienThi = Buoi.Where(b => Ngay is null || b.Buoi.Ngay.Date == Ngay).ToList(); }
+@if (hienThi.Count == 0)
+{
+    <section class="empty-state"><RadzenIcon Icon="event_available" class="empty-state-icon" /><h2>Ngày này không có buổi học</h2><p>Chọn ngày khác hoặc bỏ bộ lọc.</p></section>
+}
+else
+{
+    <div class="bang-cuon">
+        <table class="ln-bang">
+            <thead><tr><th>Tiết, giờ</th><th>Lớp</th><th>Chuyên đề</th><th>Giảng viên</th><th>Phòng</th><th>Sĩ số</th><th>Trạng thái</th>@if (CoThaoTac) { <th><span class="an-chu">Thao tác</span></th> }</tr></thead>
+            @foreach (var ngay in hienThi.GroupBy(b => b.Buoi.Ngay.Date).OrderBy(g => g.Key))
+            {
+                <tbody>
+                    @if (Ngay is null) { <tr class="ln-dong-ngay @(ngay.Key == DateTime.Today ? "hom-nay" : "")"><td colspan="@SoCot">@QuyTacHocVu.TenThu(ngay.Key), @ngay.Key.ToString("dd/MM/yyyy") · @ngay.Count() buổi</td></tr> }
+                    @foreach (var ca in ngay.GroupBy(b => QuyTacHocVu.Buoi(b.Buoi.TietBatDau)))
+                    {
+                        <tr class="ln-dong-ca"><td colspan="@SoCot">@ca.Key · @ca.Count() buổi</td></tr>
+                        @foreach (var b in ca.OrderBy(x => x.Buoi.TietBatDau).ThenBy(x => x.Buoi.MaLop.Length).ThenBy(x => x.Buoi.MaLop))
+                        {
+                            <tr class="@LichMaTranLop.LopTrangThai(b)">
+                                <td class="ln-tiet"><strong>Tiết @b.Buoi.TietBatDau–@b.Buoi.TietKetThuc</strong><small>@QuyTacHocVu.KhungGio(b.Buoi)</small></td>
+                                <td><a class="record-code" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(b.Buoi.MaLop)}?tab=lich")">@b.Buoi.MaLop</a></td>
+                                <td class="ln-cd">@b.TenChuyenDe</td>
+                                <td>@b.TenGiangVien</td>
+                                <td>@b.TenPhong</td>
+                                <td class="so">@b.SiSo</td>
+                                <td><span class="nhan-buoi-gon">@DichVuBaoCaoExcel.TrangThaiBuoi(b)</span></td>
+                                @if (CoThaoTac)
+                                {
+                                    <td class="ln-nut">
+                                        @if (ChoPhepDiemDanh(b.Buoi) && b.Buoi.Ngay.Date <= DateTime.Today) { <a class="nut-nho" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(b.Buoi.MaLop)}?tab=diem-danh&buoi={b.Buoi.Id}")" title="Điểm danh buổi này" aria-label="Điểm danh buổi này"><RadzenIcon Icon="how_to_reg" /></a> }
+                                        @if (DuocSua)
+                                        {
+                                            <button type="button" class="nut-nho" title="Sửa buổi học" aria-label="Sửa buổi học" @onclick="() => KhiSua.InvokeAsync(b.Buoi)"><RadzenIcon Icon="edit" /></button>
+                                            <button type="button" class="nut-nho nguy-hiem" title="Xoá buổi học" aria-label="Xoá buổi học" @onclick="() => KhiXoa.InvokeAsync(b.Buoi)"><RadzenIcon Icon="delete" /></button>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            }
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
+    [Parameter, EditorRequired] public DateTime DauTuan { get; set; }
+    [Parameter] public DateTime? Ngay { get; set; }
+    [Parameter] public EventCallback<DateTime?> KhiDoiNgay { get; set; }
+    [Parameter] public bool DuocSua { get; set; }
+    [Parameter] public Func<BuoiHoc, bool> ChoPhepDiemDanh { get; set; } = _ => false;
+    [Parameter] public bool CoThaoTac { get; set; }
+    /// <summary>Ẩn thanh chọn ngày, hiện toàn bộ buổi nhóm theo ngày (chế độ danh sách).</summary>
+    [Parameter] public bool AnChonNgay { get; set; }
+    [Parameter] public EventCallback<BuoiHoc> KhiSua { get; set; }
+    [Parameter] public EventCallback<BuoiHoc> KhiXoa { get; set; }
+    private int SoCot => CoThaoTac ? 8 : 7;
+}
