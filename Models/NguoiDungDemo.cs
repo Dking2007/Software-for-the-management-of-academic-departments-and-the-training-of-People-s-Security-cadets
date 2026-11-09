@@ -9,9 +9,3 @@ public enum VaiTroDemo
     HocVien,
     Guest
 }
-
-/// <summary>Thông tin hiển thị của tài khoản thử nghiệm; không phải hồ sơ người thật.</summary>
-public sealed record NguoiDungDemo(string TenDangNhap, string HoTen, VaiTroDemo VaiTro);
-
-
-

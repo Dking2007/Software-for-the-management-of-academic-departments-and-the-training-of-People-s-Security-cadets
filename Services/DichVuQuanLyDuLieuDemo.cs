@@ -99,7 +99,6 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
     }
     public string LayTenKhoa(string? ma) { lock (kho.KhoaDongBo) return kho.DanhSachKhoa.FirstOrDefault(x => x.MaKhoa == ma)?.TenKhoa ?? "Không xác định"; }
     public string LayTenTo(string? ma) { lock (kho.KhoaDongBo) return kho.DanhSachTo.FirstOrDefault(x => x.MaTo == ma)?.TenTo ?? "Không xác định"; }
-    public string LayTenLop(string? ma) { lock (kho.KhoaDongBo) return kho.DanhSachLop.FirstOrDefault(x => x.MaLop == ma)?.MaLop ?? "Không xác định"; }
     public string LayTenCanBo(string? ma) { lock (kho.KhoaDongBo) return kho.DanhSachCanBo.FirstOrDefault(x => x.MaCanBo == ma)?.HoTen ?? "Chưa phân công"; }
 
     public async Task<KetQuaThaoTac> LuuKhoaAsync(Khoa doiTuong, string? maCu = null)
@@ -364,10 +363,3 @@ public sealed class DichVuQuanLyDuLieuDemo(KhoDuLieuDemo kho, DichVuPhanQuyenDem
     private static KetQuaThaoTac TuChoi() => new(false, "Tài khoản hiện tại không có quyền thay đổi dữ liệu.");
     private static KetQuaThaoTac NotFound(string ten) => new(false, $"Không tìm thấy {ten} cần thao tác.");
 }
-
-
-
-
-
-
-

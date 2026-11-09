@@ -201,16 +201,6 @@ public sealed class DichVuDaoTao(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, Kho
         return await HienThiAsync(db, cacBuoi);
     }
 
-    public async Task<BuoiHocHienThi?> LayBuoiAsync(int id)
-    {
-        var nd = await phanQuyen.LayNguoiDungAsync();
-        if (!nd.DaDangNhap) return null;
-        await using var db = csdl.CreateDbContext();
-        var b = await db.BuoiHoc.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-        if (b is null) return null;
-        return (await HienThiAsync(db, [b])).Single();
-    }
-
     private async Task<List<BuoiHocHienThi>> HienThiAsync(CoSoDuLieuNghiepVu db, List<BuoiHoc> cacBuoi)
     {
         var ids = cacBuoi.Select(b => b.Id).ToList();

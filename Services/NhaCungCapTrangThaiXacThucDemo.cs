@@ -82,9 +82,3 @@ public sealed class NhaCungCapTrangThaiXacThucDemo(KhoVeDangNhapDemo khoVe, KhoP
     private static ClaimsPrincipal TaoNguoiDungChuaDangNhap()
         => new(new ClaimsIdentity());
 }
-
-
-
-
-
-

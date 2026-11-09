@@ -174,7 +174,3 @@ public sealed class DichVuTaiKhoan(IServiceScopeFactory scopes, IHostEnvironment
             return (await users.DeleteAsync(u)).Succeeded ? "Đã xóa tài khoản và vô hiệu hóa phiên cũ." : "Không xóa được tài khoản.";
         } finally { cong.Release(); }
     }}
-
-
-
-

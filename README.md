@@ -71,7 +71,7 @@ Việc ẩn nút trên giao diện chỉ hỗ trợ trải nghiệm. Quyền đ�
 | Cá nhân | Giảng dạy của tôi (giảng viên), Học tập của tôi với tự điểm danh (học viên), **hồ sơ cá nhân** và đổi mật khẩu |
 | Thông tin | **Bản tin Học viện** bố cục kiểu báo điện tử (tin mới chạy chữ, tiêu điểm, chuyên mục, đọc nhiều); nội dung giả lập |
 | Chương trình | **Chương trình & phân công** (khoa phụ trách lớp nào, khi nào, lớp đang học gì), **xét tư cách thi** (QLHV → Khoa → Đào tạo), **lịch thi**, tab chuyên cần, lớp đi học/nghỉ hôm nay, **điểm danh đi làm** của cán bộ |
-| Hệ thống | **Văn bản, thông báo** theo thể thức hành chính (số/ký hiệu, mức độ, hiệu lực, nơi nhận, đã đọc, chuông có số chưa đọc, ảnh minh hoạ); **xuất/nhập Excel** (ClosedXML) đúng mặt cắt quyền; tìm kiếm Ctrl+K; nhật ký chỉ thêm; trang chủ có Cần chú ý, văn bản ưu tiên, hoạt động gần đây |
+| Hệ thống | **Văn bản, thông báo** theo thể thức hành chính (số/ký hiệu, mức độ, hiệu lực, nơi nhận, đã đọc, chuông có số chưa đọc, ảnh minh hoạ); **xuất/nhập Excel** (ClosedXML) đúng mặt cắt quyền, xuất theo khoảng ngày tự chọn, báo cáo điểm danh đi làm, báo cáo giảng dạy, kết quả học tập, nhập lịch đào tạo; tìm kiếm tự do Ctrl+K (không cần dấu, không cần đúng thứ tự); hướng dẫn nhập môn theo vai trò; lịch bốn chế độ xem; nhật ký chỉ thêm; trang chủ có Cần chú ý, văn bản ưu tiên, hoạt động gần đây |
 | Nhập Excel | Tải tệp mẫu có danh sách chọn → xem trước lỗi từng dòng → xác nhận. Có cho học viên, lớp, cán bộ, chuyên đề, phòng học và **bảng điểm** (tệp mẫu điền sẵn danh sách lớp) |
 | Sổ đầu bài | Tab "Sổ đầu bài" ở trang lớp: nội dung bài, nhận xét, xếp loại tiết A–D, sĩ số có mặt lấy từ điểm danh |
 | Thi cuối học phần | Tổng quan tiến độ, xử lý hàng loạt theo bước của vai trò, QLHV điều chỉnh tư cách từng học viên (bắt buộc lý do), lịch sử xử lý, thông tin bài thi (thời lượng, cấu trúc đề, phạm vi ôn tập, tài liệu), gửi thông báo thi tới học viên và giảng viên của lớp |
@@ -145,9 +145,9 @@ dotnet run --project KiemThu/TaiKhoan/TaiKhoan.csproj
 dotnet run --project KiemThu/ThongBao/ThongBao.csproj
 ```
 
-Lần chạy ngày 06/11/2026: NghiepVu 440/440, TaiKhoan 74/74, ThongBao 29/29 đạt.
+Lần chạy ngày 10/11/2026: NghiepVu 471/471, TaiKhoan 74/74, ThongBao 29/29 đạt.
 
-Kết quả các lần chạy trước được ghi trong `BAO_CAO_KIEM_THU_2026_10_29.md` và `HUONG_DAN_TAI_KHOAN.md`. Các bộ kiểm thử này chưa bao gồm kiểm thử trên trình duyệt và kiểm thử xâm nhập.
+Kết quả các lần chạy trước được ghi trong `docs/lich-su/BAO_CAO_KIEM_THU_2026_10_29.md` và `docs/HUONG_DAN_TAI_KHOAN.md`. Các bộ kiểm thử này chưa bao gồm kiểm thử trên trình duyệt và kiểm thử xâm nhập.
 
 ## 8. Giới hạn
 
@@ -156,4 +156,4 @@ Kết quả các lần chạy trước được ghi trong `BAO_CAO_KIEM_THU_2026
 - Mật khẩu `demo123` của tài khoản mẫu được ghi cứng trong mã nguồn và công khai trong tài liệu này.
 - Trước khi dùng cho môi trường thật, cần thay bằng hệ thống danh tính, cơ sở dữ liệu, nhật ký quản trị và quy trình bảo vệ dữ liệu phù hợp.
 
-Tài liệu chi tiết hơn về tài khoản, phạm vi Manager và cách khởi tạo Admin riêng bằng User Secrets nằm trong `HUONG_DAN_TAI_KHOAN.md`.
+Tài liệu chi tiết hơn về tài khoản, phạm vi Manager và cách khởi tạo Admin riêng bằng User Secrets nằm trong `docs/HUONG_DAN_TAI_KHOAN.md`. Lịch sử cập nhật qua từng đợt nằm trong `CHANGELOG.md`.
