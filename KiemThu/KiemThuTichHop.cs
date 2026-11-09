@@ -35,7 +35,7 @@ static class KiemThuTichHop
             dv.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
             dv.AddScoped<DichVuPhanQuyenDemo>(); dv.AddScoped<DichVuQuanLyDuLieuDemo>();
             dv.AddScoped<DichVuDaoTao>(); dv.AddScoped<DichVuHocVu>(); dv.AddScoped<DichVuNhatKy>(); dv.AddScoped<DichVuTimKiem>();
-            dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>();
+            dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuBaoCaoExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>();
             dv.AddSingleton<KhoThongBaoDemo>(); dv.AddScoped<DichVuThongBao>();
             await using var root = dv.BuildServiceProvider();
 
@@ -502,6 +502,62 @@ static class KiemThuTichHop
                 && DichVuTruongTuyChinh.ChuanHoa(new TruongTuyChinh { Ten = "B", BatBuoc = true }, "").Loi is not null, "Kiểm tra kiểu ngày, số, bắt buộc");
             kiemTra((await trKhoa.XoaTruongAsync(idTr)).ThanhCong && !csdl.CreateDbContext().GiaTriTuyChinh.Any(g => g.TruongId == idTr), "Xoá trường xoá luôn giá trị");
             kiemTra(csdl.CreateDbContext().NhatKy.Any(n => n.DoiTuong == "Trường dữ liệu mở rộng"), "Định nghĩa trường được ghi nhật ký");
+
+            // ---- Báo cáo Excel theo khoảng ngày và nhập lịch đào tạo ----
+            static List<string> CacTrang(byte[] tep) { using var w = new ClosedXML.Excel.XLWorkbook(new MemoryStream(tep)); return w.Worksheets.Select(t => t.Name).ToList(); }
+            static List<string> CotTrang(byte[] tep, string trang) { using var w = new ClosedXML.Excel.XLWorkbook(new MemoryStream(tep)); return w.Worksheet(trang).Row(4).CellsUsed().Select(c => c.GetString()).ToList(); }
+            static List<string> CotDuLieu(byte[] tep, string trang, string cot)
+            {
+                using var w = new ClosedXML.Excel.XLWorkbook(new MemoryStream(tep));
+                var t = w.Worksheet(trang);
+                var so = t.Row(4).CellsUsed().First(c => c.GetString() == cot).Address.ColumnNumber;
+                return t.RowsUsed().Where(r => r.RowNumber() > 4).Select(r => r.Cell(so).GetString()).ToList();
+            }
+            kiemTra(DichVuBaoCaoExcel.KiemTraKhoang(DateTime.Today, DateTime.Today.AddDays(-1)) is not null && DichVuBaoCaoExcel.KiemTraKhoang(DateTime.Today, DateTime.Today.AddDays(400)) is not null && DichVuBaoCaoExcel.KiemTraKhoang(DateTime.Today, DateTime.Today) is null, "Khoảng ngày xuất: chặn đảo ngược và quá 366 ngày");
+            var tuXuat = DateTime.Today.AddDays(-60); var denXuat = DateTime.Today.AddDays(30);
+            var lichAdmin = await Lay<DichVuBaoCaoExcel>(admin).XuatLichAsync(tuXuat, denXuat);
+            kiemTra(lichAdmin is not null && CacTrang(lichAdmin).SequenceEqual(["Lịch chi tiết", "Tổng hợp"]) && CotTrang(lichAdmin, "Lịch chi tiết").Contains("Mã cán bộ"), "Xuất lịch toàn trường: bảng chi tiết và tổng hợp, có mã để xếp lịch");
+            var lichGv = (await Lay<DichVuBaoCaoExcel>(gv).XuatLichAsync(tuXuat, denXuat))!;
+            var giangVienTrongTep = CotDuLieu(lichGv, "Lịch chi tiết", "Giảng viên").Distinct().ToList();
+            kiemTra(CacTrang(lichGv).Contains("Thời khoá biểu") && giangVienTrongTep.Count == 1 && !CotTrang(lichGv, "Lịch chi tiết").Contains("Mã cán bộ"), "Giảng viên chỉ xuất được lịch của mình, không có cột mã cán bộ");
+            var lichHv = (await Lay<DichVuBaoCaoExcel>(hv).XuatLichAsync(tuXuat, denXuat, maLop: "B2D58"))!;
+            var lopCuaHv = CotDuLieu(lichHv, "Lịch chi tiết", "Lớp").Distinct().ToList();
+            kiemTra(lopCuaHv.Count == 1 && lopCuaHv[0] != "B2D58", "Học viên truyền lớp khác vẫn chỉ nhận lịch lớp mình");
+            kiemTra(await Lay<DichVuBaoCaoExcel>(xem).XuatLichAsync(tuXuat, denXuat) is null, "Người xem không xuất được lịch");
+            var locTheoTu = (await Lay<DichVuBaoCaoExcel>(admin).XuatLichAsync(tuXuat, denXuat, tuKhoa: "b1d58"))!;
+            kiemTra(CotDuLieu(locTheoTu, "Lịch chi tiết", "Lớp").Distinct().SequenceEqual(["B1D58"]), "Tệp xuất giữ nguyên từ khoá đang lọc");
+
+            var congThang = await Lay<DichVuBaoCaoExcel>(qlKhoa).XuatBaoCaoChamCongAsync(DateTime.Today.AddDays(-30), DateTime.Today);
+            kiemTra(congThang is not null && CacTrang(congThang).SequenceEqual(["Báo cáo", "Theo cán bộ", "Theo ngày", "Bảng công"]), "Báo cáo điểm danh đi làm đủ bốn trang");
+            kiemTra(await Lay<DichVuBaoCaoExcel>(qlDaoTao).XuatBaoCaoChamCongAsync(DateTime.Today.AddDays(-7), DateTime.Today) is null && await Lay<DichVuBaoCaoExcel>(gv).XuatBaoCaoChamCongAsync(DateTime.Today.AddDays(-7), DateTime.Today) is null, "Báo cáo công toàn khoa chỉ Quản lý khoa, Admin");
+            var congNam = (await Lay<DichVuBaoCaoExcel>(admin).XuatBaoCaoChamCongAsync(DateTime.Today.AddDays(-200), DateTime.Today))!;
+            kiemTra(!CacTrang(congNam).Contains("Bảng công"), "Kỳ dài không lập bảng công hàng trăm cột");
+            var phanHt = DichVuBaoCaoExcel.PhanHocTap.Select(p => p.Ma).ToHashSet();
+            var hocTap = await Lay<DichVuBaoCaoExcel>(hv).XuatHocTapCuaToiAsync(tuXuat, denXuat, phanHt);
+            kiemTra(hocTap is not null && new[] { "Tổng kết học tập", "Bảng điểm", "Điểm danh", "Thời khoá biểu", "Lịch học", "Lịch thi" }.All(CacTrang(hocTap).Contains), "Học viên xuất đủ kết quả học tập");
+            kiemTra(await Lay<DichVuBaoCaoExcel>(admin).XuatHocTapCuaToiAsync(tuXuat, denXuat, phanHt) is null, "Chỉ học viên xuất được \"học tập của tôi\"");
+            var chiDiem = (await Lay<DichVuBaoCaoExcel>(hv).XuatHocTapCuaToiAsync(tuXuat, denXuat, new HashSet<string> { "diem" }))!;
+            kiemTra(!CacTrang(chiDiem).Contains("Lịch học"), "Chỉ xuất phần đã chọn");
+            var phanGd = DichVuBaoCaoExcel.PhanGiangDay.Select(p => p.Ma).ToHashSet();
+            var giangDay = await Lay<DichVuBaoCaoExcel>(gv).XuatGiangDayCuaToiAsync(tuXuat, denXuat, phanGd);
+            kiemTra(giangDay is not null && new[] { "Lịch dạy", "Tổng hợp giảng dạy", "Chưa điểm danh", "Điểm danh đi làm", "Lớp tôi dạy" }.All(CacTrang(giangDay).Contains), "Giảng viên xuất đủ báo cáo giảng dạy");
+            kiemTra(await Lay<DichVuBaoCaoExcel>(hv).XuatGiangDayCuaToiAsync(tuXuat, denXuat, phanGd) is null, "Chỉ giảng viên xuất được báo cáo giảng dạy");
+            kiemTra(await Lay<DichVuBaoCaoExcel>(qlKhoa).XuatChuyenCanLopAsync("B1D58") is null && await Lay<DichVuBaoCaoExcel>(qlHocVien).XuatChuyenCanLopAsync("B1D58") is not null, "Xuất chuyên cần theo đúng quyền xem");
+
+            var lichMoi = buoiCuaGv.Buoi;
+            var ngayMoi = "01/03/2027";
+            kiemTra(await Lay<DichVuNhapExcel>(qlKhoa).TaoMauAsync(LoaiNhap.LichHoc) is null && await Lay<DichVuNhapExcel>(gv).TaoMauAsync(LoaiNhap.LichHoc) is null, "Chỉ Quản lý đào tạo, Admin nhập lịch");
+            var dongLich = await DocNhap(qlDaoTao, LoaiNhap.LichHoc, [
+                [ngayMoi, "1", "4", "B1D58", lichMoi.MaChuyenDe, lichMoi.MaCanBo, "PT-01", "Buổi nhập"],
+                [ngayMoi, "2", "2", "B2D58", lichMoi.MaChuyenDe, lichMoi.MaCanBo, "PM-01", ""],
+                ["07/03/2027", "1", "4", "B3D58", lichMoi.MaChuyenDe, lichMoi.MaCanBo, "PT-01", ""],
+                ["31/02/2027", "1", "4", "B3D58", lichMoi.MaChuyenDe, lichMoi.MaCanBo, "PT-01", ""],
+                [ngayMoi, "6", "6", "B3D58", lichMoi.MaChuyenDe, lichMoi.MaCanBo, "PT-01", ""]]);
+            kiemTra(dongLich.Count == 5 && dongLich[0].HopLe && dongLich[1].Loi.Any(l => l.Contains("Trùng giờ giảng viên")) && dongLich[2].Loi.Any(l => l.Contains("Chủ nhật")) && dongLich[3].Loi.Any(l => l.Contains("Ngày")) && !dongLich[4].HopLe, "Nhập lịch: xem trước nêu trùng trong tệp, Chủ nhật, sai ngày, sai số tiết");
+            var soBuoiTruoc = csdl.CreateDbContext().BuoiHoc.Count();
+            kiemTra((await Lay<DichVuNhapExcel>(qlDaoTao).XacNhanAsync(LoaiNhap.LichHoc, dongLich)).ThanhCong == 1 && csdl.CreateDbContext().BuoiHoc.Count() == soBuoiTruoc + 1, "Nhập lịch: chỉ ghi dòng hợp lệ");
+            var dongLichLai = await DocNhap(qlDaoTao, LoaiNhap.LichHoc, [[ngayMoi, "1", "4", "B1D58", lichMoi.MaChuyenDe, lichMoi.MaCanBo, "PT-01", ""]]);
+            kiemTra(dongLichLai[0].Loi.Any(l => l.Contains("đã")), "Nhập lại buổi vừa ghi bị chặn trùng với dữ liệu hiện có");
 
             // ---- J. Lưu bền: mở lại kho trên cùng CSDL ----
             var khoMoLai = new KhoDuLieuDemo(csdl, root.GetRequiredService<ILoggerFactory>().CreateLogger<KhoDuLieuDemo>());

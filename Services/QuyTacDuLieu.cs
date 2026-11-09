@@ -19,19 +19,6 @@ public static class QuyTacDuLieu
         return namNhapHoc is >= 1900 and <= 9995 ? $"{namNhapHoc}–{namNhapHoc + 4}" : "—";
     }
 
-    // Khớp tên ở cuối họ tên: "Anh" không khớp "Thanh" hoặc "Anh Thư".
-    // Giữ phân biệt dấu tiếng Việt, bỏ khác biệt hoa/thường và khoảng trắng thừa.
-    public static bool TenKhopTuKhoa(string hoTen, string tuKhoa)
-    {
-        static string ChuanHoa(string giaTri) => string.Join(" ",
-            giaTri.Normalize(System.Text.NormalizationForm.FormC)
-                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-
-        var cumTu = ChuanHoa(tuKhoa);
-        return cumTu.Length == 0 || (" " + ChuanHoa(hoTen))
-            .EndsWith(" " + cumTu, StringComparison.OrdinalIgnoreCase);
-    }
-
     // Danh mục 34 tỉnh/thành theo Quyết định 19/2025/QĐ-TTg, nguồn ghi trong tài liệu bàn giao.
     public static readonly string[] TinhThanh = ["Hà Nội", "Cao Bằng", "Tuyên Quang", "Điện Biên", "Lai Châu", "Sơn La", "Lào Cai", "Thái Nguyên", "Lạng Sơn", "Quảng Ninh", "Bắc Ninh", "Phú Thọ", "Hải Phòng", "Hưng Yên", "Ninh Bình", "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Quảng Trị", "Huế", "Đà Nẵng", "Quảng Ngãi", "Gia Lai", "Khánh Hòa", "Đắk Lắk", "Lâm Đồng", "Đồng Nai", "Thành phố Hồ Chí Minh", "Tây Ninh", "Đồng Tháp", "Vĩnh Long", "An Giang", "Cần Thơ", "Cà Mau"];
     public static readonly IReadOnlyDictionary<string, int> ChiTieuChucVu = new Dictionary<string, int>

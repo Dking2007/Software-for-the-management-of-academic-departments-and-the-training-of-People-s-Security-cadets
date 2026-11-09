@@ -23,7 +23,7 @@ dv.AddSingleton(new KhoDuLieuDemo()); dv.AddSingleton<KhoVeDangNhapDemo>();
 var tepDaoTao = Path.Combine(Path.GetTempPath(), $"kiem-thu-dao-tao-{Guid.NewGuid()}.db");
 dv.AddDbContextFactory<CoSoDuLieuNghiepVu>(o => o.UseSqlite($"Data Source={tepDaoTao};Pooling=False"));
 dv.AddScoped<DichVuDaoTao>(); dv.AddScoped<DichVuHocVu>(); dv.AddScoped<DichVuNhatKy>(); dv.AddScoped<DichVuTimKiem>();
-dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>(); dv.AddSingleton(new KhoThongBaoDemo()); dv.AddScoped<DichVuThongBao>();
+dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuBaoCaoExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>(); dv.AddSingleton(new KhoThongBaoDemo()); dv.AddScoped<DichVuThongBao>();
 dv.AddScoped<NhaCungCapTrangThaiXacThucDemo>();
 dv.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
 dv.AddScoped<DichVuPhanQuyenDemo>(); dv.AddScoped<DichVuQuanLyDuLieuDemo>();
@@ -246,15 +246,23 @@ using var tabXem = new NhaCungCapTrangThaiXacThucDemo(new KhoVeDangNhapDemo(), k
 KiemTra(await tabXem.DangNhapAsync("nguoixem", "demo123"),"Tab xem đăng nhập");
 KiemTra((await tabXem.GetAuthenticationStateAsync()).User.IsInRole("Guest") && !(await tabMot.GetAuthenticationStateAsync()).User.IsInRole("Admin"), "Phiên Guest mới không khôi phục quyền Admin cũ");
 
-KiemTra(QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Văn Anh", "anh"), "Tìm Anh khớp nguyên từ và không phân biệt hoa thường");
-KiemTra(!QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Văn Thanh", "anh"), "Tìm Anh không khớp Thanh");
-KiemTra(!QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Thị Anh Thư", "Anh"), "Tìm Anh không khớp Anh Thư");
-KiemTra(QuyTacDuLieu.TenKhopTuKhoa("Nguyễn  Thị Anh   Thư", "  anh  thư "), "Tìm cụm tên và chuẩn hóa khoảng trắng");
-KiemTra(!QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Anh Thư", "Anh Th"), "Không khớp cụm tên còn dở");
-KiemTra(!QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Văn Ánh", "anh"), "Tìm tên vẫn phân biệt dấu tiếng Việt");
-KiemTra(QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Văn Anh", "  "), "Xóa từ khóa khôi phục kết quả");
+// Tìm kiếm tự do: không theo mẫu, không phân biệt thứ tự, dấu, dấu phân cách.
+foreach (var tu in new[] { "duy-b10", "b10 duy", "duy,b10", "Duy B10", "b10/duy", "duyb10", "DUY   b10d58" })
+    KiemTra(TimKiemMo.Khop(tu, "Nguyễn Văn Duy", "HV00123", "B10D58"), $"Tìm tự do khớp \"{tu}\"");
+KiemTra(!TimKiemMo.Khop("duy b11", "Nguyễn Văn Duy", "HV00123", "B10D58"), "Mọi từ phải khớp: sai lớp thì không ra");
+KiemTra(TimKiemMo.Khop("nguyn van duy", "Nguyễn Văn Duy") && TimKiemMo.Khop("nvd", "Nguyễn Văn Duy"), "Gõ sai một chữ và gõ chữ cái đầu vẫn tìm được");
+KiemTra(TimKiemMo.Loc(new[] { "Nguyễn Văn Thanh", "Nguyễn Văn Anh", "Trần Anh Tuấn" }, "anh", x => [x]).SequenceEqual(new[] { "Nguyễn Văn Anh", "Trần Anh Tuấn" }), "\"anh\" không lẫn Thanh, người tên Anh xếp trước");
+KiemTra(TimKiemMo.LocNguoi(new[] { "Nguyễn Văn Thanh", "Nguyễn Văn Anh", "Trần Anh Tuấn" }, "anh", x => [x]).SequenceEqual(new[] { "Nguyễn Văn Anh" }), "Danh sách người: một từ chỉ ra đúng người mang tên đó");
+KiemTra(TimKiemMo.LocNguoi(new[] { "Trần Anh Tuấn" }, "anh", x => [x]).Count == 1, "Không ai mang đúng tên đó thì vẫn ra người có từ ấy trong họ tên");
+KiemTra(TimKiemMo.LocNguoi(new[] { "Nguyễn Anh Thư", "Nguyễn Văn Anh" }, "anh thư", x => [x]).SequenceEqual(new[] { "Nguyễn Anh Thư" }), "Hai từ trở lên vẫn tìm tự do");
+KiemTra(TimKiemMo.Loc(new[] { "B10D58", "B1D58", "B11D58" }, "b1", x => [x])[0] == "B1D58", "\"b1\" xếp B1D58 lên trước B10D58");
+KiemTra(TimKiemMo.Loc(new[] { "B10D58", "B1D58", "Tổ 1", "Tổ 10" }, "1", x => [x]).SequenceEqual(new[] { "Tổ 1", "B1D58" }), "Số ngắn chỉ khớp đúng số 1, không khớp 10");
+KiemTra(TimKiemMo.Loc(new[] { "A", "B" }, "  ", x => [x]).Count == 2, "Từ khoá rỗng giữ nguyên danh sách");
+var (kqMotPhan, mucMotPhan) = TimKiemMo.LocChiTiet(new[] { "Võ Hồng Châu", "Nguyễn Văn Duy", "Tổ 1" }, "tổ 1 châu", x => [x]);
+KiemTra(mucMotPhan == MucKhop.MotPhan && kqMotPhan.SequenceEqual(new[] { "Võ Hồng Châu" }), "Không ai khớp đủ thì trả kết quả một phần theo từ quan trọng, bỏ từ chung");
+KiemTra(TimKiemMo.VungKhop("Nguyễn Văn Duy", "duy nguyen").SequenceEqual(new[] { (0, 6), (11, 3) }), "Tô sáng đúng vị trí của từng từ trên chữ có dấu");
 
-KiemTra(!QuyTacDuLieu.TenKhopTuKhoa("Nguyễn Anh Tuấn", "Anh"), "Tìm Anh không khớp tên đệm Anh");
+
 // Kiểm tra bộ lọc trang thực tế, tránh quê quán Thanh Hóa làm lọt tên khác.
 var trangTimHocVien = new Nhom2_BTL.Components.Pages.HocVien();
 var kieuTimHocVien = trangTimHocVien.GetType();
