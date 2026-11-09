@@ -76,6 +76,12 @@ public sealed class DichVuBanTin(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, Dic
     }
 
     /// <summary>Bài mẫu (giả lập) theo các chuyên mục, ngày đăng tính lùi từ hôm nay.</summary>
+    private static DateTimeOffset KhongTuongLai(DateTimeOffset luc, int thuTu)
+    {
+        var moiNhat = DateTimeOffset.Now.AddMinutes(-thuTu - 1);
+        return luc > moiNhat ? moiNhat : luc;
+    }
+
     public static IEnumerable<TinTuc> BaiMau(DateTime homNay)
     {
         (string Muc, string TieuDe, string Sapo, bool NoiBat)[] bai =
@@ -100,7 +106,8 @@ public sealed class DichVuBanTin(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, Dic
             {
                 ChuyenMuc = bai[i].Muc, TieuDe = bai[i].TieuDe, Sapo = bai[i].Sapo, NoiBat = bai[i].NoiBat, TacGia = "Ban biên tập (mẫu)",
                 NoiDung = bai[i].Sapo + "\n\nĐây là bài viết mẫu trên Bản tin Học viện, phục vụ minh hoạ giao diện và chức năng của hệ thống quản lý Khoa/Lớp đào tạo. Nội dung, số liệu và nhân vật đều là giả lập, không phản ánh sự kiện thật.\n\nBan biên tập có thể sửa, xoá bài hoặc đăng bài mới tại trang Bản tin.",
-                DangLuc = new DateTimeOffset(homNay.AddDays(-i / 2.0).AddHours(8 + i % 9), TimeSpan.FromHours(7)),
+                // Tin mẫu không được mang giờ tương lai, kể cả khi khởi tạo trước 8 giờ sáng.
+                DangLuc = KhongTuongLai(new DateTimeOffset(homNay.AddDays(-i / 2.0).AddHours(8 + i % 9), TimeSpan.FromHours(7)), i),
                 LuotXem = 120 + (i * 137) % 900
             };
     }

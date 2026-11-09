@@ -76,6 +76,7 @@ boMayUngDung.Services.AddScoped<DichVuSoDoToChuc>();
 boMayUngDung.Services.AddScoped<DichVuTongQuan>();
 boMayUngDung.Services.AddScoped<DichVuExcel>();
 boMayUngDung.Services.AddScoped<DichVuNhapExcel>();
+boMayUngDung.Services.AddScoped<DichVuBaoCaoExcel>();
 boMayUngDung.Services.AddScoped<DichVuTruongTuyChinh>();
 boMayUngDung.Services.AddScoped<DichVuBanTin>();
 boMayUngDung.Services.AddScoped<DichVuChuongTrinh>();
@@ -175,7 +176,3 @@ ungDung.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 ungDung.Run();
-
-
-
-

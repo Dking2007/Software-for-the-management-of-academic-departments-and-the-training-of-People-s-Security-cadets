@@ -495,7 +495,20 @@ public sealed class DichVuChuongTrinh(IDbContextFactory<CoSoDuLieuNghiepVu> csdl
     public sealed record DongCongTuan(CanBoGiangVien CanBo, string TenTo, Dictionary<DateTime, ChamCong> Cong);
 
     /// <summary>Bảng công một tuần (thứ Hai – thứ Bảy) cho Quản lý khoa/Admin, sắp theo khoa → tổ → chức vụ.</summary>
-    public async Task<(List<DongCongTuan> Dong, string? Loi)> LayBangCongTuanAsync(DateTime dauTuan, string? maKhoa = null)
+    public Task<(List<DongCongTuan> Dong, string? Loi)> LayBangCongTuanAsync(DateTime dauTuan, string? maKhoa = null)
+        => LayBangCongKhoangAsync(dauTuan.Date, dauTuan.Date.AddDays(5), maKhoa);
+
+    /// <summary>Điểm danh đi làm của chính giảng viên đang đăng nhập trong một khoảng ngày.</summary>
+    public async Task<List<ChamCong>> LayChamCongCuaToiKhoangAsync(DateTime tuNgay, DateTime denNgay)
+    {
+        var nd = await phanQuyen.LayNguoiDungAsync();
+        if (!nd.LaGiangVien) return [];
+        await using var db = await csdl.CreateDbContextAsync();
+        return await db.ChamCong.AsNoTracking().Where(x => x.MaCanBo == nd.MaCanBo && x.Ngay >= tuNgay.Date && x.Ngay <= denNgay.Date).OrderBy(x => x.Ngay).ToListAsync();
+    }
+
+    /// <summary>Bảng công trong một khoảng ngày bất kỳ cho Quản lý khoa/Admin, sắp theo khoa → tổ → chức vụ.</summary>
+    public async Task<(List<DongCongTuan> Dong, string? Loi)> LayBangCongKhoangAsync(DateTime tuNgay, DateTime denNgay, string? maKhoa = null)
     {
         var nd = await phanQuyen.LayNguoiDungAsync();
         if (!nd.CoQuyenVung("Khoa")) return ([], "Chỉ Quản lý khoa và Admin theo dõi điểm danh đi làm của cán bộ.");
@@ -505,9 +518,10 @@ public sealed class DichVuChuongTrinh(IDbContextFactory<CoSoDuLieuNghiepVu> csdl
             cb = kho.DanhSachCanBo.Where(c => maKhoa is null || c.MaKhoa == maKhoa).Select(c => c.TaoBanSao()).ToList();
             tenTo = kho.DanhSachTo.ToDictionary(t => t.MaTo, t => t.TenTo);
         }
-        var den = dauTuan.Date.AddDays(6);
+        var tu = tuNgay.Date;
+        var den = denNgay.Date;
         await using var db = await csdl.CreateDbContextAsync();
-        var cong = (await db.ChamCong.AsNoTracking().Where(x => x.Ngay >= dauTuan.Date && x.Ngay < den).ToListAsync()).GroupBy(x => x.MaCanBo).ToDictionary(g => g.Key, g => g.ToDictionary(x => x.Ngay.Date));
+        var cong = (await db.ChamCong.AsNoTracking().Where(x => x.Ngay >= tu && x.Ngay <= den).ToListAsync()).GroupBy(x => x.MaCanBo).ToDictionary(g => g.Key, g => g.ToDictionary(x => x.Ngay.Date));
         string[] thuTuChucVu = ["Trưởng khoa", "Phó khoa", "Tổ trưởng", "Tổ phó", "Cán bộ giảng viên"];
         return (cb.OrderBy(c => c.MaKhoa).ThenBy(c => c.MaTo).ThenBy(c => Array.IndexOf(thuTuChucVu, c.ChucVu)).ThenBy(c => c.KhoaSapXepTen, StringComparer.Ordinal)
             .Select(c => new DongCongTuan(c, tenTo.GetValueOrDefault(c.MaTo ?? "", ""), cong.GetValueOrDefault(c.MaCanBo, []))).ToList(), null);

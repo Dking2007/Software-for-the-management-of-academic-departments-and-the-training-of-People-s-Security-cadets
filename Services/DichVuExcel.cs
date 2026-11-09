@@ -69,34 +69,54 @@ public sealed class DichVuExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuHocVu hocVu
 
     private async Task GhiNhatKyXuat(string doiTuong, int soDong) => await nhatKy.GhiAsync("Xuất Excel", doiTuong, $"{soDong} dòng");
 
+    /// <summary>Giá trị hiển thị dạng phần trăm trong tệp Excel (0,25 thành 25,0%).</summary>
+    public sealed record PhanTram(double GiaTri);
+
     /// <summary>Tạo tệp một trang tính: tiêu đề, dòng chú thích, bảng có tiêu đề cột cố định, lọc, tự giãn cột.</summary>
     public static byte[] TaoBang(string tieuDe, string[] cot, IEnumerable<object?[]> dong, string? ghiChu = null)
     {
         using var wb = new XLWorkbook();
-        var ws = wb.Worksheets.Add(TenTrang(tieuDe));
+        ThemTrang(wb, tieuDe, tieuDe, cot, dong, ghiChu);
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        return ms.ToArray();
+    }
+
+    /// <summary>Hai dòng đầu của một trang tính: tiêu đề và dòng chú thích nguồn dữ liệu.</summary>
+    public static void TieuDeTrang(IXLWorksheet ws, string tieuDe, int soCot, string? ghiChu)
+    {
         ws.Cell(1, 1).Value = tieuDe.ToUpperInvariant();
-        ws.Range(1, 1, 1, cot.Length).Merge().Style.Font.SetBold().Font.SetFontSize(14).Font.SetFontColor(XLColor.FromHtml("#1B4B34"));
+        ws.Range(1, 1, 1, soCot).Merge().Style.Font.SetBold().Font.SetFontSize(14).Font.SetFontColor(XLColor.FromHtml("#1B4B34"));
         ws.Cell(2, 1).Value = $"Học viện An ninh nhân dân · Xuất lúc {DateTime.Now:HH:mm dd/MM/yyyy} · Dữ liệu giả lập phục vụ học tập" + (ghiChu is null ? "" : " · " + ghiChu);
-        ws.Range(2, 1, 2, cot.Length).Merge().Style.Font.SetItalic().Font.SetFontColor(XLColor.FromHtml("#5A665F"));
+        ws.Range(2, 1, 2, soCot).Merge().Style.Font.SetItalic().Font.SetFontColor(XLColor.FromHtml("#5A665F"));
+    }
+
+    public static void GhiGiaTri(IXLCell o, object? giaTri)
+    {
+        switch (giaTri)
+        {
+            case null: break;
+            case DateTime t: o.Value = t; o.Style.DateFormat.Format = t.TimeOfDay == TimeSpan.Zero ? "dd/MM/yyyy" : "dd/MM/yyyy HH:mm"; break;
+            case PhanTram p: o.Value = p.GiaTri; o.Style.NumberFormat.Format = "0.0%"; break;
+            case double so: o.Value = so; o.Style.NumberFormat.Format = "0.0"; break;
+            case int so: o.Value = so; break;
+            // Mã, CCCD, SĐT giữ dạng chữ để không mất số 0 đầu.
+            default: o.SetValue(giaTri.ToString()); o.Style.NumberFormat.Format = "@"; break;
+        }
+    }
+
+    /// <summary>Thêm một trang tính dạng bảng vào tệp nhiều trang.</summary>
+    public static void ThemTrang(XLWorkbook wb, string tenTrang, string tieuDe, string[] cot, IEnumerable<object?[]> dong, string? ghiChu = null)
+    {
+        var ws = wb.Worksheets.Add(TenTrang(tenTrang));
+        TieuDeTrang(ws, tieuDe, cot.Length, ghiChu);
         for (var i = 0; i < cot.Length; i++) ws.Cell(4, i + 1).Value = cot[i];
         var tieuDeCot = ws.Range(4, 1, 4, cot.Length);
         tieuDeCot.Style.Font.SetBold().Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(XLColor.FromHtml("#1B4B34")).Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
         var r = 5;
         foreach (var d in dong)
         {
-            for (var i = 0; i < d.Length; i++)
-            {
-                var o = ws.Cell(r, i + 1);
-                switch (d[i])
-                {
-                    case null: break;
-                    case DateTime t: o.Value = t; o.Style.DateFormat.Format = t.TimeOfDay == TimeSpan.Zero ? "dd/MM/yyyy" : "dd/MM/yyyy HH:mm"; break;
-                    case double so: o.Value = so; o.Style.NumberFormat.Format = "0.0"; break;
-                    case int so: o.Value = so; break;
-                    // Mã, CCCD, SĐT giữ dạng chữ để không mất số 0 đầu.
-                    default: o.SetValue(d[i]!.ToString()); o.Style.NumberFormat.Format = "@"; break;
-                }
-            }
+            for (var i = 0; i < d.Length; i++) GhiGiaTri(ws.Cell(r, i + 1), d[i]);
             r++;
         }
         var bang = ws.Range(4, 1, Math.Max(4, r - 1), cot.Length);
@@ -105,9 +125,25 @@ public sealed class DichVuExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuHocVu hocVu
         ws.SheetView.FreezeRows(4);
         ws.Columns(1, cot.Length).AdjustToContents(4, Math.Min(r, 300));
         foreach (var c in ws.Columns(1, cot.Length)) if (c.Width > 60) c.Width = 60;
-        using var ms = new MemoryStream();
-        wb.SaveAs(ms);
-        return ms.ToArray();
+    }
+
+    /// <summary>Một bảng nhỏ có tiêu đề đặt trong trang báo cáo. Trả về số dòng ngay sau bảng.</summary>
+    public static int BangNho(IXLWorksheet ws, int dongDau, string tieuDe, string[] cot, IEnumerable<object?[]> dong)
+    {
+        ws.Cell(dongDau, 1).Value = tieuDe;
+        ws.Cell(dongDau, 1).Style.Font.SetBold().Font.SetFontSize(12).Font.SetFontColor(XLColor.FromHtml("#1B4B34"));
+        var r = dongDau + 1;
+        for (var i = 0; i < cot.Length; i++) ws.Cell(r, i + 1).Value = cot[i];
+        ws.Range(r, 1, r, cot.Length).Style.Font.SetBold().Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(XLColor.FromHtml("#1B4B34")).Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        var dauBang = r;
+        r++;
+        foreach (var d in dong)
+        {
+            for (var i = 0; i < d.Length; i++) GhiGiaTri(ws.Cell(r, i + 1), d[i]);
+            r++;
+        }
+        ws.Range(dauBang, 1, Math.Max(dauBang, r - 1), cot.Length).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorderColor(XLColor.FromHtml("#DCE0DA"));
+        return r + 1;
     }
 
     public static string TenTrang(string ten)

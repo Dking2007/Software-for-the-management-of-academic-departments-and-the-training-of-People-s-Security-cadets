@@ -7,7 +7,7 @@ using Nhom2_BTL.Models;
 namespace Nhom2_BTL.Services;
 
 /// <summary>Các loại dữ liệu nhập được từ Excel (ngoài học viên đã có ở DichVuExcel).</summary>
-public enum LoaiNhap { CanBo, Lop, ChuyenDe, Phong, Diem }
+public enum LoaiNhap { CanBo, Lop, ChuyenDe, Phong, Diem, LichHoc }
 
 /// <summary>
 /// Nhập Excel dùng chung cho cán bộ, lớp, chuyên đề, phòng học và điểm kiểm tra.
@@ -33,7 +33,7 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
 
     public static string TenLoai(LoaiNhap l) => l switch
     {
-        LoaiNhap.CanBo => "cán bộ, giảng viên", LoaiNhap.Lop => "lớp", LoaiNhap.ChuyenDe => "chuyên đề", LoaiNhap.Phong => "phòng học", _ => "điểm kiểm tra"
+        LoaiNhap.CanBo => "cán bộ, giảng viên", LoaiNhap.Lop => "lớp", LoaiNhap.ChuyenDe => "chuyên đề", LoaiNhap.Phong => "phòng học", LoaiNhap.LichHoc => "buổi học", _ => "điểm kiểm tra"
     };
 
     public static string[] Cot(LoaiNhap l) => l switch
@@ -42,6 +42,7 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
         LoaiNhap.Lop => ["Mã lớp *", "Hệ đào tạo *", "Khóa *", "Chuyên ngành *", "Giáo viên chủ nhiệm"],
         LoaiNhap.ChuyenDe => ["Mã chuyên đề *", "Tên chuyên đề *", "Mã khoa phụ trách *", "Số tiết *", "Mô tả"],
         LoaiNhap.Phong => ["Mã phòng *", "Tên phòng *", "Loại phòng *", "Sức chứa *", "Đang bảo trì (Có/Không)"],
+        LoaiNhap.LichHoc => ["Ngày * (dd/MM/yyyy)", "Tiết bắt đầu * (1–12)", "Số tiết * (1–5)", "Mã lớp *", "Mã chuyên đề *", "Mã cán bộ *", "Mã phòng *", "Ghi chú"],
         _ => ["Mã học viên *", "Họ và tên (tham khảo)", "Điểm kiểm tra (0–10; để trống: giữ nguyên)"]
     };
 
@@ -51,6 +52,7 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
         LoaiNhap.Lop => ["B5K6", "Văn bằng 2", "K6", "Điều tra", "Nguyễn Văn Ví Dụ"],
         LoaiNhap.ChuyenDe => ["CDVD01", "Chuyên đề ví dụ", "K01", "45", "Mô tả ngắn"],
         LoaiNhap.Phong => ["PVD01", "Phòng ví dụ", "Giảng đường", "60", "Không"],
+        LoaiNhap.LichHoc => ["16/11/2026", "1", "4", "B1D58", "CD-01", "CB006", "PM-01", "Dòng ví dụ, hệ thống tự bỏ qua"],
         _ => []
     };
 
@@ -63,6 +65,7 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
             LoaiNhap.CanBo => nd.CoQuyenVung("Khoa") ? null : "Chỉ Admin và Quản lý khoa được nhập cán bộ.",
             LoaiNhap.Lop => nd.CoQuyenVung("Lop") ? null : "Chỉ Admin và Quản lý học viên được nhập lớp.",
             LoaiNhap.ChuyenDe or LoaiNhap.Phong => nd.CoQuyenVung("DaoTao") ? null : "Chỉ Admin và Quản lý đào tạo được nhập chuyên đề, phòng học.",
+            LoaiNhap.LichHoc => nd.CoQuyenVung("DaoTao") ? null : "Chỉ Admin và Quản lý đào tạo được nhập lịch đào tạo.",
             _ => maLop is null || maChuyenDe is null ? "Hãy chọn lớp và chuyên đề trước khi nhập điểm."
                 : (await hocVu.LayBangDiemAsync(maLop, maChuyenDe)).DuocSua ? null : "Chỉ giảng viên dạy chuyên đề này cho lớp, Quản lý học viên hoặc Admin được nhập điểm."
         };
@@ -98,7 +101,7 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
         {
             var vd = ViDu(loai);
             for (var i = 0; i < vd.Length; i++) { ws.Cell(2, i + 1).SetValue(vd[i]); ws.Cell(2, i + 1).Style.Font.SetItalic().Font.SetFontColor(XLColor.Gray); }
-            var danhSach = DanhSachChon(loai);
+            var danhSach = await DanhSachChonAsync(loai);
             var c = 1;
             foreach (var (cotSo, giaTri) in danhSach)
             {
@@ -115,10 +118,21 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
         return ms.ToArray();
     }
 
-    private List<(int Cot, List<string> GiaTri)> DanhSachChon(LoaiNhap loai)
+    private async Task<List<(int Cot, List<string> GiaTri)>> DanhSachChonAsync(LoaiNhap loai)
     {
-        List<string> khoa, to;
-        lock (kho.KhoaDongBo) { khoa = kho.DanhSachKhoa.Select(k => k.MaKhoa).ToList(); to = kho.DanhSachTo.Select(t => t.MaTo).ToList(); }
+        List<string> khoa, to, lop, canBo;
+        lock (kho.KhoaDongBo)
+        {
+            khoa = kho.DanhSachKhoa.Select(k => k.MaKhoa).ToList(); to = kho.DanhSachTo.Select(t => t.MaTo).ToList();
+            lop = kho.DanhSachLop.Select(l => l.MaLop).ToList(); canBo = kho.DanhSachCanBo.Select(c => c.MaCanBo).ToList();
+        }
+        if (loai == LoaiNhap.LichHoc)
+        {
+            await using var db = csdl.CreateDbContext();
+            var cd = await db.ChuyenDe.Select(c => c.MaChuyenDe).OrderBy(x => x).ToListAsync();
+            var phong = await db.Phong.Where(p => !p.DangBaoTri).Select(p => p.MaPhong).OrderBy(x => x).ToListAsync();
+            return [(2, Enumerable.Range(1, 12).Select(i => i.ToString()).ToList()), (3, Enumerable.Range(1, 5).Select(i => i.ToString()).ToList()), (4, lop), (5, cd), (6, canBo), (7, phong)];
+        }
         return loai switch
         {
             LoaiNhap.CanBo => [(3, ["Nam", "Nữ"]), (5, khoa), (6, to), (7, [.. ChucVuCanBo]), (8, [.. CapBacHam]), (10, [.. HocVi])],
@@ -160,6 +174,7 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
                 LoaiNhap.Lop => KiemTraLop(hang),
                 LoaiNhap.ChuyenDe => await KiemTraChuyenDeAsync(hang),
                 LoaiNhap.Phong => await KiemTraPhongAsync(hang),
+                LoaiNhap.LichHoc => await KiemTraLichAsync(hang),
                 _ => await KiemTraDiemAsync(hang, maLop!, maChuyenDe!)
             };
             if (cuoi > SoDongToiDa + 1) return (ketQua, $"Mỗi lần nhập tối đa {SoDongToiDa:N0} dòng; phần dư bị bỏ qua.");
@@ -275,6 +290,42 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
         }).ToList();
     }
 
+    /// <summary>Kiểm tra từng buổi bằng đúng quy tắc của biểu mẫu xếp lịch, thêm kiểm tra trùng giữa các dòng trong tệp.</summary>
+    private async Task<List<DongNhapChung>> KiemTraLichAsync(List<(int So, string[] O, IXLCell[] Cell)> hang)
+    {
+        var tenCd = await TenChuyenDeAsync();
+        var kq = new List<DongNhapChung>();
+        var trongTep = new List<(int SoDong, BuoiHoc Buoi)>();
+        foreach (var h in hang)
+        {
+            var o = h.O; var loi = new List<string>();
+            if (!DocNgay(h.Cell[0], o[0], out var ngay)) loi.Add("Ngày phải theo dạng dd/MM/yyyy.");
+            if (!int.TryParse(o[1], out var tiet)) loi.Add("Tiết bắt đầu phải là số nguyên.");
+            if (!int.TryParse(o[2], out var soTiet)) loi.Add("Số tiết phải là số nguyên.");
+            var b = new BuoiHoc { Ngay = ngay.Date, TietBatDau = tiet, SoTiet = soTiet, MaLop = o[3].ToUpperInvariant(), MaChuyenDe = o[4].ToUpperInvariant(), MaCanBo = o[5].ToUpperInvariant(), MaPhong = o[6].ToUpperInvariant(), GhiChu = o[7] };
+            if (loi.Count == 0)
+            {
+                loi.AddRange(await daoTao.KiemTraBuoiHocAsync(b));
+                foreach (var (soDong, x) in trongTep.Where(t => QuyTacHocVu.TrungGio(t.Buoi, b)))
+                {
+                    if (x.MaLop == b.MaLop) loi.Add($"Trùng giờ lớp {b.MaLop} với dòng {soDong} trong tệp.");
+                    if (x.MaCanBo == b.MaCanBo) loi.Add($"Trùng giờ giảng viên {b.MaCanBo} với dòng {soDong} trong tệp.");
+                    if (x.MaPhong == b.MaPhong) loi.Add($"Trùng phòng {b.MaPhong} với dòng {soDong} trong tệp.");
+                }
+            }
+            if (loi.Count == 0) trongTep.Add((h.So, b));
+            var moTaTiet = loi.Count == 0 ? $"{QuyTacHocVu.TenThu(b.Ngay)} {b.Ngay:dd/MM/yyyy}, tiết {b.TietBatDau}–{b.TietKetThuc}" : $"{o[0]}, tiết {o[1]}";
+            kq.Add(new DongNhapChung(h.So, b.MaLop, tenCd.GetValueOrDefault(b.MaChuyenDe, b.MaChuyenDe), $"{moTaTiet} · {b.MaCanBo} · {b.MaPhong}", loi.Distinct().ToList(), b));
+        }
+        return kq;
+    }
+
+    private async Task<Dictionary<string, string>> TenChuyenDeAsync()
+    {
+        await using var db = csdl.CreateDbContext();
+        return await db.ChuyenDe.ToDictionaryAsync(c => c.MaChuyenDe, c => c.TenChuyenDe);
+    }
+
     private async Task<List<DongNhapChung>> KiemTraDiemAsync(List<(int So, string[] O, IXLCell[] Cell)> hang, string maLop, string maChuyenDe)
     {
         var (bang, _, _) = await hocVu.LayBangDiemAsync(maLop, maChuyenDe);
@@ -319,12 +370,13 @@ public sealed class DichVuNhapExcel(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao 
                     LopDaoTao l => await duLieu.LuuLopAsync(l),
                     ChuyenDe cd => await daoTao.LuuChuyenDeAsync(cd),
                     Phong p => await daoTao.LuuPhongAsync(p),
+                    BuoiHoc b => await daoTao.LuuBuoiHocAsync(b),
                     _ => new KetQuaThaoTac(false, "Loại dữ liệu không hỗ trợ.")
                 };
                 if (kq.ThanhCong) thanhCong++; else loi.Add($"Dòng {d.SoDong}: {kq.ThongBao}");
             }
         }
-        var doiTuong = loai switch { LoaiNhap.CanBo => "Cán bộ", LoaiNhap.Lop => "Lớp", LoaiNhap.ChuyenDe => "Chuyên đề", LoaiNhap.Phong => "Phòng học", _ => "Điểm" };
+        var doiTuong = loai switch { LoaiNhap.CanBo => "Cán bộ", LoaiNhap.Lop => "Lớp", LoaiNhap.ChuyenDe => "Chuyên đề", LoaiNhap.Phong => "Phòng học", LoaiNhap.LichHoc => "Lịch đào tạo", _ => "Điểm" };
         await nhatKy.GhiAsync("Nhập Excel", doiTuong, $"{thanhCong} dòng thành công, {loi.Count} lỗi{(loai == LoaiNhap.Diem ? $" (lớp {maLop}, {maChuyenDe})" : "")}");
         return (thanhCong, loi);
     }

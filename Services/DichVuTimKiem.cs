@@ -10,33 +10,51 @@ namespace Nhom2_BTL.Services;
 /// </summary>
 public sealed class DichVuTimKiem(DichVuQuanLyDuLieuDemo duLieu, DichVuDaoTao daoTao, DichVuPhanQuyenDemo phanQuyen)
 {
-    public sealed record KetQuaTim(string Loai, string BieuTuong, string Ten, string Phu, string DuongDan);
+    public sealed record KetQuaTim(string Loai, string BieuTuong, string Ten, string Phu, string DuongDan)
+    {
+        /// <summary>True khi không có bản ghi khớp đủ mọi từ và đây là kết quả gần đúng hoặc khớp một phần.</summary>
+        public bool GanDung { get; init; }
+    }
+
+    private sealed record UngVien(KetQuaTim KetQua, string?[] Truong);
+
+    /// <summary>Số kết quả tối đa mỗi loại, để một loại đông (học viên) không che hết các loại khác.</summary>
+    private const int ToiDaMoiLoai = 12;
 
     public async Task<List<KetQuaTim>> TimAsync(string tuKhoa, int toiDa = 30)
     {
         var nd = await phanQuyen.LayNguoiDungAsync();
-        var k = BoDau(tuKhoa);
-        if (!nd.DaDangNhap || k.Length < 2) return [];
-        bool Khop(params string?[] cacTruong) => cacTruong.Any(t => t is not null && BoDau(t).Contains(k));
+        if (!nd.DaDangNhap || BoDau(tuKhoa).Length < 2 || TimKiemMo.TachTu(tuKhoa).Length == 0) return [];
 
-        var ketQua = new List<KetQuaTim>();
-        ketQua.AddRange(CacTrang(nd).Where(t => Khop(t.Ten)));
-        ketQua.AddRange(duLieu.LayDanhSachKhoa().Where(x => Khop(x.MaKhoa, x.TenKhoa))
-            .Select(x => new KetQuaTim("Khoa", "account_balance", x.TenKhoa, x.MaKhoa, $"/khoa/{Uri.EscapeDataString(x.MaKhoa)}/to")));
-        ketQua.AddRange(duLieu.LayDanhSachTo().Where(x => Khop(x.MaTo, x.TenTo))
-            .Select(x => new KetQuaTim("Tổ chuyên môn", "groups", $"{x.TenTo} · {duLieu.LayTenKhoa(x.MaKhoa)}", x.MaTo, $"/khoa/{Uri.EscapeDataString(x.MaKhoa)}/to/{Uri.EscapeDataString(x.MaTo)}")));
-        ketQua.AddRange(duLieu.LayDanhSachLop().Where(x => Khop(x.MaLop, x.ChuyenNganh, x.KhoaHoc))
-            .Select(x => new KetQuaTim("Lớp", "school", x.MaLop, $"{x.HeDaoTao} · {x.KhoaHoc} · {x.ChuyenNganh}", $"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(x.MaLop)}")));
-        ketQua.AddRange(duLieu.LayDanhSachCanBo().Where(x => Khop(x.HoTen, x.MaCanBo == "" ? null : x.MaCanBo, x.ChuyenMon))
-            .Select(x => new KetQuaTim("Cán bộ", "badge", $"{x.CapBacHam} {x.HoTen}", $"{x.ChucVu} · {x.TenTo} · {x.TenKhoa}", $"/khoa/{Uri.EscapeDataString(x.MaKhoa)}/to/{Uri.EscapeDataString(x.MaTo ?? "")}")));
+        // Các trường so khớp gồm cả đơn vị của bản ghi, nhờ đó "duy b10" hay "tổ 1 châu" tìm được đúng người.
+        var nguon = new List<UngVien>();
+        nguon.AddRange(CacTrang(nd).Select(t => new UngVien(t, [t.Ten])));
+        var tenKhoa = duLieu.LayDanhSachKhoa().ToDictionary(x => x.MaKhoa, x => x.TenKhoa);
+        nguon.AddRange(duLieu.LayDanhSachKhoa().Select(x => new UngVien(
+            new KetQuaTim("Khoa", "account_balance", x.TenKhoa, x.MaKhoa, $"/khoa/{Uri.EscapeDataString(x.MaKhoa)}/to"), [x.TenKhoa, x.MaKhoa])));
+        nguon.AddRange(duLieu.LayDanhSachTo().Select(x => new UngVien(
+            new KetQuaTim("Tổ chuyên môn", "groups", $"{x.TenTo} · {tenKhoa.GetValueOrDefault(x.MaKhoa, x.MaKhoa)}", x.MaTo, $"/khoa/{Uri.EscapeDataString(x.MaKhoa)}/to/{Uri.EscapeDataString(x.MaTo)}"),
+            [x.TenTo, x.MaTo, tenKhoa.GetValueOrDefault(x.MaKhoa, x.MaKhoa)])));
+        nguon.AddRange(duLieu.LayDanhSachLop().Select(x => new UngVien(
+            new KetQuaTim("Lớp", "school", x.MaLop, $"{x.HeDaoTao} · {x.KhoaHoc} · {x.ChuyenNganh}", $"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(x.MaLop)}"),
+            [x.MaLop, x.ChuyenNganh, x.KhoaHoc, x.HeDaoTao, x.NienKhoa, x.GiaoVienChuNhiem])));
+        nguon.AddRange(duLieu.LayDanhSachCanBo().Select(x => new UngVien(
+            new KetQuaTim("Cán bộ", "badge", $"{x.CapBacHam} {x.HoTen}", $"{x.ChucVu} · {x.TenTo} · {x.TenKhoa}", $"/khoa/{Uri.EscapeDataString(x.MaKhoa)}/to/{Uri.EscapeDataString(x.MaTo ?? "")}"),
+            [x.HoTen, x.MaCanBo == "" ? null : x.MaCanBo, x.CapBacHam, x.ChucVu, x.TenTo, x.TenKhoa, x.ChuyenMon])));
         // Học viên: kết quả chỉ gồm họ tên và lớp (mặt cắt tối thiểu), dẫn tới trang lớp.
-        ketQua.AddRange(duLieu.LayDanhSachHocVien().Where(x => Khop(x.HoTen, x.MaHocVien == "" ? null : x.MaHocVien))
-            .Select(x => new KetQuaTim("Học viên", "person", x.HoTen, $"Lớp {x.MaLop}", $"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(x.MaLop)}")));
-        ketQua.AddRange((await daoTao.LayChuyenDeAsync()).Where(x => Khop(x.ChuyenDe.MaChuyenDe, x.ChuyenDe.TenChuyenDe))
-            .Select(x => new KetQuaTim("Chuyên đề", "menu_book", x.ChuyenDe.TenChuyenDe, $"{x.ChuyenDe.MaChuyenDe} · {x.TenKhoa}", "/dao-tao/chuyen-de")));
-        ketQua.AddRange((await daoTao.LayPhongAsync()).Where(x => Khop(x.MaPhong, x.TenPhong))
-            .Select(x => new KetQuaTim("Phòng", "meeting_room", x.TenPhong, $"{x.LoaiPhong} · {x.SucChua} chỗ", "/dao-tao/phong")));
-        return ketQua.Take(toiDa).ToList();
+        nguon.AddRange(duLieu.LayDanhSachHocVien().Select(x => new UngVien(
+            new KetQuaTim("Học viên", "person", x.HoTen, $"Lớp {x.MaLop}", $"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(x.MaLop)}"),
+            [x.HoTen, x.MaHocVien == "" ? null : x.MaHocVien, x.MaLop])));
+        nguon.AddRange((await daoTao.LayChuyenDeAsync()).Select(x => new UngVien(
+            new KetQuaTim("Chuyên đề", "menu_book", x.ChuyenDe.TenChuyenDe, $"{x.ChuyenDe.MaChuyenDe} · {x.TenKhoa}", "/dao-tao/chuyen-de"),
+            [x.ChuyenDe.TenChuyenDe, x.ChuyenDe.MaChuyenDe, x.TenKhoa])));
+        nguon.AddRange((await daoTao.LayPhongAsync()).Select(x => new UngVien(
+            new KetQuaTim("Phòng", "meeting_room", x.TenPhong, $"{x.LoaiPhong} · {x.SucChua} chỗ", "/dao-tao/phong"), [x.TenPhong, x.MaPhong, x.LoaiPhong])));
+
+        var (ds, muc) = TimKiemMo.LocChiTiet(nguon, tuKhoa, u => u.Truong);
+        var ganDung = muc != MucKhop.ChinhXac;
+        return ds.GroupBy(u => u.KetQua.Loai).SelectMany(g => g.Take(ToiDaMoiLoai)).Take(toiDa)
+            .Select(u => u.KetQua with { GanDung = ganDung }).ToList();
     }
 
     private static IEnumerable<KetQuaTim> CacTrang(NguoiDungHienTai nd)
