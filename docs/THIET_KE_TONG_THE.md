@@ -131,7 +131,7 @@ erDiagram
 - Dịch vụ bảo đảm, **mọi quy tắc trả về lý do**: giảng viên không dạy hai nơi cùng giờ; phòng không bị đặt chồng; sĩ số không vượt sức chứa; phòng thi đủ chỗ; phòng bảo trì không xếp được; điểm tổng kết `= 30% chuyên cần + 70% kiểm tra`, làm tròn 1 chữ số, từ 5.0 là đạt, thiếu điểm thì nói rõ thiếu điểm nào; cổng tự điểm danh mở trước giờ học 30 phút và đóng sau 15 phút.
 - Xếp loại: dưới 5.0 Không đạt; 5.0 đến dưới 6.5 Đạt; 6.5 đến dưới 8.0 Khá; 8.0 đến dưới 9.0 Giỏi; 9.0 trở lên Xuất sắc.
 
----
+--- 
 
 ## 6. Phân quyền
 
@@ -334,6 +334,15 @@ Mỗi tối tích hợp vào nhánh chính và phải chạy được. Nếu tr�
 
 **Quy trình và quy chuẩn của chủ dự án (điền vào, Claude sẽ đối chiếu sau mỗi bước):**
 
-```
-(dán hướng dẫn, quy trình, quy chuẩn, tiêu chí của bạn ở đây)
-```
+Chuẩn giao diện và nghiệm thu rút ra từ project Quân Tôm (SmartMeet), áp dụng cho mọi lát việc giao diện:
+
+1. **Một khung cho mọi trang.** Thanh điều hướng, thanh trên và vùng nội dung giống nhau; trạng thái thu gọn menu được nhớ trên trình duyệt (`wwwroot/thu-gon-menu.js`), mặc định tự thu ở màn hình dưới 1100 px.
+2. **Mỗi mục menu là một trang riêng.** Trang chủ chỉ chứa việc của hôm nay; danh sách đầy đủ nằm ở trang của phân hệ. Không xếp chồng nhiều danh sách lên trang chủ.
+3. **Đầu trang thống nhất.** Mọi trang dùng `DauTrang` (biểu tượng + màu nhấn theo phân hệ, tiêu đề, mô tả, nút thao tác). Không tự dựng tiêu đề riêng.
+4. **Trang chủ theo vai trò.** Có ô "Bắt đầu nhanh" dẫn tới việc người đó làm nhiều nhất. Ô chỉ là lối tắt; quyền thật vẫn kiểm ở dịch vụ và trang đích.
+5. **Màu và chữ.** Chỉ dùng biến CSS trong `app.css`; màu nhấn không dùng cho chữ nhỏ. Đạt tương phản ở cả Sáng và Tối. Tôn trọng `prefers-reduced-motion`.
+6. **Đủ bốn trạng thái** mỗi màn hình: đang tải, trống, lỗi, có dữ liệu.
+7. **Đáp ứng.** Không cuộn ngang ở 390 px; dùng được ở 1366×768; trên điện thoại menu thành ngăn kéo.
+8. **Tiếp cận.** Nút chỉ có biểu tượng phải có `aria-label`; thao tác được bằng bàn phím; focus nhìn thấy rõ.
+9. **Báo cáo trung thực.** Ghi rõ cái đã chạy và kết quả; cái chưa kiểm (ví dụ chưa mở trên trình duyệt thật) ghi là chưa kiểm, không viết là đã đạt.
+10. **Mỗi lát xong khi:** build 0 lỗi; `KiemThu/` vẫn qua; có cách tự xem trong tài liệu hoặc báo cáo.

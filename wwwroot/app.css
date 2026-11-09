@@ -197,8 +197,6 @@ h1:focus, .content h1:focus { outline: none; }
 /* Phân hệ đang xem: nền xanh đậm vừa; phân hệ không có mục con (Quản trị) tô xanh sáng và thêm chấm vàng đồng. */
 .module-menu-group.dang-chon > .module-menu-heading { background: rgba(255,255,255,.09); box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
 .module-menu-group.dang-chon > .module-menu-heading .module-menu-main { color: #fff; font-weight: 600; }
-.module-menu-group.khong-con.dang-chon > .module-menu-heading { background: rgba(255,255,255,.14); }
-.module-menu-group.khong-con.dang-chon > .module-menu-heading .module-menu-main::after { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-left: auto; border-radius: 50%; background: var(--mau-nhan); }
 
 /* Mục con: chữ nhỏ hơn mục cha, không biểu tượng; trang đang xem tô xanh sáng kèm chấm vàng đồng. */
 .menu-con { display: grid; gap: .125rem; margin: .25rem 0 .25rem 1.375rem; padding: 0 0 0 .75rem; border-left: 1px solid var(--vien-tren-nen-toi); list-style: none; }
@@ -251,6 +249,20 @@ h1:focus, .content h1:focus { outline: none; }
 .page-heading h1 { margin: 0 0 var(--kc-1); color: var(--chu-chinh); font-family: var(--font-co-chan); font-size: var(--cc-32); font-weight: 600; line-height: 1.2; }
 .page-heading p { margin: 0; color: var(--chu-phu); font-size: var(--cc-15); }
 .page-heading-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--kc-4); margin-bottom: var(--kc-6); }
+/* Đầu trang: ô biểu tượng + vạch nhấn theo phân hệ để người dùng nhận ra mình vừa sang trang khác.
+   Màu nhấn chỉ dùng cho ô biểu tượng và vạch trái; chữ giữ màu chính để không phá độ tương phản. */
+.page-heading-row { --nhan: var(--mau-chinh-sang); justify-content: flex-start; }
+.page-heading-row > .page-heading { flex: 1 1 16rem; min-width: 0; }
+.page-heading-row > .thao-tac-dau-trang { margin-left: auto; }
+.dau-trang-bieu-tuong { display: grid; flex: 0 0 auto; place-items: center; width: 3rem; height: 3rem; border-radius: 12px; background: var(--nhan); color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.14); }
+.dau-trang-bieu-tuong .rzi, .dau-trang-bieu-tuong .rz-icon { font-size: 1.5rem; }
+.dau-trang-khoa { --nhan: #1f7a4f; }
+.dau-trang-dao-tao { --nhan: #9a741f; }
+.dau-trang-hoc-vien { --nhan: #2a6f8f; }
+.dau-trang-ca-nhan { --nhan: #4f6bb0; }
+.dau-trang-quan-tri { --nhan: #5d6a63; }
+.dau-trang-thong-tin { --nhan: #8a4f7d; }
+@media (max-width: 759px) { .dau-trang-bieu-tuong { width: 2.5rem; height: 2.5rem; border-radius: 10px; } .page-heading-row > .thao-tac-dau-trang { margin-left: 0; width: 100%; } }
 .thao-tac-dau-trang { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kc-2); }
 .thao-tac-dau-trang .rz-button { min-height: var(--cao-o-nhap); padding: 0 var(--kc-5); font-size: var(--cc-15); font-weight: 600; }
 
@@ -260,7 +272,7 @@ h1:focus, .content h1:focus { outline: none; }
 
 /* Bảng danh sách: vùng chứa trong suốt; thanh công cụ nằm thẳng trên nền trang, chỉ riêng bảng (kèm phân trang) có khung viền. */
 .directory-panel, .directory-panel.rz-card { display: flex; flex-direction: column; gap: var(--kc-4); min-width: 0; width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-.directory-panel > .directory-grid, .directory-panel > .bang-tai-khoan { border: 1px solid var(--vien-the); border-radius: var(--bo-goc-the); background: var(--nen-the); }
+.directory-panel > .directory-grid { border: 1px solid var(--vien-the); border-radius: var(--bo-goc-the); background: var(--nen-the); }
 .directory-panel > .directory-grid { overflow: hidden; }
 .panel-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kc-3); padding: 0; }
 .panel-toolbar > .rz-button { min-height: var(--cao-o-nhap); }
@@ -493,12 +505,6 @@ h1:focus, .content h1:focus { outline: none; }
 .thao-tac-bieu-mau { display: flex; justify-content: flex-end; gap: var(--kc-2); margin-top: var(--kc-5); }
 .thong-bao-trang { margin-bottom: var(--kc-4); }
 .loc-vai-tro { flex: 0 1 14rem; height: var(--cao-o-nhap); }
-.bang-tai-khoan { overflow-x: auto; }
-.bang-tai-khoan table { --bs-table-bg: transparent; margin: 0; }
-.bang-tai-khoan thead th { background: var(--mau-chinh-nhat); color: var(--mau-chinh); font-size: var(--cc-13); font-weight: 600; white-space: nowrap; }
-.bang-tai-khoan td { vertical-align: middle; }
-.bang-tai-khoan tbody tr:hover td { background: var(--mau-chinh-nhat); }
-.ma-tai-khoan { max-width: 14rem; overflow-wrap: anywhere; }
 .bang-trong { margin: 0; padding: var(--kc-8) var(--kc-4); color: var(--chu-phu); text-align: center; }
 /* Dòng phụ nằm dưới giá trị chính trong ô bảng (cấp bậc dưới chức vụ, tổ dưới khoa). */
 .phu-dong { display: block; color: var(--chu-phu); font-size: var(--cc-12); }
@@ -631,9 +637,6 @@ h1:focus, .content h1:focus { outline: none; }
 .tom-tat-don-vi { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem 1.5rem; margin: 1.25rem 0 0; }
 .tom-tat-don-vi dt { font-size: .75rem; color: var(--chu-phu); font-weight: 500; }
 .tom-tat-don-vi dd { margin: .25rem 0 0; font-weight: 600; overflow-wrap: anywhere; }
-.dieu-huong-phan-he { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.25rem; }
-.dieu-huong-phan-he a { padding: .625rem 1rem; border: 1px solid var(--vien-the); border-radius: 8px; background: #fff; color: var(--mau-chinh); text-decoration: none; }
-.dieu-huong-phan-he a.active { background: var(--mau-chinh); color: #fff; border-color: var(--mau-chinh); }
 .so-lieu-dao-tao { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
 .so-lieu-dao-tao .rz-card { display: flex; flex-direction: column; gap: .5rem; box-shadow: none; border: 1px solid var(--vien-the); }
 .so-lieu-dao-tao strong { font-size: 1.75rem; color: var(--mau-chinh); }
@@ -690,8 +693,18 @@ h1:focus, .content h1:focus { outline: none; }
 [data-giao-dien="toi"] .form-control::placeholder { color: var(--chu-phu); }
 [data-giao-dien="toi"] .form-label, [data-giao-dien="toi"] .noi-dung-the-dang-nhap .form-label { color: var(--chu-chinh); }
 [data-giao-dien="toi"] .thong-tin-don-vi.rz-card, [data-giao-dien="toi"] .dau-phieu { background: #22372a; border-color: var(--vien-the); }
-[data-giao-dien="toi"] .dieu-huong-phan-he a { background: var(--nen-the); }
-[data-giao-dien="toi"] .dieu-huong-phan-he a.active { background: #304d3b; color: #e2f4e7; }
 
 [data-giao-dien="toi"] .hop-dang-nhap .dau-bieu-mau-dang-nhap { background: #22372a; border-color: var(--vien-the); }
 [data-giao-dien="toi"] .nhan-trang-thai.hoat-dong { background: #294332; color: #b6e9c7; }
+
+/* Trang chủ: ô "Bắt đầu nhanh" theo vai trò -------------------------------- */
+.bat-dau-nhanh { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--kc-4); margin: 0 var(--kc-6) var(--kc-6); }
+.o-bat-dau { display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; padding: var(--kc-5); border: 1px solid var(--vien-the); border-radius: 14px; background: var(--nen-the); color: var(--chu-chinh); text-decoration: none; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.o-bat-dau:hover, .o-bat-dau:focus-visible { transform: translateY(-2px); border-color: var(--mau-chinh-sang); box-shadow: 0 10px 24px rgba(14,42,30,.12); }
+.o-bat-dau-bieu-tuong { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin-bottom: var(--kc-2); border-radius: 12px; background: var(--mau-chinh); color: #fff; }
+.o-bat-dau:nth-child(even) .o-bat-dau-bieu-tuong { background: var(--mau-nhan); }
+.o-bat-dau strong { font-size: var(--cc-15); font-weight: 650; }
+.o-bat-dau small { color: var(--chu-phu); font-size: var(--cc-13); line-height: 1.4; }
+@media (max-width: 759px) { .bat-dau-nhanh { margin-inline: var(--kc-3); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kc-3); } .o-bat-dau { padding: var(--kc-4); } }
+@media (prefers-reduced-motion: reduce) { .o-bat-dau { transition: none; } .o-bat-dau:hover { transform: none; } }
+[data-giao-dien="toi"] .o-bat-dau-bieu-tuong, [data-giao-dien="toi"] .o-bat-dau:nth-child(even) .o-bat-dau-bieu-tuong { color: #102719; }

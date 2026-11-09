@@ -1,7 +1,9 @@
 @inject TuyChonGiaoDien TuyChon
-@* Đầu trang dùng chung: tiêu đề, mô tả ngắn và vùng nút thao tác (ví dụ "Thêm khoa") ở bên phải.
-   Vị trí trong hệ thống đã có breadcrumb ở header nên ở đây không lặp lại tên phân hệ. *@
-<div class="page-heading-row">
+@inject NavigationManager DieuHuong
+@* Đầu trang dùng chung: biểu tượng + màu nhấn theo phân hệ, tiêu đề, mô tả ngắn và vùng nút thao tác (ví dụ "Thêm khoa") ở bên phải.
+   Biểu tượng và màu tự suy ra từ địa chỉ nên các trang không phải truyền thêm gì; muốn đổi thì đặt BieuTuong. *@
+<div class="page-heading-row dau-trang-@PhanHe">
+    <span class="dau-trang-bieu-tuong" aria-hidden="true"><RadzenIcon Icon="@(BieuTuong ?? BieuTuongMacDinh)" /></span>
     <div class="page-heading">
         <h1>@TuyChon.Dich(TieuDe)</h1>
         @if (!string.IsNullOrWhiteSpace(MoTa))
@@ -19,7 +21,48 @@
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter, EditorRequired] public string TieuDe { get; set; } = string.Empty;
     [Parameter] public string? MoTa { get; set; }
+    /// <summary>Tên biểu tượng Material; bỏ trống thì chọn theo phân hệ của địa chỉ hiện tại.</summary>
+    [Parameter] public string? BieuTuong { get; set; }
 
     // Chỉ truyền nội dung khi người dùng có quyền thao tác; không truyền thì vùng này không hiện.
     [Parameter] public RenderFragment? ThaoTac { get; set; }
+
+    private string[] CacDoan => DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0].ToLowerInvariant().Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+    // Màu nhấn theo phân hệ (khớp nhóm trong thanh điều hướng): khoa, đào tạo, học viên, cá nhân, quản trị, thông tin.
+    private string PhanHe => (CacDoan.FirstOrDefault() ?? "") switch
+    {
+        "khoa" => "khoa",
+        "dao-tao" => "dao-tao",
+        "lop" or "hoc-vien" or "quan-ly-hoc-vien" => "hoc-vien",
+        "giang-day" or "cua-toi" or "ho-so" => "ca-nhan",
+        "quan-tri" => "quan-tri",
+        _ => "thong-tin"
+    };
+
+    private string BieuTuongMacDinh => (CacDoan.FirstOrDefault(), CacDoan.Skip(1).FirstOrDefault()) switch
+    {
+        ("khoa", "to") => "account_tree",
+        ("khoa", "can-bo") => "badge",
+        ("khoa", "so-do") => "schema",
+        ("khoa", "cham-cong") => "how_to_reg",
+        ("khoa", _) => "account_balance",
+        ("dao-tao", "lich") => "calendar_month",
+        ("dao-tao", "phong") => "meeting_room",
+        ("dao-tao", "chuyen-de") => "menu_book",
+        ("dao-tao", "chuong-trinh") => "assignment",
+        ("dao-tao", "thi") => "fact_check",
+        ("dao-tao", _) => "school",
+        ("lop", _) or ("quan-ly-hoc-vien", "lop") => "groups",
+        ("hoc-vien", _) or ("quan-ly-hoc-vien", _) => "person_search",
+        ("giang-day", _) => "co_present",
+        ("cua-toi", _) => "person",
+        ("ho-so", _) => "badge",
+        ("quan-tri", "nhat-ky") => "history",
+        ("quan-tri", "truong-du-lieu") => "tune",
+        ("quan-tri", _) => "manage_accounts",
+        ("thong-bao", _) => "campaign",
+        ("tro-giup", _) => "help_outline",
+        _ => "dashboard"
+    };
 }
