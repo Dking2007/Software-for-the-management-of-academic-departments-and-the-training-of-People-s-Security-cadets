@@ -5,6 +5,7 @@
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject NotificationService ThongBao
+@inject DichVuBaoCaoExcel BaoCao
 
 @* Trực ban theo khoa: quyền hẹp có thời hạn. Đúng ngày trực, người trực điểm danh đi làm cho cán bộ toàn khoa,
    nắm quân số học viên ở mức số liệu, ghi sổ và chốt báo cáo. Quản lý khoa lập lịch và theo dõi mọi khoa. *@
@@ -186,6 +187,10 @@ else
                     <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => DoiThang(1)" aria-label="Tháng sau" />
                 </div>
                 @if (laQuanLy) { <RadzenButton Text="Xếp tự động các ngày trống" Icon="auto_mode" ButtonStyle="ButtonStyle.Primary" Click="XepTuDong" Disabled="@(dangGhi || thang.AddMonths(1) <= DateTime.Today)" title="Luân phiên đều: ưu tiên người trực ít nhất, ít tiết dạy hôm đó, lâu chưa trực; bỏ qua người nghỉ phép, công tác; tránh trực hai ngày liền." /> }
+                <span class="nut-xuat-truc"><NutXuatTheoNgay Nhan="Xuất Excel" TieuDe="@($"Xuất lịch phân công trực ban · {maKhoa}")" TenTep="@($"lich-truc-ban-{maKhoa}")" TuNgay="thang" DenNgay="@thang.AddMonths(1).AddDays(-1)"
+                    MoTa="Chọn khoảng ngày và nội dung. Dạng lịch theo tuần in vừa một trang ngang để dán bảng tin."
+                    CacPhan="@(laQuanLy ? [.. DichVuBaoCaoExcel.PhanTrucBan, DichVuBaoCaoExcel.PhanTrucBanToanHocVien] : DichVuBaoCaoExcel.PhanTrucBan)"
+                    TaoTep="@((t, d, phan) => BaoCao.XuatLichTrucAsync(t, d, maKhoa, phan))" XemTruoc="@((t, d) => BaoCao.XemTruocLichTrucAsync(t, d, maKhoa))" /></span>
             </div>
             <div class="lich-truc" role="grid" aria-label="Lịch trực ban tháng">
                 @foreach (var t in new[] { "T2", "T3", "T4", "T5", "T6", "T7", "CN" }) { <div class="dau-cot" role="columnheader">@t</div> }

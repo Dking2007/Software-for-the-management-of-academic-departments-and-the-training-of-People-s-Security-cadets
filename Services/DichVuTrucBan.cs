@@ -258,6 +258,46 @@ public sealed class DichVuTrucBan(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, Kh
         return (ds, null);
     }
 
+    /// <summary>Một ngày làm việc của một khoa trong lịch trực, kèm người trực (mặt cắt tối thiểu) để xuất Excel.</summary>
+    public sealed record DongLichXuat(DateTime Ngay, string MaKhoa, string TenKhoa, CaTrucBan? Ca, CanBoGiangVien? NguoiTruc, string TenTo)
+    {
+        public string TrangThai => Ca is null ? "Chưa phân công" : Ca.ChotLuc is not null ? "Đã chốt" : Ngay > DateTime.Today ? "Đã phân công" : Ngay == DateTime.Today ? "Đang trực" : "Không chốt";
+        public string TenNguoiTruc => NguoiTruc is null ? "" : $"{NguoiTruc.CapBacHam} {NguoiTruc.HoTen}".Trim();
+    }
+
+    /// <summary>
+    /// Lịch trực để xuất: một khoa (cán bộ của khoa đó, Quản lý khoa, Admin) hoặc mọi khoa khi maKhoa rỗng (chỉ Quản lý khoa, Admin).
+    /// Mỗi ngày trừ Chủ nhật một dòng cho mỗi khoa, kể cả ngày chưa phân công.
+    /// </summary>
+    public async Task<(List<DongLichXuat> Dong, string? Loi)> LayLichXuatAsync(string? maKhoa, DateTime tuNgay, DateTime denNgay)
+    {
+        var nd = await phanQuyen.LayNguoiDungAsync();
+        if (maKhoa is null ? !LaQuanLyTruc(nd) : !LaQuanLyTruc(nd) && KhoaCua(nd) != maKhoa) return ([], "Lịch trực ban chỉ dành cho cán bộ của khoa, Quản lý khoa và Admin.");
+        var tu = tuNgay.Date; var den = denNgay.Date;
+        List<Khoa> khoa; Dictionary<string, CanBoGiangVien> cb; Dictionary<string, string> tenTo;
+        lock (kho.KhoaDongBo)
+        {
+            khoa = kho.DanhSachKhoa.Where(k => maKhoa is null || k.MaKhoa == maKhoa).OrderBy(k => k.MaKhoa).Select(k => k.TaoBanSao()).ToList();
+            cb = kho.DanhSachCanBo.Where(c => maKhoa is null || c.MaKhoa == maKhoa).ToDictionary(c => c.MaCanBo, CongKhai);
+            tenTo = kho.DanhSachTo.ToDictionary(t => t.MaTo, t => t.TenTo);
+        }
+        await using var db = await csdl.CreateDbContextAsync();
+        var ca = (await db.CaTrucBan.AsNoTracking().Where(x => (maKhoa == null || x.MaKhoa == maKhoa) && x.Ngay >= tu && x.Ngay <= den).ToListAsync())
+            .ToDictionary(x => (x.MaKhoa, x.Ngay.Date));
+        var ds = new List<DongLichXuat>();
+        for (var d = tu; d <= den; d = d.AddDays(1))
+        {
+            if (d.DayOfWeek == DayOfWeek.Sunday) continue;
+            foreach (var k in khoa)
+            {
+                var c = ca.GetValueOrDefault((k.MaKhoa, d));
+                var nguoi = c is null ? null : cb.GetValueOrDefault(c.MaCanBo);
+                ds.Add(new(d, k.MaKhoa, k.TenKhoa, c, nguoi, nguoi?.MaTo is { } mt ? tenTo.GetValueOrDefault(mt, "") : ""));
+            }
+        }
+        return (ds, null);
+    }
+
     /// <summary>Cán bộ có thể nhận trực ban: thuộc khoa, trừ Trưởng khoa (trực chỉ huy, không trực ban).</summary>
     public List<CanBoGiangVien> LayNguoiCoTheTruc(string maKhoa)
     {

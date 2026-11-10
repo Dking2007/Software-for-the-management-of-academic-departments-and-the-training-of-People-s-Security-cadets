@@ -108,6 +108,16 @@ public static partial class TuDienGiaoDien
         ("Đơn vị duy trì nghiêm chế độ trực ban, quân số cán bộ đảm bảo, các lớp lên lớp đúng giờ. An ninh trật tự khu vực khoa ổn định.", "The unit strictly kept the duty regime; staff headcount was ensured and classes started on time. Security and order in the faculty area were stable.", "ໜ່ວຍງານຮັກສາລະບອບເວນຢ່າງເຂັ້ມງວດ, ຈຳນວນພະນັກງານຮັບປະກັນ, ຫ້ອງຮຽນເຂົ້າຮຽນຕົງເວລາ. ຄວາມສະຫງົບໃນເຂດຄະນະໝັ້ນຄົງ."),
         ("Bàn giao đủ sổ trực, chìa khoá phòng làm việc và trang thiết bị cho ca sau.", "Handed over the duty log, office keys and equipment to the next shift.", "ມອບປຶ້ມເວນ, ກະແຈຫ້ອງການ ແລະ ອຸປະກອນໃຫ້ກະຕໍ່ໄປຄົບຖ້ວນ."),
 
+        // ---- Xuất Excel lịch trực ----
+        ("Xuất lịch phân công trực ban", "Export duty roster", "ສົ່ງອອກຕາຕະລາງເວນ"),
+        ("Chọn khoảng ngày và nội dung. Dạng lịch theo tuần in vừa một trang ngang để dán bảng tin.", "Choose the date range and contents. The weekly calendar prints on one landscape page for the notice board.", "ເລືອກຊ່ວງວັນທີ ແລະ ເນື້ອໃນ. ແບບປະຕິທິນອາທິດພິມພໍດີໜຶ່ງໜ້າແນວນອນເພື່ອຕິດກະດານແຈ້ງການ."),
+        ("Lịch trực theo ngày", "Duty roster by day", "ຕາຕະລາງເວນຕາມມື້"),
+        ("Dạng lịch theo tuần (in, dán bảng tin)", "Weekly calendar (print for notice board)", "ແບບປະຕິທິນອາທິດ (ພິມ, ຕິດກະດານແຈ້ງການ)"),
+        ("Số ca của từng cán bộ", "Shifts per staff member", "ຈຳນວນກະຂອງແຕ່ລະພະນັກງານ"),
+        ("Báo cáo trực ban đã chốt", "Closed duty reports", "ລາຍງານເວນທີ່ປິດແລ້ວ"),
+        ("Bảng tổng hợp mọi khoa (ngày × khoa)", "Summary of all faculties (day × faculty)", "ຕາຕະລາງສັງລວມທຸກຄະນະ (ມື້ × ຄະນະ)"),
+        ("{0} ngày làm việc: {1} ngày đã phân công, {2} ngày chưa phân công, {3} cán bộ trực, {4} ca đã chốt báo cáo.", "{0} working days: {1} assigned, {2} not assigned, {3} staff on duty, {4} shifts with closed reports.", "{0} ມື້ເຮັດວຽກ: ມອບໝາຍແລ້ວ {1} ມື້, ຍັງບໍ່ມອບໝາຍ {2} ມື້, ພະນັກງານເວນ {3} ຄົນ, ປິດລາຍງານແລ້ວ {4} ກະ."),
+
         // ---- Trợ giúp ----
         ("Trực ban khoa (theo ca, chỉ trong ngày trực)", "Faculty duty officer (per shift, duty day only)", "ເວນຍາມຄະນະ (ຕາມກະ, ສະເພາະມື້ເວນ)"),
         ("Lập lịch, xếp tự động, theo dõi mọi khoa", "Plan the roster, auto-schedule, monitor all faculties", "ວາງຕາຕະລາງ, ຈັດອັດຕະໂນມັດ, ຕິດຕາມທຸກຄະນະ"),

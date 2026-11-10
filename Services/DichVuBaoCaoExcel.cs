@@ -11,13 +11,16 @@ public sealed record PhanXuat(string Ma, string Ten);
 /// Mọi số liệu lấy qua dịch vụ nghiệp vụ nên đã cắt đúng quyền của người đang đăng nhập; tệp không chứa thứ màn hình không cho xem.
 /// Mỗi lần xuất được ghi nhật ký.
 /// </summary>
-public sealed class DichVuBaoCaoExcel(DichVuDaoTao daoTao, DichVuChuongTrinh chuongTrinh, DichVuHocVu hocVu, DichVuQuanLyDuLieuDemo duLieu, DichVuNhatKy nhatKy, DichVuPhanQuyenDemo phanQuyen)
+public sealed class DichVuBaoCaoExcel(DichVuDaoTao daoTao, DichVuChuongTrinh chuongTrinh, DichVuHocVu hocVu, DichVuQuanLyDuLieuDemo duLieu, DichVuNhatKy nhatKy, DichVuPhanQuyenDemo phanQuyen, DichVuTrucBan trucBan)
 {
     public const int SoNgayToiDa = 366;
     /// <summary>Bảng công dạng ma trận chỉ lập khi kỳ báo cáo không quá số ngày này, dài hơn thì quá nhiều cột để đọc.</summary>
     public const int SoNgayToiDaBangCong = 62;
 
     public static readonly PhanXuat[] PhanHocTap = [new("diem", "Bảng điểm toàn khoá"), new("diem-danh", "Lịch sử điểm danh"), new("lich", "Lịch học"), new("lich-thi", "Lịch thi")];
+    public static readonly PhanXuat[] PhanTrucBan = [new("lich", "Lịch trực theo ngày"), new("dang-lich", "Dạng lịch theo tuần (in, dán bảng tin)"), new("dem", "Số ca của từng cán bộ"), new("bao-cao", "Báo cáo trực ban đã chốt")];
+    /// <summary>Thêm cho Quản lý khoa/Admin: bảng tổng hợp mọi khoa.</summary>
+    public static readonly PhanXuat PhanTrucBanToanHocVien = new("toan-hv", "Bảng tổng hợp mọi khoa (ngày × khoa)");
     public static readonly PhanXuat[] PhanGiangDay = [new("lich", "Lịch dạy"), new("tong-hop", "Tổng hợp theo lớp, chuyên đề"), new("chua-dd", "Buổi đã qua chưa điểm danh"), new("cham-cong", "Điểm danh đi làm của tôi"), new("lop", "Danh sách lớp tôi dạy")];
 
     /// <summary>Lý do khoảng ngày không hợp lệ, null nếu hợp lệ.</summary>
@@ -268,6 +271,149 @@ public sealed class DichVuBaoCaoExcel(DichVuDaoTao daoTao, DichVuChuongTrinh chu
         ws.Column(soCot).Width = 8;
         ws.SheetView.FreezeRows(4);
         ws.SheetView.FreezeColumns(2);
+    }
+
+    // ---------- Trực ban ----------
+
+    public async Task<string?> XemTruocLichTrucAsync(DateTime tu, DateTime den, string maKhoa)
+    {
+        if (KiemTraKhoang(tu, den) is not null) return null;
+        var (dong, loi) = await trucBan.LayLichXuatAsync(maKhoa, tu, den);
+        if (loi is not null) return loi;
+        var coCa = dong.Where(d => d.Ca is not null).ToList();
+        return $"{dong.Count} ngày làm việc: {coCa.Count} ngày đã phân công, {dong.Count - coCa.Count} ngày chưa phân công, {coCa.Select(d => d.Ca!.MaCanBo).Distinct().Count()} cán bộ trực, {coCa.Count(d => d.Ca!.ChotLuc is not null)} ca đã chốt báo cáo.";
+    }
+
+    /// <summary>
+    /// Lịch phân công trực ban của một khoa: danh sách theo ngày, dạng lịch theo tuần để in, số ca từng người, báo cáo đã chốt.
+    /// Quản lý khoa/Admin chọn thêm bảng tổng hợp mọi khoa. Quyền đi theo DichVuTrucBan (cán bộ chỉ xuất được khoa mình).
+    /// </summary>
+    public async Task<byte[]?> XuatLichTrucAsync(DateTime tu, DateTime den, string maKhoa, IReadOnlySet<string> phan)
+    {
+        if (KiemTraKhoang(tu, den) is not null) return null;
+        var (dong, loi) = await trucBan.LayLichXuatAsync(maKhoa, tu, den);
+        if (loi is not null || dong.Count == 0 && !phan.Contains(PhanTrucBanToanHocVien.Ma)) return null;
+        var nd = await phanQuyen.LayNguoiDungAsync();
+        var tenKhoa = dong.FirstOrDefault()?.TenKhoa ?? duLieu.LayDanhSachKhoa().FirstOrDefault(k => k.MaKhoa == maKhoa)?.TenKhoa ?? maKhoa;
+        var moTa = $"{maKhoa} {tenKhoa} · {Khoang(tu, den)} · Người lập: {nd.Ten} ({nd.TenVaiTro})";
+        await Ghi($"Lịch phân công trực ban ({maKhoa} · {Khoang(tu, den)})", dong.Count);
+        using var wb = new XLWorkbook();
+
+        if (phan.Contains("lich"))
+        {
+            DichVuExcel.ThemTrang(wb, "Lịch trực", "Lịch phân công trực ban", ["Ngày", "Thứ", "Người trực", "Chức vụ", "Tổ", "Trạng thái", "Phân công bởi", "Chốt báo cáo lúc"],
+                dong.Select(d => new object?[] { d.Ngay, QuyTacHocVu.TenThu(d.Ngay), d.Ca is null ? "Chưa phân công" : d.TenNguoiTruc, d.NguoiTruc?.ChucVu, d.TenTo, d.TrangThai, d.Ca?.NguoiPhanCong,
+                    d.Ca?.ChotLuc is { } c ? c.ToLocalTime().DateTime : null }), moTa);
+            var ws = wb.Worksheet("Lịch trực");
+            for (var i = 0; i < dong.Count; i++)
+                if (MauTrangThaiTruc.TryGetValue(dong[i].TrangThai, out var m))
+                    ws.Cell(i + 5, 6).Style.Font.SetFontColor(XLColor.FromHtml(m.Chu)).Fill.SetBackgroundColor(XLColor.FromHtml(m.Nen));
+        }
+        if (phan.Contains("dang-lich")) ThemLichTuanTruc(wb, $"Lịch trực ban · {maKhoa} {tenKhoa}", moTa, dong, tu, den);
+        if (phan.Contains("dem"))
+        {
+            var theoNguoi = dong.Where(d => d.Ca is not null).GroupBy(d => d.Ca!.MaCanBo).ToDictionary(g => g.Key, g => g.ToList());
+            var ungVien = trucBan.LayNguoiCoTheTruc(maKhoa).Select(c => c.MaCanBo).ToHashSet();
+            // Người có thể trực (kể cả chưa có ca nào) và người đã được phân trực trong kỳ.
+            var nguoi = dong.Where(d => d.NguoiTruc is not null).Select(d => (d.NguoiTruc!, d.TenTo)).DistinctBy(x => x.Item1.MaCanBo).ToList();
+            foreach (var c in trucBan.LayNguoiCoTheTruc(maKhoa).Where(c => !theoNguoi.ContainsKey(c.MaCanBo))) nguoi.Add((c, ""));
+            DichVuExcel.ThemTrang(wb, "Số ca", "Số ca trực của từng cán bộ", ["Cán bộ", "Chức vụ", "Số ca", "Đã chốt", "Không chốt", "Các ngày trực"],
+                nguoi.Select(x => (x.Item1, Ca: theoNguoi.GetValueOrDefault(x.Item1.MaCanBo, [])))
+                    .OrderByDescending(x => x.Ca.Count).ThenBy(x => x.Item1.KhoaSapXepTen, StringComparer.Ordinal)
+                    .Select(x => new object?[] { $"{x.Item1.CapBacHam} {x.Item1.HoTen}".Trim(), x.Item1.ChucVu, x.Ca.Count, x.Ca.Count(d => d.Ca!.ChotLuc is not null), x.Ca.Count(d => d.TrangThai == "Không chốt"),
+                        string.Join(", ", x.Ca.Select(d => d.Ngay.ToString("dd/MM"))) }),
+                $"{moTa} · Có {ungVien.Count} cán bộ thuộc diện trực (trừ Trưởng khoa)");
+        }
+        if (phan.Contains("bao-cao"))
+        {
+            var bc = dong.Where(d => d.Ca is not null && d.Ngay <= DateTime.Today).OrderByDescending(d => d.Ngay).ToList();
+            DichVuExcel.ThemTrang(wb, "Báo cáo đã chốt", "Báo cáo trực ban", ["Ngày", "Thứ", "Người trực", "Trạng thái", "Chốt lúc", "Quân số cán bộ", "Quân số học viên", "Tình hình chung", "Bàn giao"],
+                bc.Select(d => new object?[] { d.Ngay, QuyTacHocVu.TenThu(d.Ngay), d.TenNguoiTruc, d.TrangThai, d.Ca!.ChotLuc is { } c ? c.ToLocalTime().DateTime : null,
+                    d.Ca.TongHopCanBo, d.Ca.TongHopHocVien, d.Ca.TinhHinh, d.Ca.BanGiao }), moTa);
+            var ws = wb.Worksheet("Báo cáo đã chốt");
+            ws.Columns(6, 9).Style.Alignment.SetWrapText(true);
+            foreach (var c in ws.Columns(6, 9)) c.Width = 42;
+        }
+        if (phan.Contains(PhanTrucBanToanHocVien.Ma) && (await trucBan.LayLichXuatAsync(null, tu, den)) is ({ Count: > 0 } tatCa, null))
+            ThemBangToanHocVien(wb, $"{Khoang(tu, den)} · Người lập: {nd.Ten} ({nd.TenVaiTro})", tatCa);
+        return wb.Worksheets.Count == 0 ? null : Luu(wb);
+    }
+
+    private static readonly Dictionary<string, (string Nen, string Chu)> MauTrangThaiTruc = new()
+    {
+        ["Đã chốt"] = ("#DCFCE7", "#166534"), ["Đang trực"] = ("#DBEAFE", "#1E40AF"), ["Không chốt"] = ("#FEF3C7", "#92400E"), ["Chưa phân công"] = ("#FEE2E2", "#B91C1C")
+    };
+
+    /// <summary>Lịch dạng tuần như bảng tin: cột thứ Hai – Chủ nhật, mỗi dòng một tuần, ô ghi ngày và người trực. Khổ ngang, vừa một trang.</summary>
+    private static void ThemLichTuanTruc(XLWorkbook wb, string tieuDe, string moTa, List<DichVuTrucBan.DongLichXuat> dong, DateTime tu, DateTime den)
+    {
+        var ws = wb.Worksheets.Add("Dạng lịch");
+        DichVuExcel.TieuDeTrang(ws, tieuDe, 7, moTa);
+        string[] thu = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"];
+        for (var i = 0; i < 7; i++) { ws.Cell(4, i + 1).Value = thu[i]; ws.Column(i + 1).Width = 24; }
+        ws.Range(4, 1, 4, 7).Style.Font.SetBold().Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(XLColor.FromHtml("#1B4B34")).Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        var theoNgay = dong.ToDictionary(d => d.Ngay);
+        var r = 5;
+        for (var dauTuan = QuyTacHocVu.DauTuan(tu.Date); dauTuan <= den.Date; dauTuan = dauTuan.AddDays(7), r++)
+        {
+            for (var i = 0; i < 7; i++)
+            {
+                var ngay = dauTuan.AddDays(i);
+                if (ngay < tu.Date || ngay > den.Date) continue;
+                var o = ws.Cell(r, i + 1);
+                if (ngay.DayOfWeek == DayOfWeek.Sunday) { o.Value = $"{ngay:dd/MM}\nNghỉ"; o.Style.Font.SetFontColor(XLColor.FromHtml("#5A665F")).Fill.SetBackgroundColor(XLColor.FromHtml("#F3F6F4")); continue; }
+                var d = theoNgay.GetValueOrDefault(ngay);
+                o.Value = $"{ngay:dd/MM}\n{(d?.Ca is null ? "Chưa phân công" : d.TenNguoiTruc)}";
+                o.GetRichText().Substring(0, 5).SetBold();
+                if (d is not null && d.Ca is null) o.Style.Font.SetFontColor(XLColor.FromHtml("#B91C1C"));
+                if (ngay == DateTime.Today) o.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#FBF3DC"));
+            }
+            ws.Row(r).Height = 40;
+        }
+        var bang = ws.Range(4, 1, Math.Max(4, r - 1), 7);
+        bang.Style.Alignment.SetWrapText(true).Alignment.SetVertical(XLAlignmentVerticalValues.Top)
+            .Border.SetOutsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorderColor(XLColor.FromHtml("#C5CBC4"));
+        ws.Cell(r + 1, 1).Value = "Người trực có mặt từ 07:00, điểm danh đi làm cho cán bộ toàn khoa, nắm quân số học viên, ghi sổ trực ban và chốt báo cáo trước khi hết ngày.";
+        ws.Range(r + 1, 1, r + 1, 7).Merge().Style.Font.SetItalic().Alignment.SetWrapText(true);
+        ws.Row(r + 1).Height = 30;
+        ws.PageSetup.SetPageOrientation(XLPageOrientation.Landscape).SetPagesWide(1).SetPagesTall(1);
+        ws.PageSetup.PrintAreas.Add(1, 1, r + 1, 7);
+    }
+
+    /// <summary>Bảng ngày × khoa cho Quản lý khoa: mỗi ô là người trực của khoa trong ngày.</summary>
+    private static void ThemBangToanHocVien(XLWorkbook wb, string moTa, List<DichVuTrucBan.DongLichXuat> dong)
+    {
+        var ws = wb.Worksheets.Add("Toàn Học viện");
+        var khoa = dong.Select(d => (d.MaKhoa, d.TenKhoa)).Distinct().OrderBy(k => k.MaKhoa).ToList();
+        var soCot = khoa.Count + 2;
+        DichVuExcel.TieuDeTrang(ws, "Lịch trực ban các khoa", soCot, moTa + " · Ô đỏ: chưa phân công");
+        ws.Cell(4, 1).Value = "Ngày"; ws.Cell(4, 2).Value = "Thứ";
+        for (var i = 0; i < khoa.Count; i++)
+        {
+            ws.Cell(4, i + 3).Value = khoa[i].MaKhoa;
+            ws.Cell(4, i + 3).CreateComment().AddText(khoa[i].TenKhoa);
+            ws.Column(i + 3).Width = 22;
+        }
+        ws.Range(4, 1, 4, soCot).Style.Font.SetBold().Font.SetFontColor(XLColor.White).Fill.SetBackgroundColor(XLColor.FromHtml("#1B4B34")).Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+        var r = 5;
+        foreach (var ngay in dong.GroupBy(d => d.Ngay).OrderBy(g => g.Key))
+        {
+            DichVuExcel.GhiGiaTri(ws.Cell(r, 1), ngay.Key);
+            ws.Cell(r, 2).Value = QuyTacHocVu.TenThu(ngay.Key);
+            var theoKhoa = ngay.ToDictionary(d => d.MaKhoa);
+            for (var i = 0; i < khoa.Count; i++)
+            {
+                var d = theoKhoa.GetValueOrDefault(khoa[i].MaKhoa);
+                var o = ws.Cell(r, i + 3);
+                if (d?.Ca is null) { o.Value = "Chưa phân công"; o.Style.Font.SetFontColor(XLColor.FromHtml("#B91C1C")).Fill.SetBackgroundColor(XLColor.FromHtml("#FEE2E2")); }
+                else o.Value = d.TenNguoiTruc;
+            }
+            r++;
+        }
+        ws.Range(4, 1, Math.Max(4, r - 1), soCot).Style.Border.SetOutsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorder(XLBorderStyleValues.Thin).Border.SetInsideBorderColor(XLColor.FromHtml("#DCE0DA"));
+        ws.Column(1).Width = 12; ws.Column(2).Width = 10;
+        ws.SheetView.FreezeRows(4); ws.SheetView.FreezeColumns(2);
+        ws.PageSetup.SetPageOrientation(XLPageOrientation.Landscape).SetPagesWide(1);
     }
 
     // ---------- Giảng viên ----------

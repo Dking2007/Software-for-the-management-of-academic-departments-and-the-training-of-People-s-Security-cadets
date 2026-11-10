@@ -436,6 +436,26 @@ static class KiemThuTichHop
                 kiemTra(xep.ThanhCong && caX.Count == Enumerable.Range(0, 30).Count(i => tuX.AddDays(i).DayOfWeek != DayOfWeek.Sunday) && caX.All(c => c.MaCanBo != truongKh02)
                     && demX.Max() - demX.Min() <= 2 && caX.Zip(caX.Skip(1)).All(p => p.First.MaCanBo != p.Second.MaCanBo || (p.Second.Ngay - p.First.Ngay).TotalDays > 1), "Xếp tự động: đủ ngày, đều người, không Trưởng khoa, không trực liền | " + xep.ThongBao);
                 kiemTra(!(await tbQl.XepTuDongAsync("KH-02", tuX, denX)).ThanhCong, "Xếp lại khi không còn ngày trống thì báo không còn ngày");
+
+                // Xuất Excel lịch phân công trực: đúng quyền, đúng trang tính.
+                static List<string> TrangTruc(byte[] tep) { using var w = new ClosedXML.Excel.XLWorkbook(new MemoryStream(tep)); return w.Worksheets.Select(t => t.Name).ToList(); }
+                var tatCaPhan = DichVuBaoCaoExcel.PhanTrucBan.Select(p => p.Ma).Append(DichVuBaoCaoExcel.PhanTrucBanToanHocVien.Ma).ToHashSet();
+                var dauThang = new DateTime(ngayTruc.Year, ngayTruc.Month, 1);
+                var tepGv = await Lay<DichVuBaoCaoExcel>(gv).XuatLichTrucAsync(dauThang, dauThang.AddMonths(1).AddDays(-1), "KH-01", tatCaPhan);
+                kiemTra(tepGv is not null && TrangTruc(tepGv).SequenceEqual(["Lịch trực", "Dạng lịch", "Số ca", "Báo cáo đã chốt"]), "Cán bộ xuất lịch trực khoa mình (không có bảng mọi khoa)");
+                using (var w = new ClosedXML.Excel.XLWorkbook(new MemoryStream(tepGv!)))
+                {
+                    var lichTruc = w.Worksheet("Lịch trực");
+                    var soNgay = Enumerable.Range(0, DateTime.DaysInMonth(dauThang.Year, dauThang.Month)).Count(i => dauThang.AddDays(i).DayOfWeek != DayOfWeek.Sunday);
+                    kiemTra(lichTruc.LastRowUsed()!.RowNumber() - 4 == soNgay && lichTruc.Range(5, 1, 4 + soNgay, 8).CellsUsed().Any(c => c.GetString().Contains("Lê Phương Hà"))
+                        && !w.Worksheets.SelectMany(t => t.CellsUsed()).Any(c => c.GetString().Contains("CCCD")), "Tệp lịch trực: mỗi ngày làm việc một dòng, có người trực, không có dữ liệu cá nhân");
+                }
+                kiemTra(await Lay<DichVuBaoCaoExcel>(gv).XuatLichTrucAsync(dauThang, dauThang.AddDays(27), "KH-02", tatCaPhan) is null
+                    && await Lay<DichVuBaoCaoExcel>(qlHocVien).XuatLichTrucAsync(dauThang, dauThang.AddDays(27), "KH-01", tatCaPhan) is null, "Không xuất được lịch trực khoa khác hoặc khi không có quyền");
+                var tepQl = await Lay<DichVuBaoCaoExcel>(qlKhoa).XuatLichTrucAsync(dauThang, dauThang.AddDays(27), "KH-01", tatCaPhan);
+                using (var w = new ClosedXML.Excel.XLWorkbook(new MemoryStream(tepQl!)))
+                    kiemTra(w.Worksheets.Any(t => t.Name == "Toàn Học viện") && w.Worksheet("Toàn Học viện").Row(4).CellsUsed().Count() == 14, "Quản lý khoa xuất thêm bảng mọi khoa (ngày × 12 khoa)");
+                kiemTra((await Lay<DichVuBaoCaoExcel>(gv).XemTruocLichTrucAsync(dauThang, dauThang.AddDays(27), "KH-01"))?.Contains("ngày đã phân công") == true, "Xem trước lịch trực trước khi xuất");
             }
 
             var btAdmin = Lay<DichVuBanTin>(admin);

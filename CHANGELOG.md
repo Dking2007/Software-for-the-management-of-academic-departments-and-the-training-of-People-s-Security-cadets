@@ -2,6 +2,13 @@
 
 Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân. Dữ liệu và tài khoản đều giả lập, phục vụ học tập. Mới nhất ở trên.
 
+## 10/11/2026 (khuya): Xuất Excel lịch phân công trực ban
+
+- Tab Lịch trực có nút **Xuất Excel**: chọn khoảng ngày (mặc định tháng đang xem) và nội dung, xem trước số liệu rồi tải tệp.
+- Các trang tính: Lịch trực (mỗi ngày làm việc một dòng, tô màu trạng thái), Dạng lịch (theo tuần, in vừa một trang ngang để dán bảng tin), Số ca (gồm cả người chưa có ca), Báo cáo đã chốt. Quản lý khoa/Admin chọn thêm bảng **Toàn Học viện** (ngày × 12 khoa, ô chưa phân công tô đỏ).
+- Quyền theo trang trực ban: cán bộ chỉ xuất khoa mình; tệp không có dữ liệu cá nhân; mỗi lần xuất ghi nhật ký.
+- Kiểm thử: thêm 5 kiểm tra (NghiepVu 502).
+
 ## 10/11/2026 (tối): Trực ban khoa
 
 - Trang mới **Trực ban** (`/khoa/truc-ban`, Quản lý khoa → Trực ban). Thiết kế ở `docs/THIET_KE_TONG_THE.md` mục 6.6.

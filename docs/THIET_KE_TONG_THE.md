@@ -203,6 +203,7 @@ Trực ban là một dạng ủy quyền hẹp có thời hạn (mục 6.5) đã
 - **Sổ trực ban và chốt báo cáo:** người trực ghi tình hình chung và nội dung bàn giao; chốt được khi mọi cán bộ đã điểm danh. Lúc chốt, hệ thống chụp số liệu cán bộ và học viên vào ca, ca bị khoá. Báo cáo đã chốt xem được bởi cán bộ trong khoa và Quản lý khoa.
 - **Ngoài phạm vi:** người trực không lập lịch, không sửa ngày đã qua (Quản lý khoa điều chỉnh), không mở bảng trực khoa khác. Cán bộ khác của khoa chỉ xem lịch trực và báo cáo đã chốt.
 - **Mở rộng sau:** cùng mô hình cho đơn vị quản lý học viên (trực ban theo khoá/hệ, người trực nắm quân số học viên cả khoá), trực ban hai người (trực chính, trực phó), nhắc giảng viên điểm danh buổi chưa điểm danh.
+- **Xuất Excel lịch phân công** (`DichVuBaoCaoExcel.XuatLichTrucAsync`): lịch theo ngày, dạng lịch tuần để in, số ca từng người, báo cáo đã chốt; Quản lý khoa thêm bảng ngày × khoa toàn Học viện. Cán bộ chỉ xuất khoa mình.
 - Trang `/khoa/truc-ban`; lối vào ở Giảng dạy của tôi khi hôm nay là ngày trực. Kiểm thử ở `KiemThu/KiemThuTichHop.cs` (khối "Trực ban").
 
 ---
