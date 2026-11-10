@@ -70,6 +70,7 @@ public sealed class KhoDuLieuDemo
             db.SaveChanges();
             db.BoQuaNhatKy = false;
         }
+        DichVuBanTin.NangCapBaiMau(db);
         // Dữ liệu đào tạo (chuyên đề, phòng, lịch, điểm danh, điểm) sinh riêng để CSDL cũ cũng được bổ sung.
         if (!db.ChuyenDe.Any())
         {

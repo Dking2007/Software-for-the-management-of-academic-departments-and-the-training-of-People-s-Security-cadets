@@ -29,7 +29,7 @@
 {
     <div class="lich-chi-so">
         <div class="lcs"><span>@(cheDo == "thang" ? "Trong tháng" : "Trong tuần")</span><strong>@cacBuoi.Count</strong><small>buổi · @cacBuoi.Sum(b => b.Buoi.SoTiet) tiết</small></div>
-        <div class="lcs"><span>Hôm nay</span><strong>@cacBuoi.Count(b => b.Buoi.Ngay.Date == DateTime.Today)</strong><small>buổi · @cacBuoi.Where(b => b.Buoi.Ngay.Date == DateTime.Today).Select(b => b.Buoi.MaLop).Distinct().Count() lớp</small></div>
+        <div class="lcs @(ngayTim is not null ? "ngay-tim" : "")"><span>@NhanNgay</span><strong>@cacBuoi.Count(b => b.Buoi.Ngay.Date == NgayXem)</strong><small>buổi · @cacBuoi.Where(b => b.Buoi.Ngay.Date == NgayXem).Select(b => b.Buoi.MaLop).Distinct().Count() lớp</small></div>
         <div class="lcs"><span>Đã điểm danh</span><strong>@cacBuoi.Count(b => b.DaDiemDanh)</strong><small>buổi</small></div>
         <button type="button" class="lcs canh-bao @(trangThaiLoc == "Chưa điểm danh" ? "dang-chon" : "")" aria-pressed="@(trangThaiLoc == "Chưa điểm danh" ? "true" : "false")" @onclick="LocQuaHan" title="Bấm để chỉ xem các buổi này">
             <span>Đã qua, chưa điểm danh</span><strong>@cacBuoi.Count(b => !b.DaDiemDanh && b.Buoi.Ngay.Date < DateTime.Today)</strong><small>buổi</small>
@@ -43,15 +43,36 @@
 
 @if (LaQuanLy && homNay is { } hn)
 {
-    @* Hôm nay lớp nào đi học, lớp nào nghỉ: mặc định thu gọn để dành chỗ cho lịch. *@
-    <details class="lich-hom-nay">
-        <summary><RadzenIcon Icon="today" /><strong>Hôm nay:</strong> @hn.CoLich.Select(b => b.Buoi.MaLop).Distinct().Count() lớp đi học, @hn.Nghi.Count lớp không có lịch<RadzenIcon Icon="expand_more" class="mui-ten-thu-gon" /></summary>
+    @* Ngày đang xem (mặc định hôm nay) lớp nào đi học, lớp nào nghỉ: mặc định thu gọn để dành chỗ cho lịch.
+       Rê chuột vào từng khoá để thấy cụ thể lớp nào nghỉ; trang "Tình hình lên lớp" có đủ lý do và buổi tiếp theo. *@
+    var soLopDiHoc = hn.CoLich.Select(b => b.Buoi.MaLop).Distinct().Count();
+    <details class="lich-hom-nay" open="@moBangHomNay">
+        <summary><RadzenIcon Icon="today" /><strong>@NhanNgay:</strong> @soLopDiHoc lớp đi học, @hn.Nghi.Count lớp không có lịch<RadzenIcon Icon="expand_more" class="mui-ten-thu-gon" /></summary>
         <div class="hom-nay-lop">
-            <section><h3><RadzenIcon Icon="school" />Đi học: @hn.CoLich.Select(b => b.Buoi.MaLop).Distinct().Count() lớp · @hn.CoLich.Count buổi</h3>
-                <div class="tags-tin">@foreach (var l in hn.CoLich.Select(b => b.Buoi.MaLop).Distinct().OrderBy(x => x.Length).ThenBy(x => x)) { <a class="tag-tin" href="@($"/quan-ly-hoc-vien/lop/{l}?tab=lich")">@l</a> }@if (hn.CoLich.Count == 0) { <span class="phu-dong">Không có lớp nào có lịch hôm nay.</span> }</div></section>
+            <section><h3><RadzenIcon Icon="school" />Đi học: @soLopDiHoc lớp · @hn.CoLich.Count buổi</h3>
+                <div class="tags-tin">
+                    @foreach (var l in hn.CoLich.Select(b => b.Buoi.MaLop).Distinct().OrderBy(x => x.Length).ThenBy(x => x))
+                    {
+                        <a class="tag-tin" href="@($"/quan-ly-hoc-vien/lop/{l}?tab=lich")" data-noi="@(thongTinLop.ContainsKey(l) ? "" : null)">@l@if (thongTinLop.TryGetValue(l, out var tt)) { <NoiDungLop Lop="tt" Buoi="@hn.CoLich.Where(b => b.Buoi.MaLop == l).ToList()" TenKy="@NhanNgay" /> }</a>
+                    }
+                    @if (hn.CoLich.Count == 0) { <span class="phu-dong">Không có lớp nào có lịch trong ngày này.</span> }
+                </div></section>
             <section><h3><RadzenIcon Icon="weekend" />Không có lịch: @hn.Nghi.Count lớp</h3>
-                <div class="tags-tin">@foreach (var g in hn.Nghi.GroupBy(l => l.KhoaHoc).OrderByDescending(g => g.Key)) { <span class="tag-tin" title="@string.Join(", ", g.Select(l => l.MaLop))">@g.Key: @g.Count() lớp</span> }</div></section>
+                <div class="tags-tin">
+                    @foreach (var g in hn.Nghi.GroupBy(l => l.KhoaHoc).OrderBy(g => g.Key.StartsWith('D') ? 0 : 1).ThenByDescending(g => g.Key))
+                    {
+                        <a class="tag-tin tag-nghi" href="@DuongDanTinhHinh(g.Key)" data-noi>
+                            @g.Key: @g.Count() lớp
+                            <span class="noi-dung-noi" hidden>
+                                <span class="tn-dau"><span class="tn-nhan">@g.First().HeDaoTao · niên khoá @g.First().NienKhoa</span><strong class="tn-tieu-de">Khoá @g.Key: @g.Count() lớp không có lịch</strong><small class="tn-phu">@NhanNgay</small></span>
+                                <span class="tn-ds-lop">@foreach (var l in g.OrderBy(l => l.MaLop.Length).ThenBy(l => l.MaLop)) { <span class="tn-lop"><b>@l.MaLop</b><small>@l.ChuyenNganh</small></span> }</span>
+                                <span class="tn-goi-y">Bấm để xem lý do từng lớp và buổi học tiếp theo</span>
+                            </span>
+                        </a>
+                    }
+                </div></section>
         </div>
+        <a class="lien-ket-tinh-hinh" href="@DuongDanTinhHinh(null)"><RadzenIcon Icon="fact_check" />Xem tình hình lên lớp chi tiết: lớp nào nghỉ, vì sao, buổi tiếp theo ›</a>
     </details>
 }
 
@@ -62,7 +83,20 @@
             <strong class="ten-tuan">@TenKy</strong>
             <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => DoiKy(1)" aria-label="Kỳ sau" />
             @if (!DangOKyHienTai) { <RadzenButton Text="Hôm nay" Icon="today" ButtonStyle="ButtonStyle.Light" Click="VeHomNay" /> }
-            <RadzenDatePicker TValue="DateTime?" Value="@((DateTime?)moc)" Change="@(async (DateTime? d) => await NhayDen(d))" DateFormat="dd/MM/yyyy" Placeholder="Đến ngày…" class="lich-chon-ngay" aria-label="Nhảy đến ngày" />
+            <RadzenDatePicker TValue="DateTime?" Value="@ngayTim" Change="@(async (DateTime? d) => await NhayDen(d))" DateFormat="dd/MM/yyyy" Placeholder="Chọn ngày…" AllowClear="true" class="lich-chon-ngay" aria-label="Tìm theo ngày" title="Chọn một ngày: lịch chuyển đến tuần chứa ngày đó và tô nổi ngày đã chọn" />
+            @if (ngayTim is { } nt)
+            {
+                <span class="chip-ngay-tim" role="status">
+                    <RadzenIcon Icon="event_available" /><strong>@QuyTacHocVu.TenThu(nt) @nt.ToString("dd/MM")</strong>
+                    <label title="Chỉ hiện các buổi của ngày đã chọn"><input type="checkbox" checked="@chiNgayTim" @onchange="DoiChiNgay" /> Chỉ ngày này</label>
+                    <button type="button" @onclick="BoNgayTim" aria-label="Bỏ chọn ngày" title="Bỏ chọn ngày"><RadzenIcon Icon="close" /></button>
+                </span>
+            }
+            else
+            {
+                @if (DangOKyHienTai) { <button type="button" class="nut-chu" @onclick="() => NhayDen(DateTime.Today)">Hôm nay</button> }
+                <button type="button" class="nut-chu" @onclick="() => NhayDen(DateTime.Today.AddDays(1))">Ngày mai</button>
+            }
         </div>
         <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị" data-hd="lich-che-do">
             @foreach (var (ma, ten, bieuTuong) in CacCheDo)
@@ -106,19 +140,19 @@
     }
     else if (cheDo == "lop")
     {
-        <LichMaTranLop Buoi="cacBuoi" DauTuan="DauTuanHienTai" CacLop="cacLop" KhiChon="XemBuoi" />
+        <LichMaTranLop Buoi="cacBuoi" DauTuan="DauTuanHienTai" CacLop="cacLop" KhiChon="XemBuoi" ThongTinLop="thongTinLop" ThongTinThem="thongTinThem" NgayTim="ngayTim" ChiNgay="@(chiNgayTim && ngayTim is not null)" />
     }
     else if (cheDo == "ngay")
     {
-        <LichTheoNgay Buoi="cacBuoi" DauTuan="DauTuanHienTai" Ngay="ngayChon" KhiDoiNgay="DoiNgayChon" DuocSua="duocSua" CoThaoTac="@(duocSua || nd.LaGiangVien || nd.CoQuyenVung("Lop"))" ChoPhepDiemDanh="@(b => DichVuHocVu.DuocGhiDiemDanh(nd, b))" KhiSua="MoBieuMau" KhiXoa="Xoa" />
+        <LichTheoNgay Buoi="cacBuoi" DauTuan="DauTuanHienTai" Ngay="ngayChon" NgayTim="ngayTim" KhiDoiNgay="DoiNgayChon" DuocSua="duocSua" CoThaoTac="@(duocSua || nd.LaGiangVien || nd.CoQuyenVung("Lop"))" ChoPhepDiemDanh="@(b => DichVuHocVu.DuocGhiDiemDanh(nd, b))" KhiSua="MoBieuMau" KhiXoa="Xoa" />
     }
     else if (cheDo == "thang")
     {
-        <LichThang Buoi="cacBuoi" Moc="moc" KhiChonNgay="MoNgay" />
+        <LichThang Buoi="cacBuoi" Moc="moc" KhiChonNgay="MoNgay" NgayTim="ngayTim" ThongTinThem="thongTinThem" />
     }
     else
     {
-        <LichLuoiTuan Buoi="cacBuoi" DauTuan="DauTuanHienTai" DuocSua="duocSua" ChoPhepDiemDanh="@(b => DichVuHocVu.DuocGhiDiemDanh(nd, b))" KhiSua="MoBieuMau" KhiXoa="Xoa" />
+        <LichLuoiTuan Buoi="cacBuoi" DauTuan="DauTuanHienTai" NgayTim="ngayTim" DuocSua="duocSua" ChoPhepDiemDanh="@(b => DichVuHocVu.DuocGhiDiemDanh(nd, b))" KhiSua="MoBieuMau" KhiXoa="Xoa" />
     }
 </RadzenCard>
 
@@ -127,6 +161,14 @@
     private NguoiDungHienTai nd = NguoiDungHienTai.Khach;
     private DateTime moc = DateTime.Today;
     private DateTime? ngayChon = DateTime.Today;
+    /// <summary>Ngày người dùng chọn trên ô lịch (null: chưa chọn). Lịch nhảy đến kỳ chứa ngày đó và tô nổi ngày này.</summary>
+    private DateTime? ngayTim;
+    private bool chiNgayTim, moBangHomNay;
+    private Dictionary<string, LopDaoTao> thongTinLop = [];
+    private Dictionary<int, DichVuDaoTao.ThongTinBuoiThem> thongTinThem = [];
+    private DateTime NgayXem => ngayTim ?? DateTime.Today;
+    private string NhanNgay => NgayXem == DateTime.Today ? "Hôm nay" : $"{QuyTacHocVu.TenThu(NgayXem)} {NgayXem:dd/MM}";
+    private string DuongDanTinhHinh(string? khoa) => $"/dao-tao/lich/tinh-hinh?ngay={NgayXem:yyyy-MM-dd}" + (khoa is null ? "" : $"&khoa={Uri.EscapeDataString(khoa)}&trang-thai=nghi");
     private string cheDo = "tuan";
     private List<BuoiHocHienThi>? tatCa, cacBuoi;
     private BuoiHocHienThi? buoiToi;
@@ -175,7 +217,8 @@
         maLop = LopTuDuongDan;
         // Toàn trường rất nhiều buổi nên mặc định "Theo lớp"; giảng viên, học viên hoặc khi đã chọn một lớp thì lưới tuần dễ đọc nhất.
         cheDo = LaQuanLy && maLop is null ? "lop" : "tuan";
-        cacLop = DuLieu.LayDanhSachLop().Select(l => l.MaLop).ToList();
+        thongTinLop = DuLieu.LayDanhSachLop().ToDictionary(l => l.MaLop);
+        cacLop = thongTinLop.Keys.ToList();
         cacGiangVien = DaoTao.CacGiangVien().Select(x => new LuaChon(x.Ma, x.Ten)).ToList();
         cacPhong = await DaoTao.LayPhongAsync();
         if (LaQuanLy) homNay = await ChuongTrinh.LayHomNayAsync();
@@ -186,6 +229,7 @@
     private async Task TaiLai()
     {
         tatCa = await DaoTao.LayLichAsync(NgayDauKy, NgayCuoiKy, maLop, maCanBo, maPhong);
+        thongTinThem = await DaoTao.LayThongTinThemAsync(tatCa.Select(b => b.Buoi).ToList());
         if (!LaQuanLy)
         {
             var bayGio = DateTime.Now;
@@ -199,7 +243,8 @@
         if (tatCa is null) { cacBuoi = null; return; }
         var q = tatCa.Where(b => (maChuyenDeLoc is null || b.Buoi.MaChuyenDe == maChuyenDeLoc)
             && (trangThaiLoc is null || DichVuBaoCaoExcel.TrangThaiBuoi(b) == trangThaiLoc)
-            && (khoaHocLoc is null || LichMaTranLop.KhoaCuaLop(b.Buoi.MaLop) == khoaHocLoc));
+            && (khoaHocLoc is null || LichMaTranLop.KhoaCuaLop(b.Buoi.MaLop) == khoaHocLoc)
+            && (!chiNgayTim || ngayTim is null || b.Buoi.Ngay.Date == ngayTim));
         cacBuoi = TimKiemMo.Loc(q, tuKhoa, DichVuBaoCaoExcel.TruongTimLich).OrderBy(b => b.Buoi.Ngay).ThenBy(b => b.Buoi.TietBatDau).ThenBy(b => b.Buoi.MaLop.Length).ThenBy(b => b.Buoi.MaLop).ToList();
     }
 
@@ -208,11 +253,27 @@
         var hom = DateTime.Today;
         ngayChon = hom >= DauTuanHienTai && hom <= DauTuanHienTai.AddDays(5) ? hom : DauTuanHienTai;
     }
-    private async Task DoiKy(int huong) { moc = cheDo == "thang" ? moc.AddMonths(huong) : moc.AddDays(7 * huong); DatNgayChonTheoKy(); cacBuoi = null; await TaiLai(); }
-    private async Task VeHomNay() { moc = DateTime.Today; ngayChon = DateTime.Today; await TaiLai(); }
-    private async Task NhayDen(DateTime? d) { if (d is null) return; moc = d.Value.Date; ngayChon = d.Value.Date; await TaiLai(); }
+    private async Task DoiKy(int huong) { moc = cheDo == "thang" ? moc.AddMonths(huong) : moc.AddDays(7 * huong); DatNgayChonTheoKy(); cacBuoi = null; await DatNgayTim(null); await TaiLai(); }
+    private async Task VeHomNay() { moc = DateTime.Today; ngayChon = DateTime.Today; await DatNgayTim(null); await TaiLai(); }
+    // Chọn ngày: nhảy tới kỳ chứa ngày đó, tô nổi ngày đã chọn ở mọi kiểu xem; bảng "lớp đi học / không có lịch" theo ngày này.
+    private async Task NhayDen(DateTime? d)
+    {
+        if (d is null) { await BoNgayTim(); return; }
+        moc = d.Value.Date; ngayChon = d.Value.Date;
+        await DatNgayTim(d.Value.Date);
+        await TaiLai();
+    }
+    private async Task BoNgayTim() { await DatNgayTim(null); ApDungLoc(); }
+    private void DoiChiNgay(ChangeEventArgs e) { chiNgayTim = e.Value is true; ApDungLoc(); }
+    private async Task DatNgayTim(DateTime? ngay)
+    {
+        var doi = ngayTim != ngay;
+        ngayTim = ngay;
+        if (ngay is null) chiNgayTim = false;
+        if (doi && LaQuanLy) { homNay = await ChuongTrinh.LayHomNayAsync(NgayXem); moBangHomNay = ngay is not null; }
+    }
     private async Task DoiCheDo(string ma) { if (cheDo == ma) return; cheDo = ma; DatNgayChonTheoKy(); await TaiLai(); }
-    private async Task MoNgay(DateTime ngay) { moc = ngay; ngayChon = ngay; cheDo = "ngay"; await TaiLai(); }
+    private async Task MoNgay(DateTime ngay) { moc = ngay; ngayChon = ngay; cheDo = "ngay"; await DatNgayTim(ngay); await TaiLai(); }
     private void DoiNgayChon(DateTime? ngay) => ngayChon = ngay;
     private async Task DoiBoLoc() { if (maLop is not null && cheDo == "lop") cheDo = "tuan"; await TaiLai(); }
     private void NhapTuKhoa(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; ApDungLoc(); }

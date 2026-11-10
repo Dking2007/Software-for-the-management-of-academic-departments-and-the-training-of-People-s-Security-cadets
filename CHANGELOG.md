@@ -2,6 +2,32 @@
 
 Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân. Dữ liệu và tài khoản đều giả lập, phục vụ học tập. Mới nhất ở trên.
 
+## 10/11/2026 (chiều): Vòng góp ý 9 điểm
+
+**Khung giao diện**
+- Cuộn quá đầu/cuối trang không còn kéo thanh bên và đầu trang theo (tắt hiệu ứng nảy ở gốc trang).
+- Khối xếp liền nhau luôn cách nhau ít nhất 16 px (ví dụ ô lọc ngay dưới thẻ "Thêm phân công").
+- Mục con trên thanh bên quá dài thì xuống dòng thay vì bị cắt, rê chuột hiện đủ tên.
+
+**Lịch đào tạo**
+- Rê chuột vào mã lớp: thẻ thông tin lớp và các chuyên đề trong tuần. Rê chuột vào một buổi: chuyên đề, buổi thứ mấy, giờ, giảng viên, phòng, số có mặt, nội dung sổ đầu bài.
+- Chọn ngày trên ô lịch: nhảy đến tuần chứa ngày đó, tô nổi ngày đã chọn ở mọi kiểu xem, có nút "Chỉ ngày này", nút nhanh Hôm nay / Ngày mai; bảng "lớp đi học / không có lịch" theo ngày đã chọn.
+- Ô "Không có lịch" theo khoá: rê chuột thấy cụ thể lớp nào, bấm để mở trang mới **Tình hình lên lớp** (`/dao-tao/lich/tinh-hinh`): tổng hợp, lọc theo lý do nghỉ, từng hệ → khoá → lớp kèm buổi gần nhất và buổi tiếp theo.
+
+**Quản lý học viên**
+- Tách theo hệ: Tổng quan các hệ → Hệ chính quy / Hệ văn bằng 2 → khoá (niên khoá, năm thứ mấy) → lớp. Đường dẫn và breadcrumb theo đúng cấp.
+- Bộ chọn cấp ở Danh sách học viên đổi thành Hệ → Khoá → Lớp.
+
+**Bản tin**
+- Ảnh minh hoạ vẽ riêng (SVG, `wwwroot/images/ban-tin/`) chọn theo nội dung bài; thư viện "Hình ảnh hoạt động", "Lối tắt nghiệp vụ".
+- Bài viết có liên kết nội bộ `[chữ](/đường-dẫn)` trong thân bài và hộp "Xem thêm trên hệ thống".
+
+**Tiếng Lào (và tiếng Anh)**
+- Bổ sung khoảng 1.100 mục từ điển (`Services/TuDienGiaoDienBoSung.cs`, `TuDienGiaoDienBoSung2.cs`), gồm cả tên khoa, chuyên đề, phòng, cấp bậc, văn bản, bản tin, trợ giúp.
+- Bộ dịch trình duyệt hiểu khuôn có số ("20 lớp đang học"), tách theo dấu "·", giữ tên người và chỉ dịch cấp bậc, dịch nội dung nhiều dòng; thân bài bản tin dịch nguyên đoạn ở máy chủ.
+- Hướng dẫn nhập môn có bản tiếng Lào.
+- Đã rà mọi trang với 7 vai trò ở chế độ tiếng Lào: chỉ còn tên người, số hiệu văn bản giữ nguyên.
+
 ## 10/11/2026: Hoàn thiện theo góp ý và dọn mã nguồn
 
 **Trang lớp**

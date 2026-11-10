@@ -1,0 +1,34 @@
+@* Nội dung thẻ nổi của một lớp trên lịch: thông tin lớp và lịch trong kỳ đang xem. Dữ liệu lớp đã cắt theo quyền ở DichVuQuanLyDuLieuDemo. *@
+<span class="noi-dung-noi" hidden>
+    <span class="tn-dau">
+        <span class="tn-nhan">@Lop.HeDaoTao · Khoá @Lop.KhoaHoc</span>
+        <strong class="tn-tieu-de">Lớp @Lop.MaLop</strong>
+        <small class="tn-phu">@(Lop.ChuyenNganh == "" ? "Chưa có chuyên ngành" : Lop.ChuyenNganh)</small>
+    </span>
+    <span class="tn-luoi">
+        <span class="tn-dong"><span class="tn-ten">Niên khoá</span><span class="tn-gt">@Lop.NienKhoa</span></span>
+        <span class="tn-dong"><span class="tn-ten">Sĩ số</span><span class="tn-gt">@Lop.SiSo học viên</span></span>
+        <span class="tn-dong"><span class="tn-ten">Chủ nhiệm</span><span class="tn-gt">@(Lop.GiaoVienChuNhiem == "" ? "Chưa phân công" : Lop.GiaoVienChuNhiem)</span></span>
+        @if (Buoi is not null)
+        {
+            <span class="tn-dong"><span class="tn-ten">@TenKy</span><span class="tn-gt">@(Buoi.Count == 0 ? "Không có buổi học" : $"{Buoi.Count} buổi · {Buoi.Sum(b => b.Buoi.SoTiet)} tiết")</span></span>
+        }
+        @if (LyDo is not null)
+        {
+            <span class="tn-dong"><span class="tn-ten">Lý do</span><span class="tn-gt">@LyDo</span></span>
+        }
+    </span>
+    @if (Buoi is { Count: > 0 })
+    {
+        <span class="tn-so-dau-bai"><span class="tn-ten">Chuyên đề đang học</span><span class="tn-gt">@string.Join(" · ", Buoi.Select(b => b.TenChuyenDe).Distinct())</span></span>
+    }
+    <span class="tn-goi-y">Bấm mã lớp để mở trang lớp</span>
+</span>
+
+@code {
+    [Parameter, EditorRequired] public LopDaoTao Lop { get; set; } = default!;
+    /// <summary>Các buổi của lớp trong kỳ đang xem (null: không hiện dòng lịch).</summary>
+    [Parameter] public List<BuoiHocHienThi>? Buoi { get; set; }
+    [Parameter] public string TenKy { get; set; } = "Tuần này";
+    [Parameter] public string? LyDo { get; set; }
+}

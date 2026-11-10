@@ -5,9 +5,12 @@ namespace Nhom2_BTL.Services;
 /// (dịch toàn trang phía trình duyệt). Chỉ dịch nhãn giao diện; tên người, mã, số liệu và nội dung người dùng nhập giữ nguyên.
 /// Bản tiếng Lào là bản dịch minh hoạ phục vụ demo.
 /// </summary>
-public static class TuDienGiaoDien
+public static partial class TuDienGiaoDien
 {
-    public static readonly (string Vi, string En, string Lo)[] Muc =
+    /// <summary>Toàn bộ mục: phần cơ bản ở tệp này, phần bổ sung (vòng hoàn thiện 10/11) ở TuDienGiaoDienBoSung.cs.</summary>
+    public static readonly (string Vi, string En, string Lo)[] Muc = [.. CoBan(), .. BoSung(), .. BoSung2()];
+
+    private static (string Vi, string En, string Lo)[] CoBan() =>
     [
         // Nâng cấp lịch, xuất Excel, hướng dẫn
         ("Hướng dẫn nhanh", "Quick tour", "ແນະນຳດ່ວນ"),
@@ -92,8 +95,11 @@ public static class TuDienGiaoDien
         ("Cài đặt", "Settings", "ການຕັ້ງຄ່າ"),
         ("Giao diện", "Appearance", "ໜ້າຕາ"),
         ("Ngôn ngữ", "Language", "ພາສາ"),
-        ("Sáng", "Light", "ແຈ້ງ"),
-        ("Tối", "Dark", "ມືດ"),
+        ("Giao diện sáng", "Light", "ແຈ້ງ"),
+        ("Giao diện tối", "Dark", "ມືດ"),
+        ("Giao diện theo hệ thống", "System", "ຕາມລະບົບ"),
+        ("Sáng", "Morning", "ຕອນເຊົ້າ"),
+        ("Tối", "Evening", "ຕອນຄ່ຳ"),
         ("Tìm kiếm…", "Search…", "ຄົ້ນຫາ…"),
         ("Quản trị viên", "Administrator", "ຜູ້ບໍລິຫານລະບົບ"),
         ("Giảng viên", "Lecturer", "ອາຈານ"),
@@ -266,7 +272,7 @@ public static class TuDienGiaoDien
         ("Thứ Sáu", "Friday", "ວັນສຸກ"),
         ("Thứ Bảy", "Saturday", "ວັນເສົາ"),
         ("Chủ nhật", "Sunday", "ວັນອາທິດ"),
-        ("Sáng ", "Morning", "ຕອນເຊົ້າ"),
+        
         ("Chiều", "Afternoon", "ຕອນບ່າຍ"),
         // Trang chủ, bảng tin
         ("Cần chú ý", "Needs attention", "ຕ້ອງໃສ່ໃຈ"),
@@ -388,6 +394,9 @@ public static class TuDienGiaoDien
         ["en"] = Muc.GroupBy(m => m.Vi.Trim()).ToDictionary(g => g.Key, g => g.First().En),
         ["lo"] = Muc.GroupBy(m => m.Vi.Trim()).ToDictionary(g => g.Key, g => g.First().Lo),
     };
+
+    /// <summary>Đổi khi từ điển đổi; trình duyệt dùng làm tham số để không giữ bản từ điển cũ.</summary>
+    public static readonly string PhienBan = Muc.Length.ToString() + "-" + Muc.Sum(m => m.Vi.Length + m.Lo.Length).ToString();
 
     public static IReadOnlyDictionary<string, string> Lay(string ngon) => TheoNgon.GetValueOrDefault(ngon) ?? new Dictionary<string, string>();
     public static string Dich(string ngon, string chu) => ngon == "vi" ? chu : Lay(ngon).GetValueOrDefault(chu, chu);

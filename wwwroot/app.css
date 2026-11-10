@@ -544,7 +544,7 @@ h1:focus, .content h1:focus { outline: none; }
     .brand-link { transition: padding var(--tg-sidebar) var(--duong-cong-sidebar); }
     /* Bề rộng cố định để chữ không xuống dòng lại liên tục khi sidebar đang co. */
     .brand-copy { flex: 1 1 auto; transition: opacity var(--tg-mo-chu) ease; }
-    .ten-phan-he, .nhan-nhom-menu, .muc-con { white-space: nowrap; }
+    .ten-phan-he, .nhan-nhom-menu { white-space: nowrap; }
     .ten-phan-he, .nhan-nhom-menu, .module-menu-main::after { transition: opacity var(--tg-mo-chu) ease; }
     .module-menu-toggle { transition: opacity var(--tg-mo-chu) ease, width var(--tg-sidebar) var(--duong-cong-sidebar), margin var(--tg-sidebar) var(--duong-cong-sidebar), visibility 0s; }
     .menu-con { max-height: 12rem; overflow: hidden; transition: max-height var(--tg-sidebar) var(--duong-cong-sidebar), opacity var(--tg-mo-chu) ease, margin var(--tg-sidebar) var(--duong-cong-sidebar), visibility 0s; }

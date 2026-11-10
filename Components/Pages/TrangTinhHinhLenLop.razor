@@ -1,0 +1,169 @@
+@page "/dao-tao/lich/tinh-hinh"
+@attribute [Authorize]
+@implements IDisposable
+@inject DichVuChuongTrinh ChuongTrinh
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject KhoDuLieuDemo Kho
+@inject NavigationManager DieuHuong
+
+@* Tình hình lên lớp theo ngày, tổ chức giống báo cáo "tình hình lên lớp hằng ngày" của các trường:
+   tổng hợp ở trên (đi học / không có lịch / tỉ lệ), nhóm lý do để lọc nhanh, rồi từng hệ → khoá → lớp
+   với buổi trong ngày, lý do nghỉ, buổi gần nhất và buổi tiếp theo. *@
+<PageTitle>Tình hình lên lớp | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Tình hình lên lớp" MoTa="Mỗi ngày lớp nào đi học, lớp nào không có lịch và vì sao; kèm buổi gần nhất và buổi tiếp theo của từng lớp.">
+    <ThaoTac><a class="rz-button rz-button-md rz-variant-filled rz-light rz-shade-default lien-ket-dau-trang" href="@($"/dao-tao/lich")"><RadzenIcon Icon="calendar_month" />Về lịch đào tạo</a></ThaoTac>
+</DauTrang>
+
+@if (!duocXem)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">Trang này dành cho Admin và các vai trò quản lý. Giảng viên, học viên xem lịch của mình ở trang Lịch.</RadzenAlert>
+}
+else
+{
+    <div class="th-thanh">
+        <div class="th-ngay" role="group" aria-label="Chọn ngày">
+            <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="() => DoiNgay(ngay.AddDays(ngay.DayOfWeek == DayOfWeek.Monday ? -2 : -1))" aria-label="Ngày trước" />
+            <strong>@QuyTacHocVu.TenThu(ngay), @ngay.ToString("dd/MM/yyyy")</strong>
+            <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => DoiNgay(ngay.AddDays(ngay.DayOfWeek == DayOfWeek.Saturday ? 2 : 1))" aria-label="Ngày sau" />
+            <RadzenDatePicker TValue="DateTime?" Value="@((DateTime?)ngay)" Change="@(async (DateTime? d) => { if (d is { } x) await DoiNgay(x.Date); })" DateFormat="dd/MM/yyyy" class="lich-chon-ngay" aria-label="Chọn ngày" />
+            @if (ngay != DateTime.Today) { <button type="button" class="nut-chu" @onclick="() => DoiNgay(DateTime.Today)">Hôm nay</button> }
+        </div>
+        <div class="search-box">
+            <RadzenIcon Icon="search" aria-hidden="true" />
+            <input class="form-control" data-tim-kiem value="@tuKhoa" @onchange="e => tuKhoa = e.Value?.ToString() ?? string.Empty" placeholder="Tìm lớp, chuyên ngành, chuyên đề, phòng…" aria-label="Tìm lớp" spellcheck="false" />
+        </div>
+        <div class="chon-che-do" role="group" aria-label="Trạng thái">
+            @foreach (var (ma, ten) in new[] { ("", "Tất cả"), ("di-hoc", "Đi học"), ("nghi", "Không có lịch") })
+            {
+                <button type="button" class="@(trangThai == ma ? "dang-chon" : "")" aria-pressed="@(trangThai == ma ? "true" : "false")" @onclick="() => trangThai = ma">@ten</button>
+            }
+        </div>
+        @if (khoaLoc is not null)
+        {
+            <span class="chip-ngay-tim"><RadzenIcon Icon="groups_3" /><strong>Khoá @khoaLoc</strong><button type="button" @onclick="() => khoaLoc = null" aria-label="Bỏ lọc khoá" title="Bỏ lọc khoá"><RadzenIcon Icon="close" /></button></span>
+        }
+    </div>
+
+    @if (dong is null)
+    {
+        <div class="th-chi-so">@for (var i = 0; i < 4; i++) { <div class="khung-xuong" style="height:5.5rem"></div> }</div>
+    }
+    else
+    {
+        var diHoc = dong.Count(d => d.DiHoc);
+        <div class="th-chi-so">
+            <div class="lcs"><span>Tổng số lớp</span><strong>@dong.Count</strong><small>@dong.Sum(d => d.Lop.SiSo).ToString("N0") học viên</small></div>
+            <button type="button" class="lcs di-hoc @(trangThai == "di-hoc" ? "dang-chon" : "")" @onclick="@(() => trangThai = trangThai == "di-hoc" ? "" : "di-hoc")"><span>Đi học</span><strong>@diHoc</strong><small>@dong.Sum(d => d.Buoi.Count) buổi · @dong.Where(d => d.DiHoc).Sum(d => d.Lop.SiSo).ToString("N0") học viên</small></button>
+            <button type="button" class="lcs nghi @(trangThai == "nghi" ? "dang-chon" : "")" @onclick="@(() => trangThai = trangThai == "nghi" ? "" : "nghi")"><span>Không có lịch</span><strong>@(dong.Count - diHoc)</strong><small>lớp nghỉ trong ngày</small></button>
+            <div class="lcs"><span>Tỉ lệ lớp lên lớp</span><strong>@(dong.Count == 0 ? 0 : diHoc * 100 / dong.Count)%</strong><small>trên tổng số lớp</small></div>
+        </div>
+
+        @if (dong.Any(d => !d.DiHoc))
+        {
+            <div class="th-ly-do tb-chuyen-muc" role="group" aria-label="Lọc theo lý do">
+                <button type="button" class="@(lyDo is null ? "dang-chon" : "")" @onclick="() => lyDo = null">Mọi lý do</button>
+                @foreach (var g in dong.Where(d => !d.DiHoc).GroupBy(d => d.LyDo!).OrderByDescending(g => g.Count()))
+                {
+                    <button type="button" class="@(lyDo == g.Key ? "dang-chon" : "")" @onclick="() => ChonLyDo(g.Key)">@g.Key <small>@g.Count()</small></button>
+                }
+            </div>
+        }
+
+        var hienThi = Loc().ToList();
+        @if (hienThi.Count == 0)
+        {
+            <section class="empty-state"><RadzenIcon Icon="event_busy" class="empty-state-icon" /><h2>Không có lớp phù hợp</h2><p>Thử bỏ bộ lọc hoặc chọn ngày khác.</p></section>
+        }
+        @foreach (var he in hienThi.GroupBy(d => d.Lop.HeDaoTao).OrderBy(g => Array.IndexOf(QuyTacDuLieu.CacHeDaoTao, g.Key)))
+        {
+            <h2 class="tieu-de-khu-vuc">Hệ @he.Key.ToLowerInvariant() <small class="phu-dong">· @he.Count() lớp</small></h2>
+            @foreach (var khoa in he.GroupBy(d => d.Lop.KhoaHoc).OrderByDescending(g => g.Key))
+            {
+                var soDi = khoa.Count(d => d.DiHoc);
+                <details class="th-nhom" open="@(khoaLoc is not null || soDi > 0 || hienThi.Count <= 40)">
+                    <summary>
+                        <RadzenIcon Icon="chevron_right" class="mui-ten-nhom" />
+                        <strong>Khoá @khoa.Key</strong>
+                        <small>Niên khoá @khoa.First().Lop.NienKhoa · @khoa.Count() lớp · @soDi đi học · @(khoa.Count() - soDi) không có lịch</small>
+                        <span class="th-thanh-ti-le" title="@($"{soDi}/{khoa.Count()} lớp đi học")"><span style="width:@(soDi * 100 / Math.Max(1, khoa.Count()))%"></span></span>
+                    </summary>
+                    <div class="bang-cuon">
+                        <table class="th-bang">
+                            <thead><tr><th class="cot-lop">Lớp</th><th>Chuyên ngành</th><th>Sĩ số</th><th class="cot-tt">Trạng thái</th><th>Buổi trong ngày / lý do</th><th>Buổi gần nhất</th><th>Buổi tiếp theo</th></tr></thead>
+                            <tbody>
+                                @foreach (var d in khoa.OrderBy(d => d.Lop.MaLop.Length).ThenBy(d => d.Lop.MaLop))
+                                {
+                                    <tr>
+                                        <td><a class="record-code" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(d.Lop.MaLop)}?tab=lich")" data-noi>@d.Lop.MaLop<NoiDungLop Lop="d.Lop" Buoi="d.Buoi" TenKy="@NhanNgay" LyDo="@d.LyDo" /></a></td>
+                                        <td>@d.Lop.ChuyenNganh</td>
+                                        <td>@d.Lop.SiSo</td>
+                                        <td>@if (d.DiHoc) { <span class="th-trang-thai di-hoc"><RadzenIcon Icon="school" />Đi học</span> } else { <span class="th-trang-thai nghi"><RadzenIcon Icon="weekend" />Không có lịch</span> }</td>
+                                        <td>
+                                            @if (d.DiHoc)
+                                            {
+                                                @foreach (var b in d.Buoi)
+                                                {
+                                                    <span class="th-buoi" data-noi><strong>@QuyTacHocVu.Buoi(b.Buoi.TietBatDau) · tiết @b.Buoi.TietBatDau–@b.Buoi.TietKetThuc · @b.TenChuyenDe</strong><small>@QuyTacHocVu.KhungGio(b.Buoi) · @b.TenPhong · @b.TenGiangVien</small><NoiDungBuoi Buoi="b" /></span>
+                                                }
+                                            }
+                                            else { <span>@d.LyDo</span> }
+                                        </td>
+                                        <td>@MoTaBuoi(d.BuoiTruoc)</td>
+                                        <td>@MoTaBuoi(d.BuoiSau)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            }
+        }
+        <p class="phu-dong">Lý do được suy ra từ dữ liệu: niên khoá của khoá, phân công giảng dạy và lịch trong khoảng 4 tuần trước đến 6 tuần sau ngày đang xem. Dữ liệu mẫu, chỉ để minh hoạ.</p>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "ngay")] public string? NgayTuDuongDan { get; set; }
+    [SupplyParameterFromQuery(Name = "khoa")] public string? KhoaTuDuongDan { get; set; }
+    [SupplyParameterFromQuery(Name = "trang-thai")] public string? TrangThaiTuDuongDan { get; set; }
+
+    private DateTime ngay = DateTime.Today;
+    private List<DichVuChuongTrinh.DongTinhHinh>? dong;
+    private string tuKhoa = "", trangThai = "";
+    private string? lyDo, khoaLoc;
+    private bool duocXem;
+    private string NhanNgay => ngay == DateTime.Today ? "Hôm nay" : $"{QuyTacHocVu.TenThu(ngay)} {ngay:dd/MM}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        duocXem = nd.DaDangNhap && !nd.LaGiangVien && !nd.LaHocVien && nd.VaiTro != "Guest";
+        if (DateTime.TryParseExact(NgayTuDuongDan, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var d)) ngay = d.Date;
+        khoaLoc = string.IsNullOrWhiteSpace(KhoaTuDuongDan) ? null : KhoaTuDuongDan;
+        trangThai = TrangThaiTuDuongDan is "nghi" or "di-hoc" ? TrangThaiTuDuongDan : "";
+        if (khoaLoc is not null) tuKhoa = "";
+        if (duocXem) await TaiLai();
+        Kho.DuLieuDaThayDoi += KhiDoi;
+    }
+
+    private void ChonLyDo(string ma) { lyDo = lyDo == ma ? null : ma; if (lyDo is not null) trangThai = "nghi"; }
+    private async Task TaiLai() => dong = await ChuongTrinh.LayTinhHinhNgayAsync(ngay);
+    private async Task DoiNgay(DateTime d)
+    {
+        ngay = d; dong = null; lyDo = null;
+        DieuHuong.NavigateTo($"/dao-tao/lich/tinh-hinh?ngay={ngay:yyyy-MM-dd}" + (khoaLoc is null ? "" : $"&khoa={Uri.EscapeDataString(khoaLoc)}"), replace: true);
+        await TaiLai();
+    }
+    private void KhiDoi() => _ = InvokeAsync(async () => { if (duocXem) { await TaiLai(); StateHasChanged(); } });
+    public void Dispose() => Kho.DuLieuDaThayDoi -= KhiDoi;
+
+    private IEnumerable<DichVuChuongTrinh.DongTinhHinh> Loc() => (dong ?? [])
+        .Where(d => trangThai == "" || (trangThai == "di-hoc") == d.DiHoc)
+        .Where(d => lyDo is null || d.LyDo == lyDo)
+        .Where(d => khoaLoc is null || d.Lop.KhoaHoc == khoaLoc)
+        .Where(d => TimKiemMo.Khop(tuKhoa, new[] { d.Lop.MaLop, d.Lop.ChuyenNganh, d.Lop.KhoaHoc, d.Lop.HeDaoTao, d.LyDo ?? "" }
+            .Concat(d.Buoi.SelectMany(b => new[] { b.TenChuyenDe, b.TenPhong, b.TenGiangVien })).ToArray()));
+
+    private static string MoTaBuoi(BuoiHocHienThi? b)
+        => b is null ? "—" : $"{QuyTacHocVu.TenThu(b.Buoi.Ngay)} {b.Buoi.Ngay:dd/MM} · {QuyTacHocVu.Buoi(b.Buoi.TietBatDau)} · {b.TenChuyenDe}";
+}

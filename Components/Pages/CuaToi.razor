@@ -36,7 +36,7 @@ else
         }
         else
         {
-            <p class="phu-dong">Chưa có buổi nào đang mở cổng. @(buoiToi is not null ? $"Buổi kế tiếp: {buoiToi.TenChuyenDe}, {QuyTacHocVu.TenThu(buoiToi.Buoi.Ngay)} {buoiToi.Buoi.Ngay:dd/MM} lúc {QuyTacHocVu.GioBatDauTiet(buoiToi.Buoi.TietBatDau):hh\\:mm} (cổng mở {QuyTacHocVu.CuaSoTuDiemDanh(buoiToi.Buoi).Mo:HH:mm})." : "")</p>
+            <p class="phu-dong"><span>Chưa có buổi nào đang mở cổng.</span>@if (buoiToi is not null) { <span> Buổi kế tiếp:</span> <span>@buoiToi.TenChuyenDe</span> <span>@($"{QuyTacHocVu.TenThu(buoiToi.Buoi.Ngay)} {buoiToi.Buoi.Ngay:dd/MM} · {QuyTacHocVu.GioBatDauTiet(buoiToi.Buoi.TietBatDau):hh\\:mm} · cổng mở {QuyTacHocVu.CuaSoTuDiemDanh(buoiToi.Buoi).Mo:HH:mm}")</span> }</p>
         }
         @if (thongBaoDd is not null) { <RadzenAlert AlertStyle="@(thongBaoDd.ThanhCong ? AlertStyle.Success : AlertStyle.Warning)" AllowClose="false">@thongBaoDd.ThongBao</RadzenAlert> }
     </RadzenCard>

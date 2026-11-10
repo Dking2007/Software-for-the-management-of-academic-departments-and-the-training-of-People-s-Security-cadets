@@ -9,6 +9,7 @@
         <RadzenFormField Text="Tiêu đề" Variant="Variant.Outlined" class="toan-hang"><RadzenTextBox @bind-Value="banSao.TieuDe" MaxLength="200" Style="width:100%" /></RadzenFormField>
         <RadzenFormField Text="Đoạn dẫn (sapo)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.Sapo" MaxLength="400" Rows="2" Style="width:100%" /></RadzenFormField>
         <RadzenFormField Text="Nội dung (mỗi dòng một đoạn)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.NoiDung" Rows="8" Style="width:100%" /></RadzenFormField>
+        <p class="phu-dong toan-hang">Chèn liên kết tới trang trong hệ thống bằng cú pháp <code>[chữ hiển thị](/duong-dan)</code>, ví dụ <code>[Lịch đào tạo](/dao-tao/lich)</code>. Chỉ nhận đường dẫn nội bộ bắt đầu bằng dấu /.</p>
         <div class="toan-hang"><label for="anh-bai">Ảnh đại diện (PNG, JPEG, WebP; tối đa 3 MB; để trống dùng ảnh minh hoạ)</label><InputFile id="anh-bai" OnChange="ChonAnh" accept="image/png,image/jpeg,image/webp" /></div>
         @if (anhXemTruoc is not null) { <img class="anh-xem-truoc" src="@anhXemTruoc" alt="Ảnh đang chọn" /> <RadzenButton Text="Bỏ ảnh" Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="BoAnh" /> }
     </div>

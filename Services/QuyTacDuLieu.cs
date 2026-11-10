@@ -41,6 +41,27 @@ public static class QuyTacDuLieu
         => he == "Chính quy" ? ChuyenNganhChinhQuy(soLop) : he == "Liên thông" ? "" : soLop % 2 == 1 ? "Điều tra" : "ANM & PCTPCNC";
 
     public static readonly string[] CacHeDaoTao = ["Chính quy", "Liên thông", "Văn bằng 2"];
+
+    /// <summary>Mã hệ dùng trên đường dẫn: "Chính quy" → "chinh-quy", "Văn bằng 2" → "van-bang-2".</summary>
+    public static string MaHe(string he) => he switch { "Chính quy" => "chinh-quy", "Liên thông" => "lien-thong", "Văn bằng 2" => "van-bang-2", _ => "" };
+    public static string? HeTuMa(string? ma) => CacHeDaoTao.FirstOrDefault(h => MaHe(h) == ma);
+
+    /// <summary>Hệ suy ra từ mã lớp theo quy ước B{số}{khoá}: khoá K là Văn bằng 2; khoá D số lớp 16–20 là Liên thông; còn lại Chính quy.</summary>
+    public static string HeTuMaLop(string maLop)
+    {
+        var m = Regex.Match(maLop ?? "", @"^B(\d+)([DK])\d+$");
+        if (!m.Success) return "";
+        return m.Groups[2].Value == "K" ? "Văn bằng 2" : int.Parse(m.Groups[1].Value) is >= 16 and <= 20 ? "Liên thông" : "Chính quy";
+    }
+
+    /// <summary>Năm thứ mấy của khoá theo niên khoá "2026–2030" (0 nếu chưa nhập học, lớn hơn 4 nghĩa là đã ra trường).</summary>
+    public static int NamThu(string nienKhoa, DateTime homNay)
+    {
+        if (!int.TryParse(nienKhoa.Split('–')[0], out var nam)) return 0;
+        // Năm học bắt đầu tháng 9.
+        var namHoc = homNay.Month >= 9 ? homNay.Year : homNay.Year - 1;
+        return namHoc - nam + 1;
+    }
     public static readonly string[] ChuyenNganhChinhQuyDanhMuc = ["Trinh sát an ninh", "Điều tra hình sự", "Quản lý xuất nhập cảnh", "ANM & PCTPCNC", "Công nghệ thông tin"];
 
     // Hệ Văn bằng 2 giữ mã B<số>K<khóa>; số lớp không bị giới hạn cứng bằng bốn.

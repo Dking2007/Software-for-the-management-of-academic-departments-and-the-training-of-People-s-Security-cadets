@@ -130,6 +130,59 @@ public sealed class DichVuChuongTrinh(IDbContextFactory<CoSoDuLieuNghiepVu> csdl
         return (lich, lop.Where(l => !coLich.Contains(l.MaLop)).ToList());
     }
 
+    /// <summary>Một lớp trong ngày: các buổi học trong ngày, trạng thái, lý do nếu không có lịch, buổi gần nhất trước và sau ngày đó.</summary>
+    public sealed record DongTinhHinh(LopDaoTao Lop, List<BuoiHocHienThi> Buoi, string? LyDo, BuoiHocHienThi? BuoiTruoc, BuoiHocHienThi? BuoiSau)
+    {
+        public bool DiHoc => Buoi.Count > 0;
+    }
+
+    /// <summary>Lý do không có lịch, dùng làm nhóm để lọc.</summary>
+    public static class LyDoNghi
+    {
+        public const string ChuNhat = "Chủ nhật, không xếp lịch";
+        public const string DaKetThuc = "Khoá đã hoàn thành chương trình";
+        public const string ChuaNhapHoc = "Khoá chưa nhập học";
+        public const string ChuaPhanCong = "Chưa được phân công chuyên đề";
+        public const string ChuaCoLich = "Chưa có lịch trong giai đoạn này";
+        public const string DaHocXong = "Đã học hết các buổi đã xếp";
+        public const string TheoThoiKhoaBieu = "Nghỉ theo thời khoá biểu";
+    }
+
+    /// <summary>
+    /// Tình hình lên lớp của mọi lớp trong một ngày, tham khảo cách các trường tổ chức báo cáo "tình hình lên lớp hằng ngày":
+    /// lớp nào đi học (buổi nào, phòng nào), lớp nào nghỉ và vì sao, buổi gần nhất và buổi tiếp theo.
+    /// Quyền đi theo LayLichAsync (giảng viên, học viên chỉ thấy phần mình) và LayDanhSachLop (mặt cắt lớp theo vai trò).
+    /// </summary>
+    public async Task<List<DongTinhHinh>> LayTinhHinhNgayAsync(DateTime ngay)
+    {
+        var d = ngay.Date;
+        var lich = await daoTao.LayLichAsync(d.AddDays(-28), d.AddDays(42));
+        var cacLop = new DichVuQuanLyDuLieuDemo(kho, phanQuyen).LayDanhSachLop();
+        await using var db = await csdl.CreateDbContextAsync();
+        var coPc = (await db.PhanCong.Select(p => p.MaLop).Distinct().ToListAsync()).ToHashSet();
+        var theoLop = lich.GroupBy(b => b.Buoi.MaLop).ToDictionary(g => g.Key, g => g.OrderBy(b => b.Buoi.Ngay).ThenBy(b => b.Buoi.TietBatDau).ToList());
+        return cacLop.Select(l =>
+        {
+            var cua = theoLop.GetValueOrDefault(l.MaLop, []);
+            var trongNgay = cua.Where(b => b.Buoi.Ngay.Date == d).ToList();
+            var truoc = cua.LastOrDefault(b => b.Buoi.Ngay.Date < d);
+            var sau = cua.FirstOrDefault(b => b.Buoi.Ngay.Date > d);
+            string? lyDo = null;
+            if (trongNgay.Count == 0)
+            {
+                var namThu = QuyTacDuLieu.NamThu(l.NienKhoa, d);
+                lyDo = d.DayOfWeek == DayOfWeek.Sunday ? LyDoNghi.ChuNhat
+                    : namThu > 4 ? LyDoNghi.DaKetThuc
+                    : namThu < 1 ? LyDoNghi.ChuaNhapHoc
+                    : !coPc.Contains(l.MaLop) && cua.Count == 0 ? LyDoNghi.ChuaPhanCong
+                    : cua.Count == 0 ? LyDoNghi.ChuaCoLich
+                    : sau is null ? LyDoNghi.DaHocXong
+                    : LyDoNghi.TheoThoiKhoaBieu;
+            }
+            return new DongTinhHinh(l, trongNgay, lyDo, truoc, sau);
+        }).ToList();
+    }
+
     /// <summary>Buổi học / buổi nghỉ của từng học viên trong lớp (mọi chuyên đề), tính từ điểm danh.</summary>
     public async Task<(List<DongChuyenCan> Dong, string? Loi)> LayChuyenCanLopAsync(string maLop)
     {

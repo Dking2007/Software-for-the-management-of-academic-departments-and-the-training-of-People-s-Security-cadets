@@ -3,160 +3,278 @@
 @page "/lop"
 @page "/quan-ly-hoc-vien"
 @page "/quan-ly-hoc-vien/lop"
+@page "/quan-ly-hoc-vien/he/{MaHe}"
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject DichVuExcel Excel
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DialogService HoiThoai
 @inject DichVuTruongTuyChinh TruongTuyChinh
 @inject NotificationService ThongBao
+@inject NavigationManager DieuHuong
 
-@* Bảng lớp giữ đúng mã lớp, hệ, khóa, chuyên ngành và sĩ số trong sơ đồ. *@
-<PageTitle>Lớp đào tạo | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
-<DauTrang TieuDe="Danh sách lớp" MoTa="Tổng hợp danh sách lớp của các hệ học tại Học viện.">
+@* Quản lý lớp đi từ ngoài vào trong, mỗi cấp một ranh giới rõ:
+   Tổng quan các hệ → một hệ (Chính quy, Liên thông, Văn bằng 2) → một khoá (niên khoá) → lớp.
+   Trang tổng quan không có tham số MaHe; trang của một hệ đọc khoá đang xem từ ?khoa= để đường dẫn chia sẻ được. *@
+<PageTitle>@(HeDangXem is null ? "Lớp đào tạo" : "Hệ " + HeDangXem.ToLowerInvariant()) | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="@(HeDangXem is null ? "Lớp đào tạo theo hệ" : "Hệ " + HeDangXem.ToLowerInvariant())"
+          MoTa="@(HeDangXem is null ? "Mỗi hệ đào tạo quản lý riêng: chọn hệ, rồi chọn khoá (niên khoá) để xem các lớp." : $"{CacKhoaCuaHe.Count} khoá · {LopCuaHe.Count} lớp · {LopCuaHe.Sum(l => l.SiSo):N0} học viên. Chọn khoá bên trái để xem lớp.")">
     <ThaoTac><NutXuatExcel TaoTep="@(async () => (byte[]?)await Excel.XuatLopAsync())" TenTep="lop-dao-tao" />@if (duocChinhSua) { <RadzenButton Icon="upload_file" Text="Nhập Excel" ButtonStyle="ButtonStyle.Light" Click="NhapExcel" /><RadzenButton Icon="add" Text="@TuyChon.Dich("Thêm lớp")" ButtonStyle="ButtonStyle.Primary" Click="ThemLop" /> }</ThaoTac>
 </DauTrang>
-@* Đi từ ngoài vào trong: niên khoá → hệ → khoá; danh sách bên dưới lọc theo cấp đã chọn. *@
-<RadzenCard class="directory-panel">
-    <BoChonCapLop CacLop="@danhSachLop" HienLop="false" KhiDoi="DoiCap" />
-</RadzenCard>
-<div class="thanh-lich" style="margin:.75rem 0">
-    <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị" style="margin-left:0">
-        <button type="button" class="@(cheDoThe ? "dang-chon" : "")" @onclick="() => cheDoThe = true"><RadzenIcon Icon="grid_view" />Thẻ lớp</button>
-        <button type="button" class="@(!cheDoThe ? "dang-chon" : "")" @onclick="() => cheDoThe = false"><RadzenIcon Icon="table_rows" />Bảng</button>
-    </div>
-    <span class="ket-qua-tim-kiem"><strong>@DanhSachHienThi.Count()</strong> / @danhSachLop.Count lớp · @DanhSachHienThi.Sum(l => l.SiSo).ToString("N0") học viên</span>
-    @if (cheDoThe)
-    {
-        <div class="nut-mo-thu">
-            <button type="button" class="nut-chip" @onclick="MoTatCa"><RadzenIcon Icon="unfold_more" />Mở tất cả</button>
-            <button type="button" class="nut-chip" @onclick="ThuGonTatCa"><RadzenIcon Icon="unfold_less" />Thu gọn tất cả</button>
-        </div>
-    }
-</div>
-@if (cheDoThe)
+
+@* Thanh chọn hệ: luôn thấy được các hệ khác và đường về tổng quan. *@
+@if (CacHe.Count > 0)
 {
-    @foreach (var nhom in NhomThe)
-    {
-        var khoaNhom = $"{nhom.Key.HeDaoTao}/{nhom.Key.KhoaHoc}";
-        var mo = LaMo(khoaNhom);
-        <section class="nhom-the-lop @(mo ? "dang-mo" : "")">
-            <button type="button" class="dau-nhom-the" aria-expanded="@(mo ? "true" : "false")" @onclick="() => DoiMo(khoaNhom)">
-                <RadzenIcon Icon="expand_more" class="mui-ten-nhom" />
-                <span class="tag-tin">@nhom.Key.NienKhoa</span>
-                <strong>@nhom.Key.HeDaoTao · Khoá @nhom.Key.KhoaHoc</strong>
-                <small>@nhom.Count() lớp · @nhom.Sum(l => l.SiSo) HV</small>
-                @if (!mo)
-                {
-                    <span class="ma-lop-thu-gon">@string.Join(" · ", nhom.OrderBy(l => l.MaLop.Length).ThenBy(l => l.MaLop).Take(8).Select(l => l.MaLop))@(nhom.Count() > 8 ? " …" : "")</span>
-                }
-            </button>
-            @if (mo)
-            {
-            <div class="luoi-the-lop">
-                @foreach (var lop in nhom.OrderBy(l => l.MaLop.Length).ThenBy(l => l.MaLop))
-                {
-                    <article class="the-lop">
-                        <TheXemNhanh Loai="Lop" Ma="@lop.MaLop" Class="neo-the-lop"><a class="ma-the-lop" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop.MaLop)}")">@lop.MaLop</a></TheXemNhanh>
-                        <span class="nganh-the-lop">@lop.ChuyenNganh</span>
-                        <span class="phu-dong"><RadzenIcon Icon="groups" />@lop.SiSo học viên</span>
-                        <span class="phu-dong"><RadzenIcon Icon="person" />@lop.GiaoVienChuNhiem</span>
-                        @if (duocChinhSua)
-                        {
-                            <div class="actions-cell">
-                                <RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa lớp {lop.MaLop}")" Click="@(() => SuaLop(lop))" />
-                                <RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa lớp {lop.MaLop}")" Click="@(() => XoaLop(lop))" />
-                            </div>
-                        }
-                    </article>
-                }
+    <nav class="hv-tab-he" aria-label="Hệ đào tạo">
+        <a href="/quan-ly-hoc-vien/lop" class="@(HeDangXem is null ? "dang-chon" : "")"><RadzenIcon Icon="dashboard" />Tổng quan <small>@danhSachLop.Count</small></a>
+        @foreach (var he in CacHe)
+        {
+            <a href="@($"/quan-ly-hoc-vien/he/{QuyTacDuLieu.MaHe(he)}")" class="@(HeDangXem == he ? "dang-chon" : "")"><RadzenIcon Icon="@BieuTuongHe(he)" />Hệ @he.ToLowerInvariant() <small>@danhSachLop.Count(l => l.HeDaoTao == he) lớp</small></a>
+        }
+    </nav>
+}
+
+@if (HeDangXem is null)
+{
+    @* ----- Tổng quan: mỗi hệ một thẻ, liệt kê các khoá của hệ đó ----- *@
+    <div class="hv-he-luoi">
+        @foreach (var he in CacHe)
+        {
+            var lopHe = danhSachLop.Where(l => l.HeDaoTao == he).ToList();
+            <section class="hv-he-the he-@QuyTacDuLieu.MaHe(he)">
+                <a class="hv-he-dau" href="@($"/quan-ly-hoc-vien/he/{QuyTacDuLieu.MaHe(he)}")">
+                    <RadzenIcon Icon="@BieuTuongHe(he)" />
+                    <span><h2>Hệ @he.ToLowerInvariant()</h2><small>@lopHe.Select(l => l.KhoaHoc).Distinct().Count() khoá · @lopHe.Count lớp · @lopHe.Sum(l => l.SiSo).ToString("N0") học viên</small></span>
+                    <RadzenIcon Icon="arrow_forward" class="mui-ten" />
+                </a>
+                <ul class="hv-he-khoa">
+                    @foreach (var kh in NhomKhoa(lopHe))
+                    {
+                        <li><a href="@($"/quan-ly-hoc-vien/he/{QuyTacDuLieu.MaHe(he)}?khoa={kh.Khoa}")">
+                            <strong>@kh.Khoa</strong>
+                            <span><span>Niên khoá @kh.NienKhoa</span><br /><small>@kh.SoLop lớp · @kh.SiSo.ToString("N0") học viên</small></span>
+                            <span class="nhan-nam @LopNam(kh.NienKhoa)">@NhanNam(kh.NienKhoa)</span>
+                        </a></li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+    @if (danhSachLop.Count == 0) { <section class="empty-state"><RadzenIcon Icon="groups" class="empty-state-icon" /><h2>Chưa có lớp nào</h2><p>Vai trò của bạn chưa được giao lớp nào hoặc dữ liệu đang trống.</p></section> }
+
+    <RadzenCard class="directory-panel">
+        @{ var ketQua = tuKhoa.Trim() == "" ? (danhSachLop.Count <= 12 ? danhSachLop : []) : DanhSachHienThi.ToList(); }
+        <div class="thanh-lich">
+            <div class="search-box" style="max-width:30rem">
+                <RadzenIcon Icon="search" aria-hidden="true" />
+                <input class="form-control" data-tim-kiem value="@tuKhoa" @oninput="e => tuKhoa = e.Value?.ToString() ?? string.Empty" placeholder="Tìm nhanh lớp ở mọi hệ: mã lớp, khoá, chuyên ngành, chủ nhiệm…" aria-label="Tìm lớp" spellcheck="false" />
             </div>
-            }
-        </section>
-    }
-    @if (!DanhSachHienThi.Any()) { <section class="empty-state"><h2>Không có lớp phù hợp</h2></section> }
+            @if (tuKhoa.Trim() != "") { <span class="ket-qua-tim-kiem"><strong>@ketQua.Count</strong> lớp khớp “@tuKhoa”</span> }
+        </div>
+        @if (ketQua.Count > 0) { @TheLop(ketQua) }
+    </RadzenCard>
 }
 else
 {
-<RadzenCard class="directory-panel">
-    <ThanhCongCu TuKhoa="@tuKhoa" KhiNhapTuKhoa="NhapTuKhoa" GoiY="Tìm mã lớp, hệ, khóa, chuyên ngành hoặc GV chủ nhiệm" NhanTimKiem="Tìm lớp đào tạo" SoHienThi="@DanhSachHienThi.Count()" TongSo="@danhSachLop.Count">
-        <CacBoLoc>
-            <RadzenDropDown TValue="string" Data="@cacHeDaoTaoLoc" @bind-Value="heDaoTaoLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả hệ đào tạo" class="filter-dropdown" />
-            <RadzenDropDown TValue="string" Data="@danhSachLop.Select(l => l.KhoaHoc).Distinct()" @bind-Value="khoaLoc" AllowClear="true" AllowFiltering="true" FilterAsYouType="true" FilterDelay="300" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" FilterOperator="StringFilterOperator.Contains" FilterPlaceholder="Nhập để tìm…" Placeholder="Tất cả các khóa" class="filter-dropdown" />
-        </CacBoLoc>
-    </ThanhCongCu>
-    <RadzenDataGrid @ref="bang" GridLines="DataGridGridLines.Horizontal" TItem="LopDaoTao" Data="@DanhSachHienThi" AllowPaging="true" PageSize="10" PageSizeOptions="@(new int[] { 5, 10, 20, 30, 40 })" PageSizeText="@TuyChon.Dich("dòng / trang")" AllowSorting="true" PagerHorizontalAlign="HorizontalAlign.Center" AllowColumnResize="true" EmptyText="Không tìm thấy lớp phù hợp." class="directory-grid">
-        <Columns>
-            <RadzenDataGridColumn TItem="LopDaoTao" Title="@TuyChon.Dich("STT")" Width="3rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.MaLop)" Title="@TuyChon.Dich("Mã lớp")" Width="6rem"><Template Context="lop"><RadzenLink class="record-code" Path="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop.MaLop)}")" Text="@lop.MaLop" /></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.HeDaoTao)" Title="@TuyChon.Dich("Hệ đào tạo")" Width="7rem" />
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.KhoaHoc)" Title="@TuyChon.Dich("Khóa")" Width="4.5rem" />
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.ChuyenNganh)" Title="@TuyChon.Dich("Chuyên ngành")" Width="12rem" />
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.SiSo)" Title="@TuyChon.Dich("Sĩ số")" TextAlign="TextAlign.Center" Width="4rem" />
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.GiaoVienChuNhiem)" Title="@TuyChon.Dich("GV chủ nhiệm")" Width="14rem" />
-            <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.NienKhoa)" Title="@TuyChon.Dich("Niên khóa")" TextAlign="TextAlign.Center" Width="8rem" />
-            @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="LopDaoTao" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.MaLop)</span></Template></RadzenDataGridColumn> }
-            @if (duocChinhSua) { <RadzenDataGridColumn TItem="LopDaoTao" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="6rem"><Template Context="lop"><div class="actions-cell"><RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa lớp {lop.MaLop}")" Click="@(() => SuaLop(lop))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa lớp {lop.MaLop}")" Click="@(() => XoaLop(lop))" /></div></Template></RadzenDataGridColumn> }
-        </Columns>
-    </RadzenDataGrid>
-</RadzenCard>
+    @* ----- Một hệ: cột khoá bên trái, lớp của khoá đang chọn bên phải ----- *@
+    <div class="hv-bo-cuc">
+        <nav class="hv-ds-khoa" aria-label="Khoá của hệ @HeDangXem">
+            <span>Khoá · niên khoá</span>
+            <button type="button" class="@(KhoaDangXem is null ? "dang-chon" : "")" @onclick="() => ChonKhoa(null)"><strong>Tất cả khoá</strong><small>@LopCuaHe.Count lớp · @LopCuaHe.Sum(l => l.SiSo).ToString("N0") HV</small></button>
+            @foreach (var kh in CacKhoaCuaHe)
+            {
+                <button type="button" class="@(KhoaDangXem == kh.Khoa ? "dang-chon" : "")" aria-pressed="@(KhoaDangXem == kh.Khoa ? "true" : "false")" @onclick="() => ChonKhoa(kh.Khoa)">
+                    <strong>Khoá @kh.Khoa</strong><small>@kh.NienKhoa · @kh.SoLop lớp</small><span class="nhan-nam @LopNam(kh.NienKhoa)">@NhanNam(kh.NienKhoa)</span>
+                </button>
+            }
+        </nav>
+
+        <section>
+            @{ var lopKhoa = LopCuaHe.Where(l => KhoaDangXem is null || l.KhoaHoc == KhoaDangXem).ToList(); }
+            <div class="hv-khoa-dau">
+                <h2>@(KhoaDangXem is null ? "Tất cả khoá" : "Khoá " + KhoaDangXem)</h2>
+                @if (KhoaDangXem is not null && lopKhoa.Count > 0) { <span>Niên khoá @lopKhoa[0].NienKhoa · @NhanNam(lopKhoa[0].NienKhoa)</span> }
+                <span>@lopKhoa.Count lớp · @lopKhoa.Sum(l => l.SiSo).ToString("N0") học viên</span>
+            </div>
+            @if (lopKhoa.Select(l => l.ChuyenNganh).Distinct().Count() > 1)
+            {
+                <div class="hv-nganh tb-chuyen-muc" role="group" aria-label="Lọc theo chuyên ngành">
+                    <button type="button" class="@(nganhLoc is null ? "dang-chon" : "")" @onclick="() => nganhLoc = null">Mọi chuyên ngành <small>@lopKhoa.Count</small></button>
+                    @foreach (var g in lopKhoa.GroupBy(l => l.ChuyenNganh).OrderBy(g => g.Key, QuyTacDuLieu.SoSanhTiengViet))
+                    {
+                        <button type="button" class="@(nganhLoc == g.Key ? "dang-chon" : "")" @onclick="() => nganhLoc = nganhLoc == g.Key ? null : g.Key">@(g.Key == "" ? "Chưa có" : g.Key) <small>@g.Count()</small></button>
+                    }
+                </div>
+            }
+            <div class="thanh-lich">
+                <div class="search-box" style="flex:1 1 14rem;max-width:24rem">
+                    <RadzenIcon Icon="search" aria-hidden="true" />
+                    <input class="form-control" data-tim-kiem value="@tuKhoa" @oninput="e => tuKhoa = e.Value?.ToString() ?? string.Empty" placeholder="Tìm mã lớp, chuyên ngành, chủ nhiệm…" aria-label="Tìm lớp trong hệ" spellcheck="false" />
+                </div>
+                <div class="chon-che-do" role="group" aria-label="Kiểu hiển thị" style="margin-left:0">
+                    <button type="button" class="@(cheDoThe ? "dang-chon" : "")" @onclick="() => cheDoThe = true"><RadzenIcon Icon="grid_view" />Thẻ lớp</button>
+                    <button type="button" class="@(!cheDoThe ? "dang-chon" : "")" @onclick="() => cheDoThe = false"><RadzenIcon Icon="table_rows" />Bảng</button>
+                </div>
+                @if (KhoaDangXem is null && cheDoThe)
+                {
+                    <span class="hv-nut-nhom">
+                        <button type="button" class="nut-chip" @onclick="() => DatTatCaKhoa(lopKhoa, true)"><RadzenIcon Icon="unfold_more" />Mở tất cả</button>
+                        <button type="button" class="nut-chip" @onclick="() => DatTatCaKhoa(lopKhoa, false)"><RadzenIcon Icon="unfold_less" />Thu gọn tất cả</button>
+                    </span>
+                }
+                <span class="ket-qua-tim-kiem"><strong>@DanhSachLoc(lopKhoa).Count()</strong> / @lopKhoa.Count lớp</span>
+            </div>
+            @{ var hienThi = DanhSachLoc(lopKhoa).ToList(); }
+            @if (hienThi.Count == 0)
+            {
+                <section class="empty-state"><RadzenIcon Icon="search_off" class="empty-state-icon" /><h2>Không có lớp phù hợp</h2><p>Thử bỏ bộ lọc chuyên ngành hoặc từ khoá.</p></section>
+            }
+            else if (cheDoThe)
+            {
+                @if (KhoaDangXem is null)
+                {
+                    @* Mỗi khoá một nhóm đóng/mở: mặc định chỉ mở khoá mới nhất, nhóm thu gọn chỉ hiện dãy mã lớp; đang tìm thì mở hết nhóm có kết quả. *@
+                    var cacNhom = hienThi.GroupBy(l => l.KhoaHoc).OrderByDescending(g => g.First().NienKhoa).ThenByDescending(g => g.Key).ToList();
+                    @foreach (var g in cacNhom)
+                    {
+                        var mo = tuKhoa.Trim() != "" || (khoaMo ?? [cacNhom[0].Key]).Contains(g.Key);
+                        <section class="nhom-the-lop hv-nhom-khoa @(mo ? "dang-mo" : "")">
+                            <button type="button" class="dau-nhom-the" aria-expanded="@(mo ? "true" : "false")" @onclick="() => DoiKhoaMo(g.Key, cacNhom.Select(x => x.Key).First())">
+                                <RadzenIcon Icon="expand_more" class="mui-ten-nhom" />
+                                <strong>Khoá @g.Key</strong>
+                                <small>niên khoá @g.First().NienKhoa · @g.Count() lớp · @g.Sum(l => l.SiSo).ToString("N0") học viên</small>
+                                <span class="nhan-nam @LopNam(g.First().NienKhoa)">@NhanNam(g.First().NienKhoa)</span>
+                                @if (!mo) { <span class="ma-lop-thu-gon">@string.Join(" · ", g.Take(10).Select(l => l.MaLop))@(g.Count() > 10 ? " …" : "")</span> }
+                            </button>
+                            @if (mo) { @TheLop(g.ToList()) }
+                        </section>
+                    }
+                }
+                else { @TheLop(hienThi) }
+            }
+            else
+            {
+                <RadzenDataGrid @ref="bang" GridLines="DataGridGridLines.Horizontal" TItem="LopDaoTao" Data="@hienThi" AllowPaging="true" PageSize="20" PageSizeOptions="@(new int[] { 10, 20, 30, 40 })" PageSizeText="@TuyChon.Dich("dòng / trang")" AllowSorting="true" PagerHorizontalAlign="HorizontalAlign.Center" AllowColumnResize="true" EmptyText="Không tìm thấy lớp phù hợp." class="directory-grid">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="LopDaoTao" Title="@TuyChon.Dich("STT")" Width="3rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.MaLop)" Title="@TuyChon.Dich("Mã lớp")" Width="6rem"><Template Context="lop"><TheXemNhanh Loai="Lop" Ma="@lop.MaLop"><RadzenLink class="record-code" Path="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop.MaLop)}")" Text="@lop.MaLop" /></TheXemNhanh></Template></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.KhoaHoc)" Title="@TuyChon.Dich("Khóa")" Width="4.5rem" />
+                        <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.ChuyenNganh)" Title="@TuyChon.Dich("Chuyên ngành")" Width="12rem" />
+                        <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.SiSo)" Title="@TuyChon.Dich("Sĩ số")" TextAlign="TextAlign.Center" Width="4.5rem" />
+                        <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.GiaoVienChuNhiem)" Title="@TuyChon.Dich("GV chủ nhiệm")" Width="14rem" />
+                        <RadzenDataGridColumn TItem="LopDaoTao" Property="@nameof(LopDaoTao.NienKhoa)" Title="@TuyChon.Dich("Niên khóa")" TextAlign="TextAlign.Center" Width="8rem" />
+                        @foreach (var tr in moRong.Truong.Where(t => t.HienTrenBang)) { <RadzenDataGridColumn TItem="LopDaoTao" Title="@tr.Ten" Width="10rem" Sortable="false"><Template Context="x"><span class="o-mo-rong-bang">@moRong.HienThi(tr, x.MaLop)</span></Template></RadzenDataGridColumn> }
+                        @if (duocChinhSua) { <RadzenDataGridColumn TItem="LopDaoTao" Title="@TuyChon.Dich("Thao tác")" Frozen="true" FrozenPosition="FrozenColumnPosition.Right" TextAlign="TextAlign.Center" CssClass="cot-thao-tac" HeaderCssClass="cot-thao-tac" Sortable="false" Width="6rem"><Template Context="lop"><div class="actions-cell"><RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Sửa")" aria-label="@($"Sửa lớp {lop.MaLop}")" Click="@(() => SuaLop(lop))" /><RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="@TuyChon.Dich("Xóa")" aria-label="@($"Xóa lớp {lop.MaLop}")" Click="@(() => XoaLop(lop))" /></div></Template></RadzenDataGridColumn> }
+                    </Columns>
+                </RadzenDataGrid>
+            }
+        </section>
+    </div>
 }
 
 @code {
-    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
+    [Parameter] public string? MaHe { get; set; }
+    [SupplyParameterFromQuery(Name = "khoa")] public string? KhoaTuDuongDan { get; set; }
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
-    // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
-    private async Task NhapTuKhoa(ChangeEventArgs e)
-    {
-        tuKhoa = e.Value?.ToString() ?? string.Empty;
-        if (bang is not null) await bang.FirstPage(true);
-    }
 
+    private sealed record NhomKhoaHoc(string Khoa, string NienKhoa, int SoLop, int SiSo);
+
+    private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     private RadzenDataGrid<LopDaoTao>? bang;
-    private int SoThuTu(LopDaoTao banGhi) => (bang?.View.ToList().IndexOf(banGhi) ?? -1) + 1;
-
-    // Mỗi tab chỉ giữ bản sao; cập nhật từ kho chung và hủy đăng ký khi component kết thúc.
-    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
-    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
-
-    private readonly string[] cacHeDaoTaoLoc = QuyTacDuLieu.CacHeDaoTao;
     private List<LopDaoTao> danhSachLop = [];
     private string tuKhoa = string.Empty;
-    private string? heDaoTaoLoc;
-    private string? khoaLoc;
-    private bool duocChinhSua;
-    private bool cheDoThe = true;
-    private BoChonCapLop.BoLoc boLocCap = new(null, null, null, null);
-    private void DoiCap(BoChonCapLop.BoLoc loc) { boLocCap = loc; nhomMo = null; }
-    // Nhóm thẻ theo hệ + khoá. Mặc định chỉ mở nhóm mới nhất; khi bộ lọc còn ≤ 2 nhóm thì mở hết.
-    private HashSet<string>? nhomMo;
-    private List<IGrouping<(string HeDaoTao, string KhoaHoc, string NienKhoa), LopDaoTao>> NhomThe =>
-        DanhSachHienThi.GroupBy(l => (l.HeDaoTao, l.KhoaHoc, l.NienKhoa)).OrderByDescending(g => g.Key.NienKhoa).ThenBy(g => Array.IndexOf(QuyTacDuLieu.CacHeDaoTao, g.Key.HeDaoTao)).ToList();
-    private bool LaMo(string khoa)
+    private string? nganhLoc;
+    /// <summary>Các khoá đang mở trong chế độ "Tất cả khoá" (null: mặc định chỉ mở khoá mới nhất).</summary>
+    private HashSet<string>? khoaMo;
+    private void DoiKhoaMo(string khoa, string macDinh)
     {
-        if (nhomMo is null)
-        {
-            var ds = NhomThe.Select(g => $"{g.Key.HeDaoTao}/{g.Key.KhoaHoc}").ToList();
-            nhomMo = ds.Count <= 2 ? ds.ToHashSet() : ds.Take(1).ToHashSet();
-        }
-        return nhomMo.Contains(khoa);
+        khoaMo ??= [macDinh];
+        if (!khoaMo.Remove(khoa)) khoaMo.Add(khoa);
     }
-    private void DoiMo(string khoa) { LaMo(khoa); if (!nhomMo!.Remove(khoa)) nhomMo.Add(khoa); }
-    private void MoTatCa() => nhomMo = NhomThe.Select(g => $"{g.Key.HeDaoTao}/{g.Key.KhoaHoc}").ToHashSet();
-    private void ThuGonTatCa() => nhomMo = [];
-    private IEnumerable<LopDaoTao> DanhSachHienThi => danhSachLop.Where(lop => boLocCap.Khop(lop) &&
-        (string.IsNullOrWhiteSpace(khoaLoc) || lop.KhoaHoc == khoaLoc) &&
-        (string.IsNullOrWhiteSpace(heDaoTaoLoc) || lop.HeDaoTao == heDaoTaoLoc)).Where(lop => TimKiemMo.Khop(tuKhoa, lop.MaLop, lop.ChuyenNganh, lop.KhoaHoc, lop.HeDaoTao, lop.GiaoVienChuNhiem, lop.NienKhoa));
+    private void DatTatCaKhoa(IEnumerable<LopDaoTao> lop, bool mo) => khoaMo = mo ? lop.Select(l => l.KhoaHoc).ToHashSet() : [];
+    private bool duocChinhSua, cheDoThe = true;
 
-    protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("Lop"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Lop"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+    private string? HeDangXem => QuyTacDuLieu.HeTuMa(MaHe);
+    private string? KhoaDangXem => string.IsNullOrWhiteSpace(KhoaTuDuongDan) ? null : KhoaTuDuongDan;
+    private List<string> CacHe => danhSachLop.Select(l => l.HeDaoTao).Distinct().OrderBy(h => Array.IndexOf(QuyTacDuLieu.CacHeDaoTao, h)).ToList();
+    private List<LopDaoTao> LopCuaHe => danhSachLop.Where(l => l.HeDaoTao == HeDangXem).ToList();
+    private List<NhomKhoaHoc> CacKhoaCuaHe => NhomKhoa(LopCuaHe);
+
+    private static List<NhomKhoaHoc> NhomKhoa(IEnumerable<LopDaoTao> lop) => lop.GroupBy(l => l.KhoaHoc)
+        .OrderByDescending(g => g.First().NienKhoa).ThenByDescending(g => g.Key)
+        .Select(g => new NhomKhoaHoc(g.Key, g.First().NienKhoa, g.Count(), g.Sum(l => l.SiSo))).ToList();
+
+    private static string BieuTuongHe(string he) => he switch { "Văn bằng 2" => "workspace_premium", "Liên thông" => "conversion_path", _ => "school" };
+    private static string NhanNam(string nienKhoa) => QuyTacDuLieu.NamThu(nienKhoa, DateTime.Today) switch { < 1 => "Sắp nhập học", > 4 => "Đã hoàn thành", 4 => "Năm cuối", var n => $"Năm thứ {n}" };
+    private static string LopNam(string nienKhoa) => QuyTacDuLieu.NamThu(nienKhoa, DateTime.Today) switch { > 4 => "da-xong", 4 => "nam-cuoi", _ => "" };
+
+    private IEnumerable<LopDaoTao> DanhSachLoc(IEnumerable<LopDaoTao> nguon) => nguon
+        .Where(l => HeDangXem is null || nganhLoc is null || l.ChuyenNganh == nganhLoc)
+        .Where(l => TimKiemMo.Khop(tuKhoa, l.MaLop, l.ChuyenNganh, l.KhoaHoc, l.HeDaoTao, l.GiaoVienChuNhiem, l.NienKhoa))
+        .OrderBy(l => l.MaLop.Length).ThenBy(l => l.MaLop);
+
+    /// <summary>Kết quả tìm trên toàn bộ lớp (mọi hệ) theo từ khoá đang gõ; ô tìm nhanh ở trang tổng quan và bộ kiểm thử dùng.</summary>
+    private IEnumerable<LopDaoTao> DanhSachHienThi => DanhSachLoc(danhSachLop);
+
+    private int SoThuTu(LopDaoTao banGhi) => (bang?.View.ToList().IndexOf(banGhi) ?? -1) + 1;
+
+    private RenderFragment TheLop(List<LopDaoTao> cacLop) => @<div class="luoi-the-lop">
+        @foreach (var lop in cacLop)
+        {
+            <article class="the-lop">
+                <TheXemNhanh Loai="Lop" Ma="@lop.MaLop" Class="neo-the-lop"><a class="ma-the-lop" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop.MaLop)}")">@lop.MaLop</a></TheXemNhanh>
+                <span class="nganh-the-lop">@(lop.ChuyenNganh == "" ? "Chưa có chuyên ngành" : lop.ChuyenNganh)</span>
+                @if (HeDangXem is null) { <span class="phu-dong"><RadzenIcon Icon="@BieuTuongHe(lop.HeDaoTao)" />@lop.HeDaoTao · khoá @lop.KhoaHoc</span> }
+                <span class="phu-dong"><RadzenIcon Icon="groups" />@lop.SiSo học viên</span>
+                <span class="phu-dong"><RadzenIcon Icon="person" />@(lop.GiaoVienChuNhiem == "" ? "Chưa phân công chủ nhiệm" : lop.GiaoVienChuNhiem)</span>
+                @if (duocChinhSua)
+                {
+                    <div class="actions-cell">
+                        <RadzenButton class="nut-sua-dong" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Sửa" aria-label="@($"Sửa lớp {lop.MaLop}")" Click="@(() => SuaLop(lop))" />
+                        <RadzenButton class="nut-xoa-dong" Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" title="Xóa" aria-label="@($"Xóa lớp {lop.MaLop}")" Click="@(() => XoaLop(lop))" />
+                    </div>
+                }
+            </article>
+        }
+    </div>;
+
+    protected override async Task OnInitializedAsync()
+    {
+        moRong = await TruongTuyChinh.LayBangAsync("Lop");
+        duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Lop");
+        TaiDuLieu();
+        DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    }
+
+    // Đổi hệ hoặc khoá (qua đường dẫn) thì xoá bộ lọc chuyên ngành, từ khoá của cấp trước.
+    private string? capTruoc;
+    protected override void OnParametersSet()
+    {
+        var cap = $"{MaHe}|{KhoaTuDuongDan}";
+        if (capTruoc is not null && capTruoc != cap) { nganhLoc = null; tuKhoa = ""; khoaMo = null; }
+        capTruoc = cap;
+        // Mã hệ không tồn tại (gõ tay sai) thì về tổng quan.
+        if (MaHe is not null && HeDangXem is null) DieuHuong.NavigateTo("/quan-ly-hoc-vien/lop", replace: true);
+    }
+
+    private void ChonKhoa(string? khoa)
+        => DieuHuong.NavigateTo($"/quan-ly-hoc-vien/he/{MaHe}" + (khoa is null ? "" : $"?khoa={Uri.EscapeDataString(khoa)}"));
+
+    private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
     private void TaiDuLieu() { danhSachLop = DuLieu.LayDanhSachLop().ToList(); }
-private async Task NhapExcel()
-{
-    var kq = await HoiThoai.OpenAsync<NhapExcelChung>("Nhập {0} từ Excel".Replace("{0}", DichVuNhapExcel.TenLoai(LoaiNhap.Lop)), new Dictionary<string, object> { [nameof(NhapExcelChung.Loai)] = LoaiNhap.Lop }, new DialogOptions { Width = "980px", CloseDialogOnOverlayClick = false });
-    if (kq is KetQuaThaoTac daLuu) { TaiDuLieu(); await ThongBaoKetQua(daLuu); }
-}
+
+    private async Task NhapExcel()
+    {
+        var kq = await HoiThoai.OpenAsync<NhapExcelChung>("Nhập {0} từ Excel".Replace("{0}", DichVuNhapExcel.TenLoai(LoaiNhap.Lop)), new Dictionary<string, object> { [nameof(NhapExcelChung.Loai)] = LoaiNhap.Lop }, new DialogOptions { Width = "980px", CloseDialogOnOverlayClick = false });
+        if (kq is KetQuaThaoTac daLuu) { TaiDuLieu(); await ThongBaoKetQua(daLuu); }
+    }
     private async Task ThemLop()
     {
-        var kq = await HoiThoai.OpenAsync<BieuMauLop>("Thêm lớp", new Dictionary<string, object> { [nameof(BieuMauLop.DuLieuBanDau)] = new LopDaoTao() }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false });
+        // Đang xem một hệ, một khoá thì điền sẵn để thêm lớp đúng chỗ.
+        var moi = new LopDaoTao();
+        if (HeDangXem is not null) moi.HeDaoTao = HeDangXem;
+        if (KhoaDangXem is not null) moi.KhoaHoc = KhoaDangXem;
+        var kq = await HoiThoai.OpenAsync<BieuMauLop>("Thêm lớp", new Dictionary<string, object> { [nameof(BieuMauLop.DuLieuBanDau)] = moi }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false });
         if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu);
     }
     private async Task SuaLop(LopDaoTao lop)

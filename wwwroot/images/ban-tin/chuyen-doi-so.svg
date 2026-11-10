@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500" role="img" aria-label="Phòng máy và hệ thống quản lý lịch học">
+<title>Phòng máy và hệ thống quản lý lịch học (ảnh minh hoạ)</title>
+<defs>
+<linearGradient id="nen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6efe9"/><stop offset="1" stop-color="#c3d4c8"/></linearGradient>
+<linearGradient id="bong" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>
+</defs>
+<rect width="800" height="500" fill="url(#nen)"/>
+<rect x="0" y="330" width="800" height="170" fill="#c9d6cc"/>
+<rect x="210" y="40" width="380" height="210" rx="10" fill="#0f2a1e"/>
+<rect x="222" y="52" width="356" height="186" rx="4" fill="#f4f7f5"/>
+<rect x="222" y="52" width="356" height="26" fill="#1b4b34"/>
+<g fill="#fff"><circle cx="236" cy="65" r="3.5" opacity=".7"/><circle cx="248" cy="65" r="3.5" opacity=".7"/><circle cx="260" cy="65" r="3.5" opacity=".7"/></g>
+<rect x="234" y="90" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="290" y="90" width="48" height="28" rx="4" fill="#d9b04a" opacity=".85"/>
+<rect x="346" y="90" width="48" height="28" rx="4" fill="#3b82c4" opacity=".85"/>
+<rect x="402" y="90" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="458" y="90" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="514" y="90" width="48" height="28" rx="4" fill="#3f8a5f" opacity=".85"/>
+<rect x="234" y="126" width="48" height="28" rx="4" fill="#d9b04a" opacity=".85"/>
+<rect x="290" y="126" width="48" height="28" rx="4" fill="#3b82c4" opacity=".85"/>
+<rect x="346" y="126" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="402" y="126" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="458" y="126" width="48" height="28" rx="4" fill="#3f8a5f" opacity=".85"/>
+<rect x="514" y="126" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="234" y="162" width="48" height="28" rx="4" fill="#3b82c4" opacity=".85"/>
+<rect x="290" y="162" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="346" y="162" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="402" y="162" width="48" height="28" rx="4" fill="#3f8a5f" opacity=".85"/>
+<rect x="458" y="162" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="514" y="162" width="48" height="28" rx="4" fill="#3b82c4" opacity=".85"/>
+<rect x="234" y="198" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="290" y="198" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="346" y="198" width="48" height="28" rx="4" fill="#3f8a5f" opacity=".85"/>
+<rect x="402" y="198" width="48" height="28" rx="4" fill="#d6e4da" opacity=".85"/>
+<rect x="458" y="198" width="48" height="28" rx="4" fill="#3b82c4" opacity=".85"/>
+<rect x="514" y="198" width="48" height="28" rx="4" fill="#b3261e" opacity=".85"/>
+<rect x="392" y="250" width="16" height="40" fill="#0f2a1e"/><rect x="350" y="288" width="100" height="10" rx="4" fill="#0f2a1e"/>
+<rect x="40" y="380" width="140" height="14" rx="4" fill="#8a6a3a"/>
+<rect x="68" y="318" width="84" height="56" rx="5" fill="#1b2f25"/><rect x="73" y="323" width="74" height="44" rx="2" fill="#dff0e5"/>
+<polyline points="80,357 95,345 110,350 125,336 140,340" fill="none" stroke="#2d6b49" stroke-width="3"/>
+<g transform="translate(110,420) scale(1.0)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#2d6b49"/><circle r="18" fill="#2b2118"/></g>
+<rect x="220" y="380" width="140" height="14" rx="4" fill="#8a6a3a"/>
+<rect x="248" y="318" width="84" height="56" rx="5" fill="#1b2f25"/><rect x="253" y="323" width="74" height="44" rx="2" fill="#dff0e5"/>
+<polyline points="260,357 275,345 290,350 305,336 320,340" fill="none" stroke="#2d6b49" stroke-width="3"/>
+<g transform="translate(290,420) scale(1.0)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#3f8a5f"/><circle r="18" fill="#1d1712"/></g>
+<rect x="440" y="380" width="140" height="14" rx="4" fill="#8a6a3a"/>
+<rect x="468" y="318" width="84" height="56" rx="5" fill="#1b2f25"/><rect x="473" y="323" width="74" height="44" rx="2" fill="#dff0e5"/>
+<polyline points="480,357 495,345 510,350 525,336 540,340" fill="none" stroke="#2d6b49" stroke-width="3"/>
+<g transform="translate(510,420) scale(1.0)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#24583d"/><circle r="18" fill="#3a2a1e"/></g>
+<rect x="620" y="380" width="140" height="14" rx="4" fill="#8a6a3a"/>
+<rect x="648" y="318" width="84" height="56" rx="5" fill="#1b2f25"/><rect x="653" y="323" width="74" height="44" rx="2" fill="#dff0e5"/>
+<polyline points="660,357 675,345 690,350 705,336 720,340" fill="none" stroke="#2d6b49" stroke-width="3"/>
+<g transform="translate(690,420) scale(1.0)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#2d6b49"/><circle r="18" fill="#2b2118"/></g>
+<rect y="410" width="800" height="90" fill="url(#bong)"/>
+<g font-family="Segoe UI, Arial, sans-serif"><rect x="650" y="464" width="134" height="22" rx="11" fill="rgba(0,0,0,.35)"/><text x="717" y="479" font-size="12" fill="#fff" text-anchor="middle" letter-spacing="1">ẢNH MINH HOẠ</text></g>
+</svg>

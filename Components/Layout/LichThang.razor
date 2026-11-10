@@ -6,13 +6,13 @@
         if (n.DayOfWeek == DayOfWeek.Sunday) continue;
         var ngay = n;
         var trongNgay = Buoi.Where(b => b.Buoi.Ngay.Date == ngay).OrderBy(b => b.Buoi.TietBatDau).ToList();
-        <button type="button" role="gridcell" class="lt2-o @(ngay.Month != Moc.Month ? "ngoai-thang" : "") @(ngay == DateTime.Today ? "hom-nay" : "") @(trongNgay.Count == 0 ? "trong" : "")" aria-label="@($"{QuyTacHocVu.TenThu(ngay)} {ngay:dd/MM}: {trongNgay.Count} buổi")" @onclick="() => KhiChonNgay.InvokeAsync(ngay)">
-            <span class="lt2-so">@ngay.Day</span>
+        <button type="button" role="gridcell" class="lt2-o @(ngay.Month != Moc.Month ? "ngoai-thang" : "") @(ngay == DateTime.Today ? "hom-nay" : "") @(ngay == NgayTim ? "ngay-tim" : "") @(trongNgay.Count == 0 ? "trong" : "")" aria-label="@($"{QuyTacHocVu.TenThu(ngay)} {ngay:dd/MM}: {trongNgay.Count} buổi")" @onclick="() => KhiChonNgay.InvokeAsync(ngay)">
+            <span class="lt2-so">@ngay.Day</span>@if (ngay == NgayTim) { <span class="nhan-ngay-tim">Ngày đang xem</span> }
             @if (trongNgay.Count is > 0 and <= 3)
             {
                 @foreach (var b in trongNgay)
                 {
-                    <span class="lt2-buoi @LichMaTranLop.LopTrangThai(b)" title="@LichMaTranLop.MoTaBuoi(b)"><b>T@(b.Buoi.TietBatDau)–@b.Buoi.TietKetThuc</b> @b.TenChuyenDe</span>
+                    <span class="lt2-buoi @LichMaTranLop.LopTrangThai(b)" data-noi><b>T@(b.Buoi.TietBatDau)–@b.Buoi.TietKetThuc</b> @b.TenChuyenDe<NoiDungBuoi Buoi="b" Them="@ThongTinThem.GetValueOrDefault(b.Buoi.Id)" GoiY="Bấm ô ngày để xem cả ngày" /></span>
                 }
             }
             else if (trongNgay.Count > 3)
@@ -29,6 +29,8 @@
     [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
     [Parameter, EditorRequired] public DateTime Moc { get; set; }
     [Parameter] public EventCallback<DateTime> KhiChonNgay { get; set; }
+    [Parameter] public DateTime? NgayTim { get; set; }
+    [Parameter] public IReadOnlyDictionary<int, DichVuDaoTao.ThongTinBuoiThem> ThongTinThem { get; set; } = new Dictionary<int, DichVuDaoTao.ThongTinBuoiThem>();
 
     private DateTime DauThang => new(Moc.Year, Moc.Month, 1);
     private DateTime DauLuoi => QuyTacHocVu.DauTuan(DauThang);

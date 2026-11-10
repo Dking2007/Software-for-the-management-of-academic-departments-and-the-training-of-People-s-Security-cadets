@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500" role="img" aria-label="Kiểm tra kết thúc chuyên đề">
+<title>Kiểm tra kết thúc chuyên đề (ảnh minh hoạ)</title>
+<defs>
+<linearGradient id="nen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efe9dc"/><stop offset="1" stop-color="#e2d9c6"/></linearGradient>
+<linearGradient id="bong" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>
+</defs>
+<rect width="800" height="500" fill="url(#nen)"/>
+<rect x="0" y="300" width="800" height="200" fill="#d8cfbd"/>
+<rect x="70" y="40" width="450" height="170" rx="6" fill="#20473a"/>
+<g font-family="Segoe UI, Arial" fill="#e7efe9" font-size="21" font-weight="600"><text x="105" y="95">KIỂM TRA KẾT THÚC CHUYÊN ĐỀ</text><text x="110" y="140" font-size="20" opacity=".8">Thời gian: 90 phút</text><text x="110" y="175" font-size="20" opacity=".8">Không sử dụng tài liệu</text></g>
+<circle cx="640" cy="110" r="62" fill="#fff" stroke="#5a5a5a" stroke-width="8"/>
+<line x1="640" y1="110" x2="640" y2="70" stroke="#222" stroke-width="6" stroke-linecap="round"/><line x1="640" y1="110" x2="670" y2="124" stroke="#222" stroke-width="5" stroke-linecap="round"/>
+<g fill="#555"><circle cx="690.0" cy="110.0" r="3.5"/><circle cx="683.3" cy="135.0" r="3.5"/><circle cx="665.0" cy="153.3" r="3.5"/><circle cx="640.0" cy="160.0" r="3.5"/><circle cx="615.0" cy="153.3" r="3.5"/><circle cx="596.7" cy="135.0" r="3.5"/><circle cx="590.0" cy="110.0" r="3.5"/><circle cx="596.7" cy="85.0" r="3.5"/><circle cx="615.0" cy="66.7" r="3.5"/><circle cx="640.0" cy="60.0" r="3.5"/><circle cx="665.0" cy="66.7" r="3.5"/><circle cx="683.3" cy="85.0" r="3.5"/></g>
+<g transform="translate(110,300) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#2d6b49"/><circle r="18" fill="#2b2118"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="40" y="348" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="80" y="338" width="60" height="12" fill="#fff" transform="rotate(-6 110 344)"/>
+<g transform="translate(300,300) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#3f8a5f"/><circle r="18" fill="#1d1712"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="230" y="348" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="270" y="338" width="60" height="12" fill="#fff" transform="rotate(-6 300 344)"/>
+<g transform="translate(490,300) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#24583d"/><circle r="18" fill="#3a2a1e"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="420" y="348" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="460" y="338" width="60" height="12" fill="#fff" transform="rotate(-6 490 344)"/>
+<g transform="translate(680,300) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#2d6b49"/><circle r="18" fill="#2b2118"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="610" y="348" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="650" y="338" width="60" height="12" fill="#fff" transform="rotate(-6 680 344)"/>
+<g transform="translate(140,390) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#3f8a5f"/><circle r="18" fill="#1d1712"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="70" y="438" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="110" y="428" width="60" height="12" fill="#fff" transform="rotate(-6 140 434)"/>
+<g transform="translate(330,390) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#24583d"/><circle r="18" fill="#3a2a1e"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="260" y="438" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="300" y="428" width="60" height="12" fill="#fff" transform="rotate(-6 330 434)"/>
+<g transform="translate(520,390) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#2d6b49"/><circle r="18" fill="#2b2118"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="450" y="438" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="490" y="428" width="60" height="12" fill="#fff" transform="rotate(-6 520 434)"/>
+<g transform="translate(710,390) scale(0.9)"><path d="M-30 60 Q-30 20 0 20 Q30 20 30 60 Z" fill="#3f8a5f"/><circle r="18" fill="#1d1712"/><path d="M-20 -6 Q0 -28 20 -6 Z" fill="#1b4b34"/><rect x="-22" y="-8" width="44" height="5" rx="2.5" fill="#123526"/></g>
+<rect x="640" y="438" width="140" height="16" rx="4" fill="#8a6a3a"/><rect x="680" y="428" width="60" height="12" fill="#fff" transform="rotate(-6 710 434)"/>
+<rect y="410" width="800" height="90" fill="url(#bong)"/>
+<g font-family="Segoe UI, Arial, sans-serif"><rect x="650" y="464" width="134" height="22" rx="11" fill="rgba(0,0,0,.35)"/><text x="717" y="479" font-size="12" fill="#fff" text-anchor="middle" letter-spacing="1">ẢNH MINH HOẠ</text></g>
+</svg>

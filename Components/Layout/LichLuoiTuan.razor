@@ -4,7 +4,7 @@
     @for (var d = 0; d < 6; d++)
     {
         var ngay = DauTuan.AddDays(d);
-        <div class="dau-ngay @(ngay == DateTime.Today ? "hom-nay" : "")" role="columnheader"><span>@QuyTacHocVu.TenThu(ngay)</span><strong>@ngay.ToString("dd/MM")</strong></div>
+        <div class="dau-ngay @(ngay == DateTime.Today ? "hom-nay" : "") @(ngay == NgayTim ? "ngay-tim" : "")" role="columnheader"><span>@QuyTacHocVu.TenThu(ngay)</span><strong>@ngay.ToString("dd/MM")</strong>@if (ngay == NgayTim) { <span class="nhan-ngay-tim">Ngày đang xem</span> }</div>
     }
     @foreach (var buoi in new[] { "Sáng", "Chiều", "Tối" })
     {
@@ -13,7 +13,7 @@
         @for (var d = 0; d < 6; d++)
         {
             var ngay = DauTuan.AddDays(d);
-            <div class="o-lich @(ngay == DateTime.Today ? "hom-nay" : "")" role="gridcell">
+            <div class="o-lich @(ngay == DateTime.Today ? "hom-nay" : "") @(ngay == NgayTim ? "ngay-tim" : "")" role="gridcell">
                 @foreach (var b in Buoi.Where(b => b.Buoi.Ngay.Date == ngay && QuyTacHocVu.Buoi(b.Buoi.TietBatDau) == buoi))
                 {
                     <TheBuoiHoc Buoi="b" DuocSua="DuocSua" DuocDiemDanh="ChoPhepDiemDanh(b.Buoi)" KhiSua="KhiSua" KhiXoa="KhiXoa" />
@@ -27,6 +27,7 @@
     [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
     [Parameter, EditorRequired] public DateTime DauTuan { get; set; }
     [Parameter] public bool DuocSua { get; set; }
+    [Parameter] public DateTime? NgayTim { get; set; }
     [Parameter] public Func<BuoiHoc, bool> ChoPhepDiemDanh { get; set; } = _ => false;
     [Parameter] public EventCallback<BuoiHoc> KhiSua { get; set; }
     [Parameter] public EventCallback<BuoiHoc> KhiXoa { get; set; }

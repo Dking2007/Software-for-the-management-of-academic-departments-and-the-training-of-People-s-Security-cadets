@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500" role="img" aria-label="Giao ban công tác quản lý học viên">
+<title>Giao ban công tác quản lý học viên (ảnh minh hoạ)</title>
+<defs>
+<linearGradient id="nen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8efe9"/><stop offset="1" stop-color="#d2ddd5"/></linearGradient>
+<linearGradient id="bong" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>
+</defs>
+<rect width="800" height="500" fill="url(#nen)"/>
+<rect x="170" y="150" width="460" height="200" rx="100" fill="#8a6a3a"/>
+<rect x="180" y="158" width="440" height="184" rx="92" fill="#a57f45"/>
+<rect x="232" y="290" width="36" height="26" fill="#fff" transform="rotate(-12 250 200)"/>
+<rect x="292" y="180" width="36" height="26" fill="#fff" transform="rotate(-8 310 200)"/>
+<rect x="352" y="290" width="36" height="26" fill="#fff" transform="rotate(-4 370 200)"/>
+<rect x="412" y="180" width="36" height="26" fill="#fff" transform="rotate(0 430 200)"/>
+<rect x="472" y="290" width="36" height="26" fill="#fff" transform="rotate(4 490 200)"/>
+<rect x="532" y="180" width="36" height="26" fill="#fff" transform="rotate(8 550 200)"/>
+<circle cx="400" cy="100" r="34" fill="#2d6b49"/><circle cx="400" cy="100" r="19" fill="#2b2118"/>
+<circle cx="290" cy="110" r="34" fill="#3f8a5f"/><circle cx="290" cy="110" r="19" fill="#1d1712"/>
+<circle cx="510" cy="110" r="34" fill="#24583d"/><circle cx="510" cy="110" r="19" fill="#3a2a1e"/>
+<circle cx="140" cy="250" r="34" fill="#2d6b49"/><circle cx="140" cy="250" r="19" fill="#2b2118"/>
+<circle cx="660" cy="250" r="34" fill="#3f8a5f"/><circle cx="660" cy="250" r="19" fill="#1d1712"/>
+<circle cx="290" cy="395" r="34" fill="#24583d"/><circle cx="290" cy="395" r="19" fill="#3a2a1e"/>
+<circle cx="510" cy="395" r="34" fill="#2d6b49"/><circle cx="510" cy="395" r="19" fill="#2b2118"/>
+<circle cx="400" cy="405" r="34" fill="#3f8a5f"/><circle cx="400" cy="405" r="19" fill="#1d1712"/>
+<rect x="355" y="230" width="90" height="40" rx="6" fill="#1b4b34"/><polygon points="400.0,236.0 403.3,245.5 413.3,245.7 405.3,251.7 408.2,261.3 400.0,255.6 391.8,261.3 394.7,251.7 386.7,245.7 396.7,245.5" fill="#d9b04a"/>
+<rect y="410" width="800" height="90" fill="url(#bong)"/>
+<g font-family="Segoe UI, Arial, sans-serif"><rect x="650" y="464" width="134" height="22" rx="11" fill="rgba(0,0,0,.35)"/><text x="717" y="479" font-size="12" fill="#fff" text-anchor="middle" letter-spacing="1">ẢNH MINH HOẠ</text></g>
+</svg>

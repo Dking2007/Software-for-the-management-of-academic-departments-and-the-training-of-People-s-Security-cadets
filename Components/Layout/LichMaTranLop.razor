@@ -1,7 +1,7 @@
 @* Ma trận lớp × ngày: mỗi lớp một hàng, nhóm theo khoá, nhóm có thể thu gọn. Một màn hình thấy được cả tuần của nhiều lớp,
    thay cho danh sách hàng chục thẻ. Bấm một buổi để xem chi tiết, sửa hoặc xoá. *@
 @{
-    var cacNgay = Enumerable.Range(0, 6).Select(i => DauTuan.AddDays(i)).ToArray();
+    var cacNgay = ChiNgay && NgayTim is { } nt ? [nt] : Enumerable.Range(0, 6).Select(i => DauTuan.AddDays(i)).ToArray();
     var cacNhom = TaoNhom();
 }
 <div class="mt-cong-cu">
@@ -22,7 +22,7 @@
                 <th scope="col">Lớp</th>
                 @foreach (var n in cacNgay)
                 {
-                    <th scope="col" class="@(n == DateTime.Today ? "hom-nay" : "")">@QuyTacHocVu.TenThu(n)<small>@n.ToString("dd/MM") · @Buoi.Count(b => b.Buoi.Ngay.Date == n) buổi</small></th>
+                    <th scope="col" class="@LopNgay(n)">@QuyTacHocVu.TenThu(n)<small>@n.ToString("dd/MM") · @Buoi.Count(b => b.Buoi.Ngay.Date == n) buổi</small>@if (n == NgayTim) { <span class="nhan-ngay-tim">Ngày đang xem</span> }</th>
                 }
             </tr>
         </thead>
@@ -31,7 +31,7 @@
             var dangMo = nhomMo.Contains(nhom.Ten);
             <tbody>
                 <tr class="mt-dong-nhom">
-                    <td colspan="7">
+                    <td colspan="@(cacNgay.Length + 1)">
                         <button type="button" aria-expanded="@(dangMo ? "true" : "false")" @onclick="() => DoiNhom(nhom.Ten)">
                             <RadzenIcon Icon="@(dangMo ? "expand_more" : "chevron_right")" /><strong>Khoá @nhom.Ten</strong>
                             <span>@nhom.CacLop.Count(l => Buoi.Any(b => b.Buoi.MaLop == l)) / @nhom.CacLop.Count lớp có lịch · @nhom.SoBuoi buổi</span>
@@ -43,16 +43,19 @@
                     @foreach (var lop in nhom.CacLop)
                     {
                         <tr>
-                            <th scope="row"><a class="record-code" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop)}?tab=lich")">@lop</a></th>
+                            <th scope="row">
+                                <a class="record-code" href="@($"/quan-ly-hoc-vien/lop/{Uri.EscapeDataString(lop)}?tab=lich")" data-noi="@(ThongTinLop.ContainsKey(lop) ? "" : null)">@lop@if (ThongTinLop.TryGetValue(lop, out var tt)) { <NoiDungLop Lop="tt" Buoi="@Buoi.Where(b => b.Buoi.MaLop == lop).ToList()" TenKy="Tuần này" /> }</a>
+                            </th>
                             @foreach (var n in cacNgay)
                             {
-                                <td class="@(n == DateTime.Today ? "hom-nay" : "")">
+                                <td class="@LopNgay(n)">
                                     @foreach (var b in Buoi.Where(x => x.Buoi.MaLop == lop && x.Buoi.Ngay.Date == n).OrderBy(x => x.Buoi.TietBatDau))
                                     {
-                                        <button type="button" class="mt-buoi @LopTrangThai(b)" title="@MoTaBuoi(b)" aria-label="@MoTaBuoi(b)" @onclick="() => KhiChon.InvokeAsync(b)">
+                                        <button type="button" class="mt-buoi @LopTrangThai(b)" data-noi aria-label="@MoTaBuoi(b)" @onclick="() => KhiChon.InvokeAsync(b)">
                                             <b>@QuyTacHocVu.Buoi(b.Buoi.TietBatDau) · T@(b.Buoi.TietBatDau)–@b.Buoi.TietKetThuc</b>
                                             <span>@b.TenChuyenDe</span>
                                             <small>@b.TenPhong</small>
+                                            <NoiDungBuoi Buoi="b" Them="@ThongTinThem.GetValueOrDefault(b.Buoi.Id)" GoiY="Bấm để xem chi tiết, sửa hoặc điểm danh" />
                                         </button>
                                     }
                                 </td>
@@ -72,6 +75,15 @@
     [Parameter, EditorRequired] public DateTime DauTuan { get; set; }
     [Parameter] public IReadOnlyList<string> CacLop { get; set; } = [];
     [Parameter] public EventCallback<BuoiHocHienThi> KhiChon { get; set; }
+    /// <summary>Thông tin lớp cho thẻ nổi khi rê chuột vào mã lớp.</summary>
+    [Parameter] public IReadOnlyDictionary<string, LopDaoTao> ThongTinLop { get; set; } = new Dictionary<string, LopDaoTao>();
+    [Parameter] public IReadOnlyDictionary<int, DichVuDaoTao.ThongTinBuoiThem> ThongTinThem { get; set; } = new Dictionary<int, DichVuDaoTao.ThongTinBuoiThem>();
+    /// <summary>Ngày người dùng chọn trên lịch: tô nổi cột đó.</summary>
+    [Parameter] public DateTime? NgayTim { get; set; }
+    /// <summary>Chỉ hiện cột của ngày đã chọn.</summary>
+    [Parameter] public bool ChiNgay { get; set; }
+
+    private string LopNgay(DateTime n) => (n == DateTime.Today ? "hom-nay " : "") + (n == NgayTim ? "ngay-tim" : "");
 
     private HashSet<string> nhomMo = [];
     private DateTime? tuanDaMo;
@@ -89,7 +101,7 @@
         => b.DaDiemDanh ? "da-diem-danh" : b.Buoi.Ngay.Date < DateTime.Today ? "chua-diem-danh" : b.Buoi.Ngay.Date == DateTime.Today ? "hom-nay" : "sap-toi";
 
     public static string MoTaBuoi(BuoiHocHienThi b)
-        => $"Lớp {b.Buoi.MaLop}, {QuyTacHocVu.TenThu(b.Buoi.Ngay)} {b.Buoi.Ngay:dd/MM}, tiết {b.Buoi.TietBatDau}–{b.Buoi.TietKetThuc} ({QuyTacHocVu.KhungGio(b.Buoi)}), {b.TenChuyenDe}, {b.TenGiangVien}, {b.TenPhong}, {DichVuBaoCaoExcel.TrangThaiBuoi(b)}";
+        => $"Lớp {b.Buoi.MaLop} · {QuyTacHocVu.TenThu(b.Buoi.Ngay)} {b.Buoi.Ngay:dd/MM} · tiết {b.Buoi.TietBatDau}–{b.Buoi.TietKetThuc} ({QuyTacHocVu.KhungGio(b.Buoi)}) · {b.TenChuyenDe} · {b.TenGiangVien} · {b.TenPhong} · {DichVuBaoCaoExcel.TrangThaiBuoi(b)}";
 
     private List<NhomLop> TaoNhom()
     {

@@ -8,7 +8,7 @@
     @for (var i = 0; i < 6; i++)
     {
         var n = DauTuan.AddDays(i);
-        <button type="button" role="tab" aria-selected="@(Ngay == n ? "true" : "false")" class="@(Ngay == n ? "dang-chon" : "") @(n == DateTime.Today ? "hom-nay" : "")" @onclick="() => KhiDoiNgay.InvokeAsync(n)">
+        <button type="button" role="tab" aria-selected="@(Ngay == n ? "true" : "false")" class="@(Ngay == n ? "dang-chon" : "") @(n == DateTime.Today ? "hom-nay" : "") @(n == NgayTim ? "ngay-tim" : "")" @onclick="() => KhiDoiNgay.InvokeAsync(n)">
             <span>@QuyTacHocVu.TenThu(n)</span><strong>@Buoi.Count(b => b.Buoi.Ngay.Date == n)</strong><small>@n.ToString("dd/MM")</small>
         </button>
     }
@@ -67,6 +67,7 @@ else
     [Parameter, EditorRequired] public DateTime DauTuan { get; set; }
     [Parameter] public DateTime? Ngay { get; set; }
     [Parameter] public EventCallback<DateTime?> KhiDoiNgay { get; set; }
+    [Parameter] public DateTime? NgayTim { get; set; }
     [Parameter] public bool DuocSua { get; set; }
     [Parameter] public Func<BuoiHoc, bool> ChoPhepDiemDanh { get; set; } = _ => false;
     [Parameter] public bool CoThaoTac { get; set; }

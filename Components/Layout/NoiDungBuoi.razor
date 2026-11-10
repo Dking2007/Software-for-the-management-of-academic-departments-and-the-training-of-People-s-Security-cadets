@@ -1,0 +1,39 @@
+@* Nội dung thẻ nổi của một buổi học (ẩn sẵn trong ô lịch; wwwroot/the-noi.js chép ra thẻ nổi khi rê chuột hoặc focus).
+   Chỉ dùng thẻ inline (span) để đặt được bên trong nút. *@
+@{
+    var b = Buoi.Buoi;
+    var trangThai = DichVuBaoCaoExcel.TrangThaiBuoi(Buoi);
+}
+<span class="noi-dung-noi" hidden>
+    <span class="tn-dau">
+        <span class="tn-nhan @LichMaTranLop.LopTrangThai(Buoi)">@trangThai</span>
+        <strong class="tn-tieu-de">@Buoi.TenChuyenDe</strong>
+        <small class="tn-phu">@b.MaChuyenDe@(Them is { TongBuoi: > 0 } t ? $" · buổi {t.ThuTu}/{t.TongBuoi}" : "")</small>
+    </span>
+    <span class="tn-luoi">
+        <span class="tn-dong"><span class="tn-ten">Lớp</span><span class="tn-gt">@b.MaLop · @Buoi.SiSo học viên</span></span>
+        <span class="tn-dong"><span class="tn-ten">Thời gian</span><span class="tn-gt">@QuyTacHocVu.TenThu(b.Ngay) @b.Ngay.ToString("dd/MM/yyyy")</span></span>
+        <span class="tn-dong"><span class="tn-ten">Tiết</span><span class="tn-gt">@QuyTacHocVu.Buoi(b.TietBatDau) · tiết @b.TietBatDau–@b.TietKetThuc (@QuyTacHocVu.KhungGio(b))</span></span>
+        <span class="tn-dong"><span class="tn-ten">Giảng viên</span><span class="tn-gt">@Buoi.TenGiangVien</span></span>
+        <span class="tn-dong"><span class="tn-ten">Phòng</span><span class="tn-gt">@Buoi.TenPhong</span></span>
+        @if (Them?.CoMat is int coMat)
+        {
+            <span class="tn-dong"><span class="tn-ten">Có mặt</span><span class="tn-gt">@coMat / @Buoi.SiSo học viên</span></span>
+        }
+    </span>
+    @if (!string.IsNullOrWhiteSpace(Them?.NoiDung))
+    {
+        <span class="tn-so-dau-bai"><span class="tn-ten">Sổ đầu bài@(Them!.XepLoai is { } xl ? $" · xếp loại {xl}" : "")</span><span class="tn-gt">@Them.NoiDung</span></span>
+    }
+    else if (b.GhiChu != "")
+    {
+        <span class="tn-so-dau-bai"><span class="tn-ten">Ghi chú</span><span class="tn-gt">@b.GhiChu</span></span>
+    }
+    @if (GoiY is not null) { <span class="tn-goi-y">@GoiY</span> }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public BuoiHocHienThi Buoi { get; set; } = default!;
+    [Parameter] public DichVuDaoTao.ThongTinBuoiThem? Them { get; set; }
+    [Parameter] public string? GoiY { get; set; }
+}

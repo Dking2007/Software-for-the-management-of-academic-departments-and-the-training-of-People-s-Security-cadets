@@ -1,6 +1,7 @@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @inject NavigationManager DieuHuong
+@inject DichVuQuanLyDuLieuDemo DuLieu
 
 <div class="sidebar-menu @(menuDangMo ? "menu-open" : string.Empty)">
     <div class="brand-block">
@@ -34,7 +35,7 @@
                                 <ul class="menu-con" id="@($"menu-{nhom.Ma}")">
                                     @foreach (var muc in nhom.CacMuc)
                                     {
-                                        <li><NavLink class="muc-con" href="@muc.DuongDan" Match="NavLinkMatch.All">@TuyChon.Dich(muc.Ten)</NavLink></li>
+                                        <li><NavLink class="muc-con" href="@muc.DuongDan" Match="@(muc.KhopTienTo ? NavLinkMatch.Prefix : NavLinkMatch.All)" title="@TuyChon.Dich(muc.Ten)">@TuyChon.Dich(muc.Ten)</NavLink></li>
                                     }
                                 </ul>
                             }
@@ -71,7 +72,7 @@
 </div>
 
 @code {
-    private sealed record MucMenu(string Ten, string DuongDan);
+    private sealed record MucMenu(string Ten, string DuongDan, bool KhopTienTo = false);
     private sealed record NhomMenu(string Ma, string Ten, string BieuTuong, string DuongDan, MucMenu[] CacMuc);
     [CascadingParameter] private Task<AuthenticationState>? TrangThaiXacThuc { get; set; }
     private NhomMenu[] cacNhom = [];
@@ -87,21 +88,21 @@
         if (nd.LaHocVien) nhom.Add(new("ca-nhan", "Học tập của tôi", "person", "/cua-toi", [new("Tổng quan cá nhân", "/cua-toi"), new("Lịch học", "/dao-tao/lich")]));
         // Mỗi manager thấy đủ mảng mình sở hữu; mảng khác chỉ hiện mục phối hợp (xem) cần cho công việc.
         MucMenu[] khoaDu = [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Tổ chuyên môn", "/khoa/to"), new("Cán bộ, giảng viên", "/khoa/can-bo"), new("Điểm danh đi làm", "/khoa/cham-cong")];
-        MucMenu[] daoTaoDu = [new("Tổng quan đào tạo", "/dao-tao"), new("Chuyên ngành", "/dao-tao/chuyen-nganh"), new("Khóa và niên khóa", "/dao-tao/khoa-hoc"), new("Chuyên đề", "/dao-tao/chuyen-de"), new("Chương trình & phân công", "/dao-tao/chuong-trinh"), new("Lịch đào tạo", "/dao-tao/lich"), new("Phòng học", "/dao-tao/phong"), new("Xét tư cách & lịch thi", "/dao-tao/thi")];
+        MucMenu[] daoTaoDu = [new("Tổng quan đào tạo", "/dao-tao"), new("Chuyên ngành", "/dao-tao/chuyen-nganh"), new("Khóa và niên khóa", "/dao-tao/khoa-hoc"), new("Chuyên đề", "/dao-tao/chuyen-de"), new("Chương trình & phân công", "/dao-tao/chuong-trinh"), new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp", "/dao-tao/lich/tinh-hinh"), new("Phòng học", "/dao-tao/phong"), new("Xét tư cách & lịch thi", "/dao-tao/thi")];
         if (nd.LaAdmin || nd.LaQuanLy("Khoa")) nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu));
         else if (nd.LaQuanLy("DaoTao")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Cán bộ, giảng viên", "/khoa/can-bo")]));
         else if (nd.LaQuanLy("Lop")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Cán bộ, giảng viên", "/khoa/can-bo")]));
         else if (nd.LaGiangVien || nd.VaiTro == "Guest") nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu.Take(4).ToArray()));
         if (nd.LaAdmin || nd.LaQuanLy("DaoTao") || nd.LaGiangVien) nhom.Add(new("dao-tao", "Quản lý đào tạo", "menu_book", "/dao-tao", daoTaoDu));
         else if (nd.LaQuanLy("Khoa")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Chuyên đề (GV đủ điều kiện)", "/dao-tao/chuyen-de"), new("Lịch đào tạo", "/dao-tao/lich"), new("Xét tư cách thi (khoa xác nhận)", "/dao-tao/thi")]));
-        else if (nd.LaQuanLy("Lop")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Lịch đào tạo", "/dao-tao/lich"), new("Chương trình (xem)", "/dao-tao/chuong-trinh"), new("Xét tư cách thi (đề xuất)", "/dao-tao/thi")]));
+        else if (nd.LaQuanLy("Lop")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp", "/dao-tao/lich/tinh-hinh"), new("Chương trình (xem)", "/dao-tao/chuong-trinh"), new("Xét tư cách thi (đề xuất)", "/dao-tao/thi")]));
         else if (nd.VaiTro == "Guest") nhom.Add(new("dao-tao", "Quản lý đào tạo", "menu_book", "/dao-tao", daoTaoDu.Take(4).ToArray()));
         // Quản lý khoa không xem danh sách lớp/học viên; Quản lý đào tạo chỉ thấy lớp ở mức tổng hợp (hàng rào 2).
         if (nd.LaQuanLy("Khoa")) { }
-        else if (nd.LaQuanLy("DaoTao")) nhom.Add(new("hoc-vien", "Lớp (tổng hợp)", "school", "/quan-ly-hoc-vien", [new("Danh sách lớp", "/quan-ly-hoc-vien/lop")]));
+        else if (nd.LaQuanLy("DaoTao")) nhom.Add(new("hoc-vien", "Lớp (tổng hợp)", "school", "/quan-ly-hoc-vien", [new("Tổng quan các hệ", "/quan-ly-hoc-vien/lop"), .. CacMucHe()]));
         else if (nd.LaGiangVien) nhom.Add(new("hoc-vien", "Lớp tôi dạy", "school", "/quan-ly-hoc-vien", [new("Danh sách lớp", "/quan-ly-hoc-vien/lop"), new("Học viên các lớp", "/quan-ly-hoc-vien/hoc-vien")]));
         else if (nd.LaHocVien) nhom.Add(new("hoc-vien", "Lớp của tôi", "school", "/quan-ly-hoc-vien", [new("Thông tin lớp", "/quan-ly-hoc-vien/lop")]));
-        else nhom.Add(new("hoc-vien", "Quản lý học viên", "school", "/quan-ly-hoc-vien", [new("Danh sách lớp", "/quan-ly-hoc-vien/lop"), new("Danh sách học viên", "/quan-ly-hoc-vien/hoc-vien")]));
+        else nhom.Add(new("hoc-vien", "Quản lý học viên", "school", "/quan-ly-hoc-vien", [new("Tổng quan các hệ", "/quan-ly-hoc-vien/lop"), .. CacMucHe(), new("Danh sách học viên", "/quan-ly-hoc-vien/hoc-vien")]));
         cacNhom = nhom.ToArray();
         var quanTri = new List<MucMenu>();
         if (nd.LaAdmin || nd.LaQuanLy("DaoTao") || nd.LaQuanLy("Lop")) quanTri.Add(new("Tài khoản và phân quyền", "/quan-tri/tai-khoan"));
@@ -110,6 +111,10 @@
         cacMucQuanTri = quanTri.ToArray();
         CapNhat();
     }
+    // Mỗi hệ đào tạo có dữ liệu là một mục riêng; vào trong là khoá, rồi tới lớp.
+    private MucMenu[] CacMucHe() => DuLieu.LayDanhSachLop().Select(l => l.HeDaoTao).Distinct()
+        .OrderBy(h => Array.IndexOf(QuyTacDuLieu.CacHeDaoTao, h))
+        .Select(h => new MucMenu("Hệ " + h.ToLowerInvariant(), "/quan-ly-hoc-vien/he/" + QuyTacDuLieu.MaHe(h), true)).ToArray();
     private bool menuDangMo;
     private string phanHe = "";
     private readonly HashSet<string> nhomMo = [];

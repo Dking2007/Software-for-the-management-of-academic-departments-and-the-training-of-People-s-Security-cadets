@@ -61,8 +61,23 @@
                         <h1>@bai.TieuDe</h1>
                         <div class="bt-meta"><span><RadzenIcon Icon="person" />@bai.TacGia</span><span><RadzenIcon Icon="schedule" />@GioDang(bai.DangLuc)</span><span><RadzenIcon Icon="visibility" />@bai.LuotXem.ToString("N0") lượt xem</span></div>
                         <p class="bt-sapo">@bai.Sapo</p>
-                        <AnhTin Bai="bai" Lon="true" />
-                        <div class="bt-noi-dung">@foreach (var doan in bai.NoiDung.Split('\n', StringSplitOptions.RemoveEmptyEntries)) { <p>@doan</p> }</div>
+                        <figure class="bt-anh-trong-bai"><AnhTin Bai="bai" Lon="true" />@if (bai.Anh is null) { <figcaption class="bt-chu-thich-anh">Ảnh minh hoạ cho bài viết “@bai.TieuDe”</figcaption> }</figure>
+                        <div class="bt-noi-dung">
+                            @foreach (var doan in bai.NoiDung.Split('\n', StringSplitOptions.RemoveEmptyEntries).Where(d => d.Trim() != bai.Sapo.Trim()))
+                            {
+                                // Đoạn có liên kết bị tách thành nhiều nút chữ nên dịch nguyên đoạn ở máy chủ (giữ cú pháp liên kết), rồi chặn bộ dịch phía trình duyệt.
+                                var dich = TuDienGiaoDien.Dich(NgonNgu, doan);
+                                <p translate="@(dich != doan ? "no" : null)">@foreach (var phan in DichVuBanTin.TachLienKet(dich)) { if (phan.DuongDan is null) { @phan.Chu } else { <a href="@phan.DuongDan">@phan.Chu</a> } }</p>
+                            }
+                        </div>
+                        @{ var lienKet = DichVuBanTin.LienKetLienQuan(bai); }
+                        @if (lienKet.Count > 0)
+                        {
+                            <aside class="bt-lien-ket" aria-label="Xem thêm trên hệ thống">
+                                <h2>Xem thêm trên hệ thống</h2>
+                                @foreach (var lk in lienKet) { <a href="@lk.DuongDan"><RadzenIcon Icon="@lk.BieuTuong" />@lk.Ten ›</a> }
+                            </aside>
+                        }
                         @if (laAdmin)
                         {
                             <div class="hanh-dong-tin"><RadzenButton Text="Sửa bài" Icon="edit" ButtonStyle="ButtonStyle.Light" Click="() => MoBieuMau(bai.TaoBanSao())" /><RadzenButton Text="Xoá bài" Icon="delete" ButtonStyle="ButtonStyle.Danger" Click="() => Xoa(bai)" /></div>
@@ -111,6 +126,24 @@
                             </div>
                         </section>
                     }
+                    <section class="bt-khoi">
+                        <h2 class="bt-tieu-de-khoi"><span>Hình ảnh hoạt động</span><small>Ảnh minh hoạ</small></h2>
+                        <div class="bt-thu-vien-luoi">
+                            @foreach (var b in cacBai.DistinctBy(b => b.Anh ?? DichVuBanTin.AnhMinhHoa(b)).Skip(1).Take(5))
+                            {
+                                <a href="@($"/ban-tin/{b.Id}")"><img src="@(b.Anh ?? DichVuBanTin.AnhMinhHoa(b))" alt="" loading="lazy" /><span>@b.TieuDe</span></a>
+                            }
+                        </div>
+                    </section>
+                    <section class="bt-khoi">
+                        <h2 class="bt-tieu-de-khoi"><span>Lối tắt nghiệp vụ</span></h2>
+                        <div class="bt-loi-tat">
+                            <a href="/dao-tao/lich"><RadzenIcon Icon="calendar_month" /><span><strong>Lịch đào tạo</strong><small>@soBuoiHomNay buổi học hôm nay</small></span></a>
+                            <a href="/dao-tao/lich/tinh-hinh"><RadzenIcon Icon="fact_check" /><span><strong>Tình hình lên lớp</strong><small>@soLopHomNay lớp lên lớp hôm nay</small></span></a>
+                            <a href="/thong-bao"><RadzenIcon Icon="description" /><span><strong>Văn bản, thông báo</strong><small>@vanBan.Count văn bản mới</small></span></a>
+                            <a href="/quan-ly-hoc-vien/lop"><RadzenIcon Icon="school" /><span><strong>Lớp đào tạo theo hệ</strong><small>Chính quy, văn bằng 2</small></span></a>
+                        </div>
+                    </section>
                     @foreach (var cm in TinTuc.CacChuyenMuc)
                     {
                         var dsMuc = cacBai.Where(b => b.ChuyenMuc == cm).Take(4).ToList();
@@ -152,6 +185,7 @@
 
 @code {
     [Parameter] public int? Id { get; set; }
+    [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNgu { get; set; } = "vi";
     private List<TinTuc> cacBai = [];
     private List<ThongBao> vanBan = [];
     private TinTuc? baiMo;

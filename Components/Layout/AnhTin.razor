@@ -1,19 +1,9 @@
-@* Ảnh bài viết: dùng ảnh đã tải lên; nếu chưa có thì vẽ ảnh minh hoạ bằng CSS theo chuyên mục (không dùng ảnh bên ngoài). *@
-@if (Bai.Anh is not null)
-{
-    <img class="bt-anh @(Lon ? "lon" : "")" src="@Bai.Anh" alt="@Bai.TieuDe" loading="lazy" />
-}
-else
-{
-    <span class="bt-anh bt-anh-ve muc-@MaMuc @(Lon ? "lon" : "")" role="img" aria-label="Ảnh minh hoạ chuyên mục @Bai.ChuyenMuc">
-        <RadzenIcon Icon="@BieuTuong" />
-        @if (Lon) { <small>@Bai.ChuyenMuc</small> }
-    </span>
-}
+@* Ảnh bài viết: ảnh đã tải lên; nếu chưa có thì dùng ảnh minh hoạ SVG vẽ sẵn theo nội dung bài (wwwroot/images/ban-tin, không dùng ảnh bên ngoài). *@
+<span class="bt-khung-anh">
+    <img class="bt-anh @(Lon ? "lon" : "")" src="@(Bai.Anh ?? DichVuBanTin.AnhMinhHoa(Bai))" alt="@(Bai.Anh is null ? $"Ảnh minh hoạ: {Bai.TieuDe}" : Bai.TieuDe)" loading="lazy" />
+</span>
 
 @code {
     [Parameter, EditorRequired] public TinTuc Bai { get; set; } = default!;
     [Parameter] public bool Lon { get; set; }
-    private int MaMuc => Math.Max(0, Array.IndexOf(TinTuc.CacChuyenMuc, Bai.ChuyenMuc));
-    private string BieuTuong => MaMuc switch { 0 => "account_balance", 1 => "school", 2 => "science", 3 => "groups", 4 => "gavel", _ => "sports_martial_arts" };
 }

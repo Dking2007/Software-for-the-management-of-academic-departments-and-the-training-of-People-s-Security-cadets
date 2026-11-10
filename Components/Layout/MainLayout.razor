@@ -117,6 +117,11 @@
     private void DongMenuNguoiDung() => menuNguoiDungMo = false;
     private void PhimTrongMenu(KeyboardEventArgs e) { if (e.Key == "Escape") menuNguoiDungMo = false; }
 
+    private string? KhoaTrenDuongDan()
+    {
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(new Uri(DieuHuong.Uri).Query);
+        return q.TryGetValue("khoa", out var v) && !string.IsNullOrWhiteSpace(v) ? v.ToString() : null;
+    }
     private string DuongDanHienTai => DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0].Trim('/');
     private bool LaTrangChu => string.IsNullOrEmpty(DuongDanHienTai);
 
@@ -149,9 +154,22 @@
         var cacDoan = DuongDanHienTai.Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (cacDoan.FirstOrDefault() == "quan-ly-hoc-vien" || DuongDanHienTai is "lop" or "hoc-vien")
         {
-            chuoi = [new("Quản lý học viên", "/quan-ly-hoc-vien"), new((DuongDanHienTai == "hoc-vien" || DuongDanHienTai.EndsWith("/hoc-vien")) ? "Danh sách học viên" : "Danh sách lớp", "/quan-ly-hoc-vien/lop")];
-            if (cacDoan.Length == 3) chuoi = [new("Quản lý học viên", "/quan-ly-hoc-vien"), new("Danh sách lớp", "/quan-ly-hoc-vien/lop"), new(Uri.UnescapeDataString(cacDoan[2]))];
+            // Đi từ ngoài vào trong: Quản lý học viên → Hệ → Khoá → Lớp.
+            MucDuongDan goc = new("Quản lý học viên", "/quan-ly-hoc-vien/lop");
+            if (DuongDanHienTai == "hoc-vien" || DuongDanHienTai.EndsWith("/hoc-vien")) chuoi = [goc, new("Danh sách học viên")];
+            else if (cacDoan.Length == 3 && cacDoan[1] == "he" && QuyTacDuLieu.HeTuMa(cacDoan[2]) is { } he)
+                chuoi = KhoaTrenDuongDan() is { } kh ? [goc, new("Hệ " + he.ToLowerInvariant(), "/quan-ly-hoc-vien/he/" + cacDoan[2]), new("Khoá " + kh)] : [goc, new("Hệ " + he.ToLowerInvariant())];
+            else if (cacDoan.Length == 3 && cacDoan[1] == "lop")
+            {
+                var ma = Uri.UnescapeDataString(cacDoan[2]);
+                var heLop = QuyTacDuLieu.HeTuMaLop(ma);
+                chuoi = heLop == "" ? [goc, new(ma)]
+                    : [goc, new("Hệ " + heLop.ToLowerInvariant(), "/quan-ly-hoc-vien/he/" + QuyTacDuLieu.MaHe(heLop)), new("Khoá " + LichMaTranLop.KhoaCuaLop(ma), $"/quan-ly-hoc-vien/he/{QuyTacDuLieu.MaHe(heLop)}?khoa={LichMaTranLop.KhoaCuaLop(ma)}"), new(ma)];
+            }
+            else chuoi = [goc, new("Tổng quan các hệ")];
         }
+        else if (cacDoan.FirstOrDefault() == "dao-tao" && cacDoan.Length == 3 && cacDoan[1] == "lich" && cacDoan[2] == "tinh-hinh")
+            chuoi = [new("Quản lý đào tạo", "/dao-tao"), new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp")];
         else if (cacDoan.FirstOrDefault() == "dao-tao")
             chuoi = cacDoan.Length == 1 ? [new("Quản lý đào tạo")] : [new("Quản lý đào tạo", "/dao-tao"), new(cacDoan[1] switch { "chuyen-nganh" => "Chuyên ngành", "chuyen-de" => "Chuyên đề", "lich" => "Lịch đào tạo", "phong" => "Phòng học", "chuong-trinh" => "Chương trình & phân công", "thi" => "Xét tư cách & lịch thi", _ => "Khóa và niên khóa" })];
         else if (cacDoan.FirstOrDefault() == "ban-tin" && cacDoan.Length == 2)

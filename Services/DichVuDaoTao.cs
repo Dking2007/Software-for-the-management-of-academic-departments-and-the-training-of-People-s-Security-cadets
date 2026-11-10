@@ -212,6 +212,40 @@ public sealed class DichVuDaoTao(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, Kho
             tenPhong.GetValueOrDefault(b.MaPhong, b.MaPhong), siSo.GetValueOrDefault(b.MaLop), daDiemDanh.Contains(b.Id))).ToList();
     }
 
+    /// <summary>Thông tin thêm của một buổi cho thẻ nổi trên lịch: buổi thứ mấy của chuyên đề, sổ đầu bài, số có mặt.</summary>
+    public sealed record ThongTinBuoiThem(int ThuTu, int TongBuoi, string? NoiDung, string? XepLoai, int? CoMat);
+
+    /// <summary>
+    /// Bổ sung cho các buổi đang hiển thị. Nội dung sổ đầu bài theo đúng quyền xem sổ (Admin, các quản lý, giảng viên);
+    /// học viên chỉ thấy thứ tự buổi, không thấy nội dung sổ hay số có mặt.
+    /// </summary>
+    public async Task<Dictionary<int, ThongTinBuoiThem>> LayThongTinThemAsync(IReadOnlyCollection<BuoiHoc> cacBuoi)
+    {
+        var nd = await phanQuyen.LayNguoiDungAsync();
+        if (cacBuoi.Count == 0 || !nd.DaDangNhap || nd.VaiTro == "Guest") return [];
+        await using var db = await csdl.CreateDbContextAsync();
+        var lop = cacBuoi.Select(b => b.MaLop).Distinct().ToList();
+        var cd = cacBuoi.Select(b => b.MaChuyenDe).Distinct().ToList();
+        var cung = await db.BuoiHoc.AsNoTracking().Where(b => lop.Contains(b.MaLop) && cd.Contains(b.MaChuyenDe))
+            .Select(b => new { b.Id, b.MaLop, b.MaChuyenDe, b.Ngay, b.TietBatDau }).ToListAsync();
+        var thuTu = cung.GroupBy(b => (b.MaLop, b.MaChuyenDe))
+            .SelectMany(g => g.OrderBy(x => x.Ngay).ThenBy(x => x.TietBatDau).Select((x, i) => (x.Id, ThuTu: i + 1, Tong: g.Count())))
+            .ToDictionary(t => t.Id);
+        var ids = cacBuoi.Select(b => b.Id).ToList();
+        var xemSo = nd.LaAdmin || nd.VaiTro == "Manager" || nd.LaGiangVien;
+        var so = xemSo ? await db.SoDauBai.AsNoTracking().Where(s => ids.Contains(s.BuoiHocId)).ToDictionaryAsync(s => s.BuoiHocId) : [];
+        var coMat = xemSo
+            ? (await db.DiemDanh.Where(d => ids.Contains(d.BuoiHocId) && (d.TrangThai == TrangThaiDiemDanh.CoMat || d.TrangThai == TrangThaiDiemDanh.DiMuon)).Select(d => d.BuoiHocId).ToListAsync())
+                .GroupBy(x => x).ToDictionary(g => g.Key, g => g.Count())
+            : [];
+        return cacBuoi.ToDictionary(b => b.Id, b =>
+        {
+            var t = thuTu.GetValueOrDefault(b.Id);
+            var s = so.GetValueOrDefault(b.Id);
+            return new ThongTinBuoiThem(t.ThuTu, t.Tong, s?.NoiDung, s?.XepLoaiTiet, coMat.TryGetValue(b.Id, out var n) ? n : null);
+        });
+    }
+
     /// <summary>Mọi lý do buổi học không xếp được (trống nếu hợp lệ). Không dừng ở lỗi đầu tiên để người dùng sửa một lần.</summary>
     public async Task<List<string>> KiemTraBuoiHocAsync(BuoiHoc b)
     {

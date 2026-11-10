@@ -15,7 +15,7 @@
                 <div class="cd-chon" role="radiogroup" aria-label="Giao diện">
                     @foreach (var (ma, nhan, icon) in new[] { ("sang", "Sáng", "light_mode"), ("toi", "Tối", "dark_mode"), ("he-thong", "Theo hệ thống", "contrast") })
                     {
-                        <button type="button" role="radio" aria-checked="@(t.GiaoDien == ma ? "true" : "false")" class="@(t.GiaoDien == ma ? "dang-chon" : "")" @onclick="() => Dat(x => x.GiaoDien = ma)"><RadzenIcon Icon="@icon" />@TuyChon.Dich(nhan)</button>
+                        <button type="button" role="radio" aria-checked="@(t.GiaoDien == ma ? "true" : "false")" class="@(t.GiaoDien == ma ? "dang-chon" : "")" @onclick="() => Dat(x => x.GiaoDien = ma)"><RadzenIcon Icon="@icon" /><span translate="no">@(TuyChon.NgonNgu == "vi" ? nhan : TuyChon.Dich("Giao diện " + nhan.ToLowerInvariant()))</span></button>
                     }
                 </div>
                 <label for="chon-ngon-ngu">@TuyChon.Dich("Ngôn ngữ")</label>
