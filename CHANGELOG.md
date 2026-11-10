@@ -2,6 +2,17 @@
 
 Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân. Dữ liệu và tài khoản đều giả lập, phục vụ học tập. Mới nhất ở trên.
 
+## 10/11/2026 (tối): Trực ban khoa
+
+- Trang mới **Trực ban** (`/khoa/truc-ban`, Quản lý khoa → Trực ban). Thiết kế ở `docs/THIET_KE_TONG_THE.md` mục 6.6.
+- Quyền theo ca: đúng ngày trực, người trực điểm danh đi làm cho cán bộ toàn khoa, nắm quân số học viên học chuyên đề của khoa ở mức số liệu, ghi sổ trực ban, chốt báo cáo. Hết ngày, đổi người trực hoặc chốt báo cáo thì quyền tự hết.
+- Lịch trực theo tháng: chọn người từng ngày hoặc xếp tự động luân phiên đều; đếm số ca từng người.
+- Báo cáo đã chốt giữ số liệu cán bộ và học viên tại lúc chốt.
+- Giảng dạy của tôi: thẻ "Hôm nay bạn trực ban khoa" hoặc ngày trực tiếp theo.
+- Dữ liệu mẫu: lịch trực 12 khoa từ 14 ngày trước tới 14 ngày sau; tài khoản `giangvien` trực khoa KH-01 hôm nay.
+- Trợ giúp: thêm dòng trực ban vào ma trận vai trò. Dịch Anh/Lào đủ trang (`Services/TuDienGiaoDienTrucBan.cs`).
+- Kiểm thử: thêm 26 kiểm tra (NghiepVu 497).
+
 ## 10/11/2026 (chiều): Vòng góp ý 9 điểm
 
 **Khung giao diện**

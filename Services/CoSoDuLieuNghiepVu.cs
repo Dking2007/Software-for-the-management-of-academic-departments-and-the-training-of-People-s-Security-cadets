@@ -48,6 +48,7 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
     public DbSet<GiaTriTuyChinh> GiaTriTuyChinh => Set<GiaTriTuyChinh>();
     public DbSet<LichSuXetTuCach> LichSuXetTuCach => Set<LichSuXetTuCach>();
     public DbSet<DieuChinhTuCach> DieuChinhTuCach => Set<DieuChinhTuCach>();
+    public DbSet<CaTrucBan> CaTrucBan => Set<CaTrucBan>();
 
     // ---- Thông tin người thực hiện, do dịch vụ gán trước khi lưu ----
     public string NguoiThucHien { get; set; } = "Hệ thống";
@@ -231,6 +232,17 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
             e.Property(x => x.ThoiDiem).HasConversion(new DateTimeOffsetToBinaryConverter());
         });
 
+        mb.Entity<CaTrucBan>(e =>
+        {
+            e.ToTable("CaTrucBan");
+            e.HasKey(x => x.Id);
+            // Mỗi khoa mỗi ngày đúng một ca trực.
+            e.HasIndex(x => new { x.MaKhoa, x.Ngay }).IsUnique();
+            e.HasIndex(x => new { x.MaCanBo, x.Ngay });
+            e.Property(x => x.PhanCongLuc).HasConversion(new DateTimeOffsetToBinaryConverter());
+            e.Property(x => x.ChotLuc).HasConversion(new DateTimeOffsetToBinaryConverter());
+        });
+
         mb.Entity<KetQuaLuuTru>(e =>
         {
             e.ToTable("KetQuaLuuTru");
@@ -389,7 +401,7 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
         Models.Khoa => "Khoa", Models.ToChuyenMon => "Tổ chuyên môn", CanBoGiangVien => "Cán bộ", LopDaoTao => "Lớp", Models.HocVien => "Học viên",
         Models.ChuyenDe => "Chuyên đề", Models.ChuyenMonGiangDay => "Chuyên môn giảng dạy", Models.Phong => "Phòng", Models.BuoiHoc => "Buổi học",
         Models.DiemDanh => "Điểm danh", Models.KetQua => "Kết quả", Models.ThongBao => "Thông báo", Models.BoNhiem => "Bổ nhiệm", Models.TinTuc => "Bản tin", Models.PhanCongGiangDay => "Phân công giảng dạy",
-        Models.XetTuCachThi => "Xét tư cách thi", Models.LichThi => "Lịch thi", Models.ChamCong => "Chấm công", Models.SoDauBai => "Sổ đầu bài", Models.BaiThi => "Thông tin bài thi", Models.TruongTuyChinh => "Trường dữ liệu mở rộng", Models.GiaTriTuyChinh => "Giá trị trường mở rộng", Models.LichSuXetTuCach => "Lịch sử xét tư cách", Models.DieuChinhTuCach => "Điều chỉnh tư cách thi", _ => x.GetType().Name
+        Models.XetTuCachThi => "Xét tư cách thi", Models.LichThi => "Lịch thi", Models.ChamCong => "Chấm công", Models.SoDauBai => "Sổ đầu bài", Models.BaiThi => "Thông tin bài thi", Models.TruongTuyChinh => "Trường dữ liệu mở rộng", Models.GiaTriTuyChinh => "Giá trị trường mở rộng", Models.LichSuXetTuCach => "Lịch sử xét tư cách", Models.DieuChinhTuCach => "Điều chỉnh tư cách thi", Models.CaTrucBan => "Ca trực ban", _ => x.GetType().Name
     };
 
     // ---------- Nâng cấu trúc CSDL không mất dữ liệu ----------

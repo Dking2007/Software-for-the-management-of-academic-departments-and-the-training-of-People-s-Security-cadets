@@ -6,6 +6,7 @@
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DichVuChuongTrinh ChuongTrinh
 @inject DichVuBaoCaoExcel BaoCao
+@inject DichVuTrucBan TrucBan
 
 <PageTitle>Giảng dạy của tôi | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
 <DauTrang TieuDe="Giảng dạy của tôi" MoTa="Buổi dạy hôm nay, các lớp đang dạy và chuyên đề đủ điều kiện dạy. Điểm danh và nhập điểm cho lớp mình dạy.">
@@ -22,6 +23,20 @@ else
         <span class="user-avatar phieu-avatar">@canBo.HoTen.Split(' ')[^1][0]</span>
         <div><strong>@canBo.CapBacHam @canBo.HoTen</strong><span>@canBo.ChucVu · @canBo.TenTo · @canBo.TenKhoa</span><span>@canBo.HocVi@(canBo.HocHam != "" ? $", {canBo.HocHam}" : "")</span></div>
     </section>
+
+    @if (caTruc.HomNay is { } ct)
+    {
+        <section class="the-truc-nhanh">
+            <RadzenIcon Icon="@(ct.ChotLuc is null ? "local_police" : "task_alt")" />
+            <span>@if (ct.ChotLuc is null) { <strong>Hôm nay bạn trực ban khoa.</strong> <span class="phu-dong">Điểm danh đi làm cho cán bộ toàn khoa, nắm quân số học viên và chốt báo cáo trước khi hết ngày.</span> }
+                  else { <strong>Bạn đã chốt báo cáo trực ban hôm nay.</strong> <span class="phu-dong">Quyền trực ban đã kết thúc.</span> }</span>
+            <RadzenLink Path="/khoa/truc-ban" Text="Mở bảng trực ban" Icon="arrow_forward" />
+        </section>
+    }
+    else if (caTruc.KeTiep is { } kt)
+    {
+        <p class="phu-dong"><RadzenIcon Icon="event" Style="vertical-align:middle" /> Ca trực ban tiếp theo của bạn: @($"{QuyTacHocVu.TenThu(kt.Ngay)}, {kt.Ngay:dd/MM/yyyy}") <a href="/khoa/truc-ban">Xem lịch trực</a></p>
+    }
 
     <RadzenCard class="the-muc the-tu-diem-danh">
         <h2><RadzenIcon Icon="work_history" />Điểm danh đi làm hôm nay</h2>
@@ -73,6 +88,7 @@ else
     private List<LopDaoTao> cacLop = [];
     private List<DichVuDaoTao.DongChuyenDe> chuyenDe = [];
     private ChamCong? chamCong;
+    private (CaTrucBan? HomNay, CaTrucBan? KeTiep) caTruc;
     private string? thongBaoCong;
     private async Task ChamCongNgay() { thongBaoCong = (await ChuongTrinh.TuChamCongAsync()).ThongBao; chamCong = await ChuongTrinh.LayChamCongCuaToiAsync(); }
 
@@ -83,6 +99,7 @@ else
         canBo = DuLieu.LayDanhSachCanBo().FirstOrDefault(c => c.MaTraCuuNoiBo == nd.MaCanBo);
         if (canBo is null) return;
         chamCong = await ChuongTrinh.LayChamCongCuaToiAsync();
+        caTruc = await TrucBan.LayCaCuaToiAsync();
         var lich = await DaoTao.LayLichAsync(DateTime.Today.AddDays(-14), DateTime.Today);
         homNay = lich.Where(b => b.Buoi.Ngay.Date == DateTime.Today).ToList();
         chuaDiemDanh = lich.Where(b => b.Buoi.Ngay.Date < DateTime.Today && !b.DaDiemDanh).ToList();

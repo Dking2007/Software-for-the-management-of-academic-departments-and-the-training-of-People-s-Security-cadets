@@ -83,6 +83,7 @@ public sealed class KhoDuLieuDemo
         db.BoQuaNhatKy = false;
         DichVuChuongTrinh.KhoiTaoPhanCong(db);
         DichVuChuongTrinh.KhoiTaoChamCong(db, DanhSachCanBo, DateTime.Today);
+        DichVuTrucBan.KhoiTaoTrucBan(db, DanhSachKhoa, DanhSachCanBo, DateTime.Today, KhoiTaoDaoTaoMau.MaGiangVienMau);
         DichVuHocVu.KhoiTaoSoDauBai(db, DateTime.Today);
         KhoiTaoDaoTaoMau.BoSungLichLopNamCuoi(db, DanhSachLop, DanhSachHocVien, DateTime.Today);
         if (!db.KetQuaLuuTru.Any())

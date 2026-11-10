@@ -1,0 +1,21 @@
+@* Một báo cáo trực ban: ngày, người trực, số liệu chụp lúc chốt, tình hình và bàn giao. Ca đã qua mà không chốt được đánh dấu riêng. *@
+<details class="bao-cao-truc @(Ca.ChotLuc is null ? "chua-chot" : "")" open="@MoSan">
+    <summary>
+        <span class="ngay-bc"><strong>@Ca.Ngay.ToString("dd/MM")</strong><small>@QuyTacHocVu.TenThu(Ca.Ngay)</small></span>
+        <span class="ten-bc"><strong>@TenNguoiTruc</strong><small class="phu-dong">@(Ca.ChotLuc is { } c ? $"Chốt lúc {c.ToLocalTime():HH:mm}" : Ca.Ngay < DateTime.Today ? "Không chốt báo cáo" : "Đang trực, chưa chốt")</small></span>
+        @if (Ca.ChotLuc is not null) { <span class="tt-ca chot">Đã chốt</span> } else if (Ca.Ngay < DateTime.Today) { <span class="tt-ca qua-han">Không chốt</span> } else { <span class="tt-ca dang">Đang trực</span> }
+        <RadzenIcon Icon="expand_more" class="mui-ten-thu-gon" />
+    </summary>
+    <div class="than-bc">
+        @if (Ca.TongHopCanBo != "") { <p><RadzenIcon Icon="badge" /><span><strong>Cán bộ:</strong> @Ca.TongHopCanBo</span></p> }
+        @if (Ca.TongHopHocVien != "") { <p><RadzenIcon Icon="groups" /><span><strong>Học viên:</strong> @Ca.TongHopHocVien</span></p> }
+        <p><RadzenIcon Icon="description" /><span><strong>Tình hình:</strong> @(Ca.TinhHinh == "" ? "Chưa ghi." : Ca.TinhHinh)</span></p>
+        @if (Ca.BanGiao != "") { <p><RadzenIcon Icon="swap_horiz" /><span><strong>Bàn giao:</strong> @Ca.BanGiao</span></p> }
+    </div>
+</details>
+
+@code {
+    [Parameter, EditorRequired] public CaTrucBan Ca { get; set; } = default!;
+    [Parameter] public string TenNguoiTruc { get; set; } = "";
+    [Parameter] public bool MoSan { get; set; }
+}

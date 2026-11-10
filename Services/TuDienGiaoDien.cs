@@ -8,7 +8,7 @@ namespace Nhom2_BTL.Services;
 public static partial class TuDienGiaoDien
 {
     /// <summary>Toàn bộ mục: phần cơ bản ở tệp này, phần bổ sung (vòng hoàn thiện 10/11) ở TuDienGiaoDienBoSung.cs.</summary>
-    public static readonly (string Vi, string En, string Lo)[] Muc = [.. CoBan(), .. BoSung(), .. BoSung2()];
+    public static readonly (string Vi, string En, string Lo)[] Muc = [.. CoBan(), .. BoSung(), .. BoSung2(), .. BoSungTrucBan()];
 
     private static (string Vi, string En, string Lo)[] CoBan() =>
     [

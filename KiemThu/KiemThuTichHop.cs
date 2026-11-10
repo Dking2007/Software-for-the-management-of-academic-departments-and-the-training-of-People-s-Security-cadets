@@ -35,7 +35,7 @@ static class KiemThuTichHop
             dv.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
             dv.AddScoped<DichVuPhanQuyenDemo>(); dv.AddScoped<DichVuQuanLyDuLieuDemo>();
             dv.AddScoped<DichVuDaoTao>(); dv.AddScoped<DichVuHocVu>(); dv.AddScoped<DichVuNhatKy>(); dv.AddScoped<DichVuTimKiem>();
-            dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuBaoCaoExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>();
+            dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuBaoCaoExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuTrucBan>(); dv.AddScoped<DichVuBanTin>();
             dv.AddSingleton<KhoThongBaoDemo>(); dv.AddScoped<DichVuThongBao>();
             await using var root = dv.BuildServiceProvider();
 
@@ -372,6 +372,71 @@ static class KiemThuTichHop
             kiemTra(!(await ctGv.TuChamCongAsync(DateTime.Today.AddHours(9))).ThanhCong || DateTime.Today.DayOfWeek == DayOfWeek.Sunday, "Mỗi ngày chỉ tự điểm danh đi làm một lần");
             kiemTra((await Lay<DichVuChuongTrinh>(qlKhoa).GhiChamCongAsync("CB007", DateTime.Today, "Công tác")).ThanhCong && !(await Lay<DichVuChuongTrinh>(qlHocVien).GhiChamCongAsync("CB007", DateTime.Today, "Vắng")).ThanhCong, "Quản lý khoa ghi chấm công; quản lý học viên không ghi được");
             kiemTra((await Lay<DichVuChuongTrinh>(qlKhoa).LayChamCongAsync(DateTime.Today, "KH-01")).Dong.Single(d => d.CanBo.MaCanBo == "CB007").Cong?.TrangThai == "Công tác", "Bảng chấm công theo khoa hiện đúng trạng thái");
+
+            bool LaKhongPhaiTruong(string ma) { lock (kho.KhoaDongBo) return kho.DanhSachCanBo.First(c => c.MaCanBo == ma).ChucVu != "Trưởng khoa"; }
+            // ---- Trực ban: quyền hẹp có thời hạn theo ca (khoa + ngày + người trực) ----
+            if (DateTime.Today.DayOfWeek != DayOfWeek.Sunday)
+            {
+                var ngayTruc = DateTime.Today;
+                var tbGv = Lay<DichVuTrucBan>(gv); var tbQl = Lay<DichVuTrucBan>(qlKhoa);
+                List<string> cbKh01, cbKh02; string truongKh02;
+                lock (kho.KhoaDongBo)
+                {
+                    cbKh01 = kho.DanhSachCanBo.Where(c => c.MaKhoa == "KH-01").Select(c => c.MaCanBo).ToList();
+                    cbKh02 = kho.DanhSachCanBo.Where(c => c.MaKhoa == "KH-02").Select(c => c.MaCanBo).ToList();
+                    truongKh02 = kho.DanhSachCanBo.First(c => c.MaKhoa == "KH-02" && c.ChucVu == "Trưởng khoa").MaCanBo;
+                }
+                var caMau = csdl.CreateDbContext().CaTrucBan.AsNoTracking().ToList();
+                kiemTra(caMau.Select(c => c.MaKhoa).Distinct().Count() == 12 && caMau.Any(c => c.MaKhoa == "KH-01" && c.Ngay == ngayTruc && c.MaCanBo == "CB006")
+                    && caMau.Where(c => c.Ngay < ngayTruc).All(c => c.ChotLuc is not null) && caMau.All(c => c.Ngay.DayOfWeek != DayOfWeek.Sunday), "Lịch trực mẫu: 12 khoa, giảng viên mẫu trực hôm nay, ca đã qua đã chốt, không xếp Chủ nhật");
+                kiemTra((await tbGv.LayCaCuaToiAsync()).HomNay?.MaKhoa == "KH-01", "Giảng viên biết hôm nay mình trực ban khoa nào");
+
+                var (bangTruc, _) = await tbGv.LayBangTrucAsync("KH-01");
+                kiemTra(bangTruc is { LaNguoiTruc: true, DuocGhi: true, DuocSuaSo: true } && bangTruc.CanBo.Count == cbKh01.Count, "Người trực thấy quân số cán bộ toàn khoa và được ghi");
+                kiemTra(bangTruc!.CanBo.All(c => c.CanBo.SoCCCD == "" && c.CanBo.SoDienThoai == "" && c.CanBo.QueQuan == ""), "Bảng trực chỉ mang mặt cắt tối thiểu của cán bộ (không CCCD, điện thoại, quê quán)");
+                kiemTra(bangTruc.QuanSoHocVien.SoBuoi == bangTruc.Buoi.Count && bangTruc.QuanSoHocVien.TheoLich == bangTruc.Buoi.Sum(b => b.SiSo), "Quân số học viên của khoa là số liệu tổng hợp theo buổi");
+                kiemTra((await tbGv.LayBangTrucAsync("KH-02")).Loi is not null, "Người trực khoa này không mở được bảng trực khoa khác");
+                kiemTra((await Lay<DichVuTrucBan>(qlHocVien).LayBangTrucAsync("KH-01")).Loi is not null && !(await Lay<DichVuTrucBan>(qlHocVien).ChamCongAsync(cbKh01[1], "Có mặt")).ThanhCong, "Quản lý học viên không xem, không ghi bảng trực");
+
+                var nguoiKhac = cbKh01.First(m => m != "CB006" && m != "CB007");
+                var ghi = await tbGv.ChamCongAsync(nguoiKhac, "Đi muộn");
+                kiemTra(ghi.ThanhCong && csdl.CreateDbContext().ChamCong.Find(nguoiKhac, ngayTruc)?.NguoiGhi.Contains("trực ban KH-01") == true, "Người trực điểm danh đi làm cho đồng nghiệp, bản ghi nêu rõ theo quyền trực ban");
+                kiemTra(!(await tbGv.ChamCongAsync(cbKh02[0], "Có mặt")).ThanhCong, "Người trực không điểm danh được cán bộ khoa khác");
+                var homQua = ngayTruc.AddDays(ngayTruc.DayOfWeek == DayOfWeek.Monday ? -2 : -1);
+                kiemTra(!(await tbGv.ChamCongAsync(nguoiKhac, "Có mặt", homQua)).ThanhCong && (await tbQl.ChamCongAsync(nguoiKhac, "Có mặt", homQua)).ThanhCong, "Quyền trực ban chỉ trong ngày trực; ngày đã qua do Quản lý khoa điều chỉnh");
+                kiemTra(!(await Lay<DichVuChuongTrinh>(gv).GhiChamCongAsync(nguoiKhac, ngayTruc, "Có mặt")).ThanhCong, "Trang Điểm danh đi làm của quản lý vẫn không mở cho giảng viên");
+                kiemTra(!(await tbGv.PhanCongAsync("KH-01", ngayTruc.AddDays(1), "CB006")).ThanhCong && !(await tbGv.XepTuDongAsync("KH-01", ngayTruc, ngayTruc.AddDays(7))).ThanhCong, "Người trực không tự lập lịch trực");
+
+                // Đổi người trực giữa ngày: quyền chuyển ngay, không cần đăng nhập lại.
+                var nguoiThay = cbKh01.First(m => m != "CB006" && m != "CB007" && m != nguoiKhac && LaKhongPhaiTruong(m));
+                kiemTra((await tbQl.PhanCongAsync("KH-01", ngayTruc, nguoiThay)).ThanhCong && !(await tbGv.ChamCongAsync(nguoiKhac, "Có mặt")).ThanhCong, "Quản lý khoa đổi người trực: người cũ mất quyền ngay");
+                kiemTra((await tbQl.PhanCongAsync("KH-01", ngayTruc, "CB006")).ThanhCong && (await tbGv.ChamCongAsync(nguoiKhac, "Có mặt")).ThanhCong, "Giao lại ca: quyền trở lại");
+                var nghiPhep = cbKh01.First(m => m != "CB006" && m != nguoiKhac && m != nguoiThay);
+                kiemTra((await tbQl.ChamCongAsync(nghiPhep, "Nghỉ phép")).ThanhCong && !(await tbQl.PhanCongAsync("KH-01", ngayTruc, nghiPhep)).ThanhCong, "Không phân công người đang nghỉ phép");
+                kiemTra(!(await tbQl.PhanCongAsync("KH-01", ngayTruc.AddDays(-3), "CB006")).ThanhCong && !(await tbQl.PhanCongAsync("KH-01", ngayTruc, cbKh02[0])).ThanhCong, "Không sửa lịch ngày đã qua; người trực phải thuộc khoa");
+
+                // Sổ trực và chốt báo cáo.
+                kiemTra(!(await tbGv.ChotCaAsync("KH-01", "Bình thường", "")).ThanhCong || bangTruc.QuanSoCanBo.ChuaDiemDanh == 0, "Chưa điểm danh đủ quân số thì chưa chốt được");
+                var coMatHet = await tbGv.GhiCoMatChoNguoiChuaDiemDanhAsync("KH-01");
+                kiemTra((await tbGv.LayBangTrucAsync("KH-01")).Bang!.QuanSoCanBo.ChuaDiemDanh == 0, "Ghi \"Có mặt\" một lần cho mọi người chưa điểm danh | " + coMatHet.ThongBao);
+                kiemTra(!(await tbGv.ChotCaAsync("KH-01", "  ", "")).ThanhCong, "Chốt báo cáo phải có tình hình chung");
+                kiemTra((await Lay<DichVuTrucBan>(xem).LuuSoTrucAsync("KH-01", "x", "")).ThanhCong == false, "Người không trực không ghi được sổ trực ban");
+                var chot = await tbGv.ChotCaAsync("KH-01", "Quân số đủ, các lớp lên lớp đúng giờ.", "Bàn giao sổ trực.");
+                var caChot = csdl.CreateDbContext().CaTrucBan.AsNoTracking().Single(c => c.MaKhoa == "KH-01" && c.Ngay == ngayTruc);
+                kiemTra(chot.ThanhCong && caChot.ChotLuc is not null && caChot.TongHopCanBo.Contains("Chưa điểm danh 0") && caChot.TongHopHocVien.Contains("buổi"), "Chốt báo cáo chụp số liệu cán bộ và học viên | " + chot.ThongBao);
+                kiemTra(!(await tbGv.ChamCongAsync(nguoiKhac, "Vắng")).ThanhCong && !(await tbGv.LuuSoTrucAsync("KH-01", "sửa", "")).ThanhCong, "Chốt xong: quyền trực ban kết thúc");
+                kiemTra(!(await tbQl.PhanCongAsync("KH-01", ngayTruc, nguoiThay)).ThanhCong, "Ca đã chốt không đổi người trực");
+                kiemTra((await tbGv.LayBaoCaoAsync("KH-01")).Any(x => x.Ca.Ngay == ngayTruc && x.Ca.ChotLuc is not null) && (await tbGv.LayBaoCaoAsync("KH-02")).Count == 0, "Báo cáo đã chốt xem được trong khoa mình");
+
+                // Xếp tự động: luân phiên, không Chủ nhật, không Trưởng khoa, không trực hai ngày liền.
+                var tuX = ngayTruc.AddDays(15); var denX = ngayTruc.AddDays(44);
+                var xep = await tbQl.XepTuDongAsync("KH-02", tuX, denX);
+                var caX = csdl.CreateDbContext().CaTrucBan.AsNoTracking().Where(c => c.MaKhoa == "KH-02" && c.Ngay >= tuX && c.Ngay <= denX).OrderBy(c => c.Ngay).ToList();
+                var demX = csdl.CreateDbContext().CaTrucBan.AsNoTracking().Where(c => c.MaKhoa == "KH-02").Select(c => c.MaCanBo).ToList().GroupBy(m => m).Select(g => g.Count()).ToList();
+                kiemTra(xep.ThanhCong && caX.Count == Enumerable.Range(0, 30).Count(i => tuX.AddDays(i).DayOfWeek != DayOfWeek.Sunday) && caX.All(c => c.MaCanBo != truongKh02)
+                    && demX.Max() - demX.Min() <= 2 && caX.Zip(caX.Skip(1)).All(p => p.First.MaCanBo != p.Second.MaCanBo || (p.Second.Ngay - p.First.Ngay).TotalDays > 1), "Xếp tự động: đủ ngày, đều người, không Trưởng khoa, không trực liền | " + xep.ThongBao);
+                kiemTra(!(await tbQl.XepTuDongAsync("KH-02", tuX, denX)).ThanhCong, "Xếp lại khi không còn ngày trống thì báo không còn ngày");
+            }
 
             var btAdmin = Lay<DichVuBanTin>(admin);
             var cacTin = await btAdmin.LayDanhSachAsync();

@@ -192,6 +192,19 @@ Mỗi tài khoản một vai trò. Ba manager thay cho hai Manager (Khoa, Lớp)
 - **Mốc 2:** ủy quyền hẹp có thời hạn. Không uỷ quyền toàn quyền, không uỷ quyền tạo Admin, không nới phạm vi dữ liệu (Quản lý đào tạo được uỷ quyền cấp tài khoản vẫn không xem được học viên), người nhận không uỷ quyền tiếp, mọi thao tác ghi "theo uỷ quyền của X", tự hết hạn, thu hồi được bất cứ lúc nào.
 - Các khả năng khác để Mốc 2: chốt và mở khoá điểm, duyệt hai bước thao tác nhạy cảm, Admin xem như vai trò khác (chỉ đọc, có ghi nhật ký).
 
+### 6.6 Trực ban khoa: quyền theo ca (thêm 10/11/2026)
+
+Trực ban là một dạng ủy quyền hẹp có thời hạn (mục 6.5) đã làm: quyền gắn với **ca trực**, không gắn với tài khoản.
+
+- **Ca trực** = (khoa, ngày, cán bộ trực), bảng `CaTrucBan`, mỗi khoa mỗi ngày một ca. Quản lý khoa/Admin lập lịch: chọn người từng ngày hoặc **xếp tự động** (ưu tiên người trực ít nhất trong 60 ngày, rồi người ít tiết dạy hôm đó, rồi người lâu chưa trực; bỏ người nghỉ phép/công tác; tránh trực hai ngày liền; không xếp Trưởng khoa, không xếp Chủ nhật).
+- **Quyền của người trực** chỉ có khi: đúng ngày hôm nay, đúng người, ca chưa chốt. Dịch vụ tính lại ở **mỗi thao tác** (`DichVuTrucBan`), nên đổi người trực giữa ngày, qua 0 giờ, hay chốt báo cáo là quyền hết ngay; không đổi vai trò, không cần thu hồi phiên.
+- **Với cán bộ:** người trực điểm danh đi làm cho cán bộ toàn khoa (từng người, có nút ghi "Có mặt" cho người chưa điểm danh), thấy ai đang lên lớp tiết nào. Bản ghi chấm công ghi "Tên (trực ban KH-xx)". Bảng trực chỉ mang mặt cắt tối thiểu (tên, cấp bậc, chức vụ, tổ), không có trường cá nhân.
+- **Với học viên:** người trực chỉ **nắm tổng hợp** quân số các buổi học chuyên đề của khoa trong ngày (sĩ số, có mặt, muộn, vắng có/không phép, buổi chưa điểm danh), không thấy từng học viên (hàng rào 2). Điểm danh học viên vẫn do giảng viên theo buổi.
+- **Sổ trực ban và chốt báo cáo:** người trực ghi tình hình chung và nội dung bàn giao; chốt được khi mọi cán bộ đã điểm danh. Lúc chốt, hệ thống chụp số liệu cán bộ và học viên vào ca, ca bị khoá. Báo cáo đã chốt xem được bởi cán bộ trong khoa và Quản lý khoa.
+- **Ngoài phạm vi:** người trực không lập lịch, không sửa ngày đã qua (Quản lý khoa điều chỉnh), không mở bảng trực khoa khác. Cán bộ khác của khoa chỉ xem lịch trực và báo cáo đã chốt.
+- **Mở rộng sau:** cùng mô hình cho đơn vị quản lý học viên (trực ban theo khoá/hệ, người trực nắm quân số học viên cả khoá), trực ban hai người (trực chính, trực phó), nhắc giảng viên điểm danh buổi chưa điểm danh.
+- Trang `/khoa/truc-ban`; lối vào ở Giảng dạy của tôi khi hôm nay là ngày trực. Kiểm thử ở `KiemThu/KiemThuTichHop.cs` (khối "Trực ban").
+
 ---
 
 ## 7. Tích hợp A và C vào B: mỗi chức năng một chỗ

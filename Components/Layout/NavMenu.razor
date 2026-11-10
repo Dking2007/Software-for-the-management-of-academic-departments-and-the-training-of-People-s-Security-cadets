@@ -87,12 +87,13 @@
         if (nd.LaGiangVien) nhom.Add(new("ca-nhan", "Giảng dạy của tôi", "co_present", "/giang-day", [new("Lớp và buổi dạy", "/giang-day"), new("Lịch dạy", "/dao-tao/lich")]));
         if (nd.LaHocVien) nhom.Add(new("ca-nhan", "Học tập của tôi", "person", "/cua-toi", [new("Tổng quan cá nhân", "/cua-toi"), new("Lịch học", "/dao-tao/lich")]));
         // Mỗi manager thấy đủ mảng mình sở hữu; mảng khác chỉ hiện mục phối hợp (xem) cần cho công việc.
-        MucMenu[] khoaDu = [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Tổ chuyên môn", "/khoa/to"), new("Cán bộ, giảng viên", "/khoa/can-bo"), new("Điểm danh đi làm", "/khoa/cham-cong")];
+        MucMenu[] khoaDu = [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Tổ chuyên môn", "/khoa/to"), new("Cán bộ, giảng viên", "/khoa/can-bo"), new("Điểm danh đi làm", "/khoa/cham-cong"), new("Trực ban", "/khoa/truc-ban")];
         MucMenu[] daoTaoDu = [new("Tổng quan đào tạo", "/dao-tao"), new("Chuyên ngành", "/dao-tao/chuyen-nganh"), new("Khóa và niên khóa", "/dao-tao/khoa-hoc"), new("Chuyên đề", "/dao-tao/chuyen-de"), new("Chương trình & phân công", "/dao-tao/chuong-trinh"), new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp", "/dao-tao/lich/tinh-hinh"), new("Phòng học", "/dao-tao/phong"), new("Xét tư cách & lịch thi", "/dao-tao/thi")];
         if (nd.LaAdmin || nd.LaQuanLy("Khoa")) nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu));
         else if (nd.LaQuanLy("DaoTao")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Cán bộ, giảng viên", "/khoa/can-bo")]));
         else if (nd.LaQuanLy("Lop")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Cán bộ, giảng viên", "/khoa/can-bo")]));
-        else if (nd.LaGiangVien || nd.VaiTro == "Guest") nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu.Take(4).ToArray()));
+        else if (nd.LaGiangVien) nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", [.. khoaDu.Take(4), new("Trực ban", "/khoa/truc-ban")]));
+        else if (nd.VaiTro == "Guest") nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu.Take(4).ToArray()));
         if (nd.LaAdmin || nd.LaQuanLy("DaoTao") || nd.LaGiangVien) nhom.Add(new("dao-tao", "Quản lý đào tạo", "menu_book", "/dao-tao", daoTaoDu));
         else if (nd.LaQuanLy("Khoa")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Chuyên đề (GV đủ điều kiện)", "/dao-tao/chuyen-de"), new("Lịch đào tạo", "/dao-tao/lich"), new("Xét tư cách thi (khoa xác nhận)", "/dao-tao/thi")]));
         else if (nd.LaQuanLy("Lop")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp", "/dao-tao/lich/tinh-hinh"), new("Chương trình (xem)", "/dao-tao/chuong-trinh"), new("Xét tư cách thi (đề xuất)", "/dao-tao/thi")]));

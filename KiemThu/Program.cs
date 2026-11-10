@@ -23,7 +23,7 @@ dv.AddSingleton(new KhoDuLieuDemo()); dv.AddSingleton<KhoVeDangNhapDemo>();
 var tepDaoTao = Path.Combine(Path.GetTempPath(), $"kiem-thu-dao-tao-{Guid.NewGuid()}.db");
 dv.AddDbContextFactory<CoSoDuLieuNghiepVu>(o => o.UseSqlite($"Data Source={tepDaoTao};Pooling=False"));
 dv.AddScoped<DichVuDaoTao>(); dv.AddScoped<DichVuHocVu>(); dv.AddScoped<DichVuNhatKy>(); dv.AddScoped<DichVuTimKiem>();
-dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuBaoCaoExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuBanTin>(); dv.AddSingleton(new KhoThongBaoDemo()); dv.AddScoped<DichVuThongBao>();
+dv.AddScoped<DichVuExcel>(); dv.AddScoped<DichVuNhapExcel>(); dv.AddScoped<DichVuBaoCaoExcel>(); dv.AddScoped<DichVuTruongTuyChinh>(); dv.AddScoped<DichVuTongQuan>(); dv.AddScoped<DichVuSoDoToChuc>(); dv.AddScoped<DichVuChuongTrinh>(); dv.AddScoped<DichVuTrucBan>(); dv.AddScoped<DichVuBanTin>(); dv.AddSingleton(new KhoThongBaoDemo()); dv.AddScoped<DichVuThongBao>();
 dv.AddScoped<NhaCungCapTrangThaiXacThucDemo>();
 dv.AddScoped<AuthenticationStateProvider>(s => s.GetRequiredService<NhaCungCapTrangThaiXacThucDemo>());
 dv.AddScoped<DichVuPhanQuyenDemo>(); dv.AddScoped<DichVuQuanLyDuLieuDemo>();

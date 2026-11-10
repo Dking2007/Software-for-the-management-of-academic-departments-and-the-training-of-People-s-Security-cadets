@@ -1,0 +1,317 @@
+@page "/khoa/truc-ban"
+@attribute [Authorize(Roles = "Admin,Manager,GiangVien")]
+@implements IDisposable
+@inject DichVuTrucBan TrucBanDv
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject DichVuPhanQuyenDemo PhanQuyen
+@inject NotificationService ThongBao
+
+@* Trực ban theo khoa: quyền hẹp có thời hạn. Đúng ngày trực, người trực điểm danh đi làm cho cán bộ toàn khoa,
+   nắm quân số học viên ở mức số liệu, ghi sổ và chốt báo cáo. Quản lý khoa lập lịch và theo dõi mọi khoa. *@
+<PageTitle>Trực ban | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+<DauTrang TieuDe="Trực ban" MoTa="Mỗi ngày một cán bộ trực ban cho khoa. Trong ngày trực, người trực điểm danh đi làm cho cán bộ toàn khoa, nắm tổng hợp quân số học viên học chuyên đề của khoa, ghi sổ và chốt báo cáo. Hết ngày hoặc chốt báo cáo thì quyền tự kết thúc." />
+
+@if (cacKhoa is null)
+{
+    <div class="th-chi-so">@for (var i = 0; i < 4; i++) { <div class="khung-xuong" style="height:5.5rem"></div> }</div>
+}
+else if (cacKhoa.Count == 0)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Info" AllowClose="false">Trực ban dành cho cán bộ của các khoa, Quản lý khoa và Admin. Tài khoản này không thuộc khoa nào.</RadzenAlert>
+}
+else
+{
+    @if (laQuanLy)
+    {
+        <div class="tb-chuyen-muc tb-khoa-truc" role="group" aria-label="Chọn khoa">
+            @foreach (var k in cacKhoa) { <button type="button" class="@(maKhoa == k.MaKhoa ? "dang-chon" : "")" aria-pressed="@(maKhoa == k.MaKhoa ? "true" : "false")" title="@k.TenKhoa" @onclick="() => ChonKhoa(k.MaKhoa)">@k.MaKhoa</button> }
+        </div>
+    }
+
+    @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Warning" AllowClose="false">@loi</RadzenAlert> }
+    else if (bang is null) { <div class="khung-xuong" style="height:6rem"></div> }
+    else
+    {
+        var ca = bang.Ca;
+        <section class="the-ca-truc @(bang.DuocSuaSo ? "dang-truc" : ca?.ChotLuc is not null ? "da-chot" : ca is null ? "trong" : "")">
+            <span class="bieu-tuong-ca"><RadzenIcon Icon="@(bang.DuocSuaSo ? "local_police" : ca?.ChotLuc is not null ? "task_alt" : "shield")" /></span>
+            <div class="noi-dung-ca">
+                <span class="nhan-ca">@($"Ca trực hôm nay · {QuyTacHocVu.TenThu(bang.Ngay)}, {bang.Ngay:dd/MM/yyyy} · ")<span translate="no">@bang.MaKhoa</span> @bang.TenKhoa</span>
+                <strong>@(ca is null ? "Chưa phân công người trực" : bang.TenNguoiTruc)@(bang.LaNguoiTruc ? " (bạn)" : "")</strong>
+                <span class="phu-dong">
+                    @if (bang.DuocSuaSo) { <text>Bạn đang trực ban. Quyền điểm danh cán bộ toàn khoa có hiệu lực đến 23:59 hôm nay hoặc tới khi bạn chốt báo cáo.</text> }
+                    else if (ca?.ChotLuc is { } chot) { @($"Đã chốt báo cáo lúc {chot.ToLocalTime():HH:mm}. Quyền trực ban của ca này đã kết thúc.") }
+                    else if (ca is null) { <text>@(laQuanLy ? "Phân công ở tab Lịch trực hoặc bấm Xếp tự động." : "Quản lý khoa chưa phân công người trực hôm nay.")</text> }
+                    else if (laQuanLy) { <text>Đang trực, chưa chốt báo cáo. Quản lý khoa theo dõi và ghi bổ sung được.</text> }
+                    else { <text>Chỉ người trực và Quản lý khoa xem bảng quân số trong ngày. Bạn xem lịch trực và báo cáo đã chốt.</text> }
+                </span>
+            </div>
+            @if (bang.DuocSuaSo) { <span class="chip-hieu-luc"><RadzenIcon Icon="schedule" />@ConLai()</span> }
+            else if (caCuaToi.KeTiep is { } kt && !bang.LaNguoiTruc) { <span class="chip-hieu-luc nhat"><RadzenIcon Icon="event" />Ca tiếp theo của bạn: @($"{QuyTacHocVu.TenThu(kt.Ngay)}, {kt.Ngay:dd/MM}")</span> }
+        </section>
+
+        var xemChiTiet = laQuanLy || bang.LaNguoiTruc;
+        <div class="tb-chuyen-muc tab-truc" role="tablist" aria-label="Nội dung trực ban">
+            @foreach (var (ma, ten, bt) in CacTab(xemChiTiet))
+            {
+                <button type="button" role="tab" aria-selected="@(tab == ma ? "true" : "false")" class="@(tab == ma ? "dang-chon" : "")" @onclick="() => ChonTab(ma)"><RadzenIcon Icon="@bt" />@ten</button>
+            }
+        </div>
+
+        @if (tab == "can-bo" && xemChiTiet)
+        {
+            var qs = bang.QuanSoCanBo;
+            <div class="th-chi-so">
+                <div class="lcs"><span>Quân số cán bộ</span><strong>@qs.Tong</strong><small>@($"{bang.CanBo.Select(c => c.TenTo).Where(t => t != "").Distinct().Count()} tổ chuyên môn")</small></div>
+                <div class="lcs di-hoc"><span>Có mặt tại đơn vị</span><strong>@qs.TaiDonVi</strong><small>@($"{qs.CoMat} có mặt · {qs.DiMuon} đi muộn")</small></div>
+                <div class="lcs"><span>Vắng mặt</span><strong>@(qs.CongTac + qs.NghiPhep + qs.Vang)</strong><small>@($"{qs.CongTac} công tác · {qs.NghiPhep} nghỉ phép · {qs.Vang} vắng")</small></div>
+                <div class="lcs @(qs.ChuaDiemDanh > 0 ? "nghi" : "")"><span>Chưa điểm danh</span><strong>@qs.ChuaDiemDanh</strong><small>@(qs.ChuaDiemDanh == 0 ? "đủ quân số đã điểm danh" : "cần điểm danh trước khi chốt")</small></div>
+            </div>
+            <div class="thanh-lich">
+                @if (bang.DuocGhi && qs.ChuaDiemDanh > 0)
+                {
+                    <RadzenButton Text="@($"Ghi “Có mặt” cho {qs.ChuaDiemDanh} người chưa điểm danh")" Icon="done_all" ButtonStyle="ButtonStyle.Primary" Click="GhiCoMatTatCa" Disabled="dangGhi" />
+                }
+                <div class="chu-giai-cong">@foreach (var tt in ChamCong.CacTrangThai) { <span class="o-cong @ChamCongCanBo.LopTt(tt)">@ChamCongCanBo.KyHieu(tt)</span><small>@tt</small> }</div>
+            </div>
+            <div class="bang-cuon the-bang-truc">
+                <table class="bang-cong bang-truc">
+                    <thead><tr><th>Cán bộ</th><th>Lên lớp hôm nay</th><th>Điểm danh</th><th>Ghi bởi</th></tr></thead>
+                    @foreach (var to in bang.CanBo.GroupBy(c => c.TenTo))
+                    {
+                        <tbody>
+                            <tr class="dong-to"><td colspan="4">@(to.Key == "" ? "Lãnh đạo khoa" : to.Key) <small>@($"{to.Count(x => x.Cong is not null)}/{to.Count()} đã điểm danh")</small></td></tr>
+                            @foreach (var d in to)
+                            {
+                                <tr>
+                                    <td><strong><TheXemNhanh Loai="CanBo" Ma="@d.CanBo.MaTraCuuNoiBo">@d.CanBo.CapBacHam @d.CanBo.HoTen</TheXemNhanh></strong><small class="phu-dong">@d.CanBo.ChucVu</small>@if (d.CanBo.MaCanBo == bang.Ca?.MaCanBo) { <span class="tt-ca dang">trực ban</span> }</td>
+                                    <td>@(d.LichDay == "" ? "—" : d.LichDay)</td>
+                                    <td>
+                                        @if (bang.DuocGhi)
+                                        {
+                                            <select class="o-cong o-cong-rong @(d.Cong is null ? "chua" : ChamCongCanBo.LopTt(d.Cong.TrangThai))" aria-label="@($"Điểm danh {d.CanBo.HoTen}")" disabled="@dangGhi" @onchange="e => Ghi(d.CanBo.MaCanBo, e.Value?.ToString())">
+                                                <option value="" selected="@(d.Cong is null)">Chưa điểm danh</option>
+                                                @foreach (var tt in ChamCong.CacTrangThai) { <option value="@tt" selected="@(d.Cong?.TrangThai == tt)">@tt</option> }
+                                            </select>
+                                        }
+                                        else { <span class="o-cong o-cong-rong @(d.Cong is null ? "chua" : ChamCongCanBo.LopTt(d.Cong.TrangThai))">@(d.Cong?.TrangThai ?? "Chưa điểm danh")</span> }
+                                    </td>
+                                    <td><small class="phu-dong">@(d.Cong is null ? "" : $"{d.Cong.NguoiGhi} · {d.Cong.ThoiDiem.ToLocalTime():HH:mm}")</small></td>
+                                </tr>
+                            }
+                        </tbody>
+                    }
+                </table>
+            </div>
+        }
+        else if (tab == "hoc-vien" && xemChiTiet)
+        {
+            var hv = bang.QuanSoHocVien;
+            <div class="th-chi-so">
+                <div class="lcs"><span>Buổi học của khoa</span><strong>@hv.SoBuoi</strong><small>@($"{hv.SoLop} lớp · {hv.TheoLich} học viên theo lịch")</small></div>
+                <div class="lcs di-hoc"><span>Có mặt</span><strong>@(hv.CoMat + hv.DiMuon)</strong><small>@($"{hv.DiMuon} đi muộn")@(hv.DaDiemDanh == 0 ? "" : $" · {100 * (hv.CoMat + hv.DiMuon) / hv.DaDiemDanh}%")</small></div>
+                <div class="lcs"><span>Vắng</span><strong>@(hv.VangCoPhep + hv.VangKhongPhep)</strong><small>@($"{hv.VangCoPhep} có phép · {hv.VangKhongPhep} không phép")</small></div>
+                <div class="lcs @(hv.BuoiChuaDiemDanh > 0 ? "nghi" : "")"><span>Buổi chưa điểm danh</span><strong>@hv.BuoiChuaDiemDanh</strong><small>giảng viên điểm danh theo buổi</small></div>
+            </div>
+            <p class="ghi-chu-truc"><RadzenIcon Icon="lock" />Trực ban chỉ nắm số liệu tổng hợp. Danh sách từng học viên do giảng viên lớp đó và Quản lý học viên quản lý.</p>
+            @if (bang.Buoi.Count == 0)
+            {
+                <section class="empty-state"><RadzenIcon Icon="event_available" class="empty-state-icon" /><h2>Hôm nay khoa không có buổi học</h2><p>Không có chuyên đề nào của khoa được xếp lịch trong ngày.</p></section>
+            }
+            else
+            {
+                <div class="bang-cuon the-bang-truc">
+                    <table class="bang-cong bang-truc">
+                        <thead><tr><th>Lớp · chuyên đề</th><th>Tiết</th><th>Giảng viên</th><th>Phòng</th><th>Sĩ số</th><th>Có mặt</th><th>Muộn</th><th>Vắng CP</th><th>Vắng KP</th></tr></thead>
+                        <tbody>
+                            @foreach (var b in bang.Buoi)
+                            {
+                                <tr>
+                                    <td><strong translate="no">@b.MaLop</strong><small class="phu-dong">@b.TenChuyenDe</small></td>
+                                    <td>@b.TietBatDau–@b.TietKetThuc</td>
+                                    <td>@b.TenGiangVien</td>
+                                    <td>@b.TenPhong</td>
+                                    <td class="so">@b.SiSo</td>
+                                    @if (b.DaDiemDanh)
+                                    {
+                                        <td class="so">@b.CoMat</td><td class="so">@b.DiMuon</td><td class="so">@b.VangCoPhep</td><td class="so @(b.VangKhongPhep > 0 ? "chu-loi" : "")">@b.VangKhongPhep</td>
+                                    }
+                                    else { <td colspan="4"><span class="o-cong o-cong-rong chua">Chưa điểm danh</span></td> }
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot><tr><td><strong>Tổng</strong></td><td></td><td></td><td></td><td class="so"><strong>@hv.TheoLich</strong></td><td class="so"><strong>@hv.CoMat</strong></td><td class="so"><strong>@hv.DiMuon</strong></td><td class="so"><strong>@hv.VangCoPhep</strong></td><td class="so"><strong>@hv.VangKhongPhep</strong></td></tr></tfoot>
+                    </table>
+                </div>
+            }
+        }
+        else if (tab == "so-truc" && xemChiTiet)
+        {
+            @if (ca is null)
+            {
+                <section class="empty-state"><RadzenIcon Icon="edit_note" class="empty-state-icon" /><h2>Chưa có ca trực hôm nay</h2><p>Sổ trực ban mở khi khoa có người trực.</p></section>
+            }
+            else if (bang.DuocSuaSo)
+            {
+                <RadzenCard class="the-muc so-truc">
+                    <label for="tinh-hinh"><strong>Tình hình chung trong ca</strong><small class="phu-dong">Quân số, nề nếp, an ninh trật tự, sự việc đã xử lý.</small></label>
+                    <textarea id="tinh-hinh" class="form-control" rows="4" maxlength="2000" @bind="tinhHinh" placeholder="Ví dụ: Quân số cán bộ đủ, 1 đồng chí công tác. Các lớp lên lớp đúng giờ…"></textarea>
+                    <label for="ban-giao"><strong>Đề xuất, bàn giao cho ca sau</strong></label>
+                    <textarea id="ban-giao" class="form-control" rows="3" maxlength="2000" @bind="banGiao" placeholder="Ví dụ: Bàn giao sổ trực, chìa khoá phòng làm việc…"></textarea>
+                    <div class="hang-nut-so">
+                        <RadzenButton Text="Lưu sổ" Icon="save" ButtonStyle="ButtonStyle.Light" Click="LuuSo" Disabled="dangGhi" />
+                        @if (!xacNhanChot) { <RadzenButton Text="Chốt báo cáo và kết thúc ca" Icon="task_alt" ButtonStyle="ButtonStyle.Primary" Click="() => xacNhanChot = true" Disabled="dangGhi" /> }
+                        else
+                        {
+                            <span class="xac-nhan-chot">Sau khi chốt, bạn không sửa được sổ và điểm danh nữa.
+                                <RadzenButton Text="Xác nhận chốt" Icon="check" ButtonStyle="ButtonStyle.Danger" Click="Chot" Disabled="dangGhi" />
+                                <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => xacNhanChot = false" />
+                            </span>
+                        }
+                    </div>
+                    <small class="phu-dong">Khi chốt, hệ thống chụp lại quân số cán bộ và học viên tại thời điểm đó. Chốt được khi mọi cán bộ đã điểm danh.</small>
+                </RadzenCard>
+            }
+            else
+            {
+                <BaoCaoTruc Ca="ca" TenNguoiTruc="@bang.TenNguoiTruc" MoSan="true" />
+            }
+        }
+        else if (tab == "lich")
+        {
+            <div class="thanh-lich">
+                <div class="dieu-khien-tuan">
+                    <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Click="() => DoiThang(-1)" aria-label="Tháng trước" />
+                    <strong class="ten-tuan">@($"Tháng {thang:MM/yyyy}")</strong>
+                    <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Click="() => DoiThang(1)" aria-label="Tháng sau" />
+                </div>
+                @if (laQuanLy) { <RadzenButton Text="Xếp tự động các ngày trống" Icon="auto_mode" ButtonStyle="ButtonStyle.Primary" Click="XepTuDong" Disabled="@(dangGhi || thang.AddMonths(1) <= DateTime.Today)" title="Luân phiên đều: ưu tiên người trực ít nhất, ít tiết dạy hôm đó, lâu chưa trực; bỏ qua người nghỉ phép, công tác; tránh trực hai ngày liền." /> }
+            </div>
+            <div class="lich-truc" role="grid" aria-label="Lịch trực ban tháng">
+                @foreach (var t in new[] { "T2", "T3", "T4", "T5", "T6", "T7", "CN" }) { <div class="dau-cot" role="columnheader">@t</div> }
+                @for (var i = 0; i < ((int)thang.DayOfWeek + 6) % 7; i++) { <div class="o-lich-truc ngoai"></div> }
+                @foreach (var o in lich)
+                {
+                    var cuaToi = o.Ca is not null && o.Ca.MaCanBo == maCuaToi;
+                    var suaDuoc = laQuanLy && o.Ngay >= DateTime.Today && o.Ngay.DayOfWeek != DayOfWeek.Sunday && o.Ca?.ChotLuc is null;
+                    <div class="o-lich-truc @(o.Ngay == DateTime.Today ? "hom-nay" : "") @(o.Ngay.DayOfWeek == DayOfWeek.Sunday ? "chu-nhat" : "") @(cuaToi ? "cua-toi" : "")" role="gridcell">
+                        <span class="so-ngay">@o.Ngay.Day</span>
+                        @if (o.Ngay.DayOfWeek == DayOfWeek.Sunday) { <small class="phu-dong">Nghỉ</small> }
+                        else if (suaDuoc)
+                        {
+                            <select class="chon-nguoi-truc" aria-label="@($"Người trực ngày {o.Ngay:dd/MM}")" disabled="@dangGhi" @onchange="e => PhanCong(o.Ngay, e.Value?.ToString())">
+                                <option value="" selected="@(o.Ca is null)">Chưa phân công</option>
+                                @foreach (var c in ungVien) { <option value="@c.MaCanBo" selected="@(o.Ca?.MaCanBo == c.MaCanBo)">@c.HoTen</option> }
+                            </select>
+                        }
+                        else if (o.Ca is null) { <small class="phu-dong">@(o.Ngay < DateTime.Today ? "Không có ca" : "Chưa phân công")</small> }
+                        else { <span class="ten-truc">@(cuaToi ? "Bạn" : o.TenNguoiTruc)</span> }
+                        @if (o.Ca is not null && o.Ngay <= DateTime.Today)
+                        {
+                            <span class="tt-ca @(o.Ca.ChotLuc is not null ? "chot" : o.Ngay == DateTime.Today ? "dang" : "qua-han")">@(o.Ca.ChotLuc is not null ? "Đã chốt" : o.Ngay == DateTime.Today ? "Đang trực" : "Không chốt")</span>
+                        }
+                    </div>
+                }
+            </div>
+            @if (lich.Any(o => o.Ca is not null))
+            {
+                <h2 class="tieu-de-khu-vuc">Số ca trong tháng <small class="phu-dong">luân phiên đều giữa cán bộ</small></h2>
+                <div class="dem-ca-truc">
+                    @foreach (var g in lich.Where(o => o.Ca is not null).GroupBy(o => o.TenNguoiTruc).OrderByDescending(g => g.Count()).ThenBy(g => g.Key))
+                    {
+                        <span class="chip-dem"><strong>@g.Count()</strong>@g.Key</span>
+                    }
+                </div>
+            }
+        }
+        else if (tab == "bao-cao")
+        {
+            @if (baoCao.Count == 0)
+            {
+                <section class="empty-state"><RadzenIcon Icon="history_edu" class="empty-state-icon" /><h2>Chưa có báo cáo trực ban</h2><p>Báo cáo xuất hiện sau khi người trực chốt ca.</p></section>
+            }
+            @foreach (var (c, ten) in baoCao) { <BaoCaoTruc Ca="c" TenNguoiTruc="@ten" /> }
+        }
+    }
+}
+
+@code {
+    private List<Nhom2_BTL.Models.Khoa>? cacKhoa;
+    private string maKhoa = "", tab = "can-bo", tinhHinh = "", banGiao = "";
+    private string? loi, maCuaToi;
+    private bool laQuanLy, dangGhi, xacNhanChot;
+    private DichVuTrucBan.BangTruc? bang;
+    private (CaTrucBan? HomNay, CaTrucBan? KeTiep) caCuaToi;
+    private DateTime thang = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private List<DichVuTrucBan.OLich> lich = [];
+    private List<Nhom2_BTL.Models.CanBoGiangVien> ungVien = [];
+    private List<(CaTrucBan, string)> baoCao = [];
+
+    private static IEnumerable<(string, string, string)> CacTab(bool chiTiet) => chiTiet
+        ? [("can-bo", "Quân số cán bộ", "badge"), ("hoc-vien", "Quân số học viên", "groups"), ("so-truc", "Sổ trực ban", "edit_note"), ("lich", "Lịch trực", "calendar_month"), ("bao-cao", "Báo cáo đã chốt", "history_edu")]
+        : [("lich", "Lịch trực", "calendar_month"), ("bao-cao", "Báo cáo đã chốt", "history_edu")];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var nd = await PhanQuyen.LayNguoiDungAsync();
+        laQuanLy = nd.CoQuyenVung("Khoa");
+        maCuaToi = nd.MaCanBo;
+        cacKhoa = await TrucBanDv.LayKhoaDuocXemAsync();
+        if (cacKhoa.Count == 0) return;
+        caCuaToi = await TrucBanDv.LayCaCuaToiAsync();
+        maKhoa = caCuaToi.HomNay?.MaKhoa ?? cacKhoa[0].MaKhoa;
+        await Tai(true);
+        if (bang is { } b && !(laQuanLy || b.LaNguoiTruc)) tab = "lich";
+        await TaiTab();
+        DuLieu.DuLieuDaThayDoi += KhiDoi;
+    }
+
+    private async Task Tai(bool napSo = false)
+    {
+        (bang, loi) = await TrucBanDv.LayBangTrucAsync(maKhoa);
+        if (napSo || !(bang?.DuocSuaSo ?? false)) { tinhHinh = bang?.Ca?.TinhHinh ?? ""; banGiao = bang?.Ca?.BanGiao ?? ""; }
+    }
+
+    private async Task TaiTab()
+    {
+        if (tab == "lich")
+        {
+            (lich, _) = await TrucBanDv.LayLichTrucAsync(maKhoa, thang, thang.AddMonths(1).AddDays(-1));
+            if (laQuanLy) ungVien = TrucBanDv.LayNguoiCoTheTruc(maKhoa);
+        }
+        else if (tab == "bao-cao") baoCao = (await TrucBanDv.LayBaoCaoAsync(maKhoa)).Where(x => x.Ca.ChotLuc is not null || x.Ca.Ngay < DateTime.Today).ToList();
+    }
+
+    private async Task ChonKhoa(string ma) { maKhoa = ma; xacNhanChot = false; await Tai(true); await TaiTab(); }
+    private async Task ChonTab(string ma) { tab = ma; xacNhanChot = false; await TaiTab(); }
+    private async Task DoiThang(int soThang) { thang = thang.AddMonths(soThang); await TaiTab(); }
+
+    private string ConLai()
+    {
+        var con = DateTime.Today.AddDays(1) - DateTime.Now;
+        return con.TotalHours >= 1 ? $"Còn {(int)con.TotalHours} giờ {con.Minutes} phút" : $"Còn {con.Minutes} phút";
+    }
+
+    private async Task ThucHien(Func<Task<KetQuaThaoTac>> thaoTac, bool baoThanhCong = true)
+    {
+        dangGhi = true;
+        try
+        {
+            var kq = await thaoTac();
+            if (!kq.ThanhCong) ThongBao.Notify(NotificationSeverity.Warning, "Chưa thực hiện được", kq.ThongBao);
+            else if (baoThanhCong) ThongBao.Notify(NotificationSeverity.Success, kq.ThongBao);
+            await Tai(); await TaiTab();
+        }
+        finally { dangGhi = false; }
+    }
+
+    private Task Ghi(string maCanBo, string? tt) => string.IsNullOrEmpty(tt) ? Task.CompletedTask : ThucHien(() => TrucBanDv.ChamCongAsync(maCanBo, tt), false);
+    private Task GhiCoMatTatCa() => ThucHien(() => TrucBanDv.GhiCoMatChoNguoiChuaDiemDanhAsync(maKhoa));
+    private Task LuuSo() => ThucHien(() => TrucBanDv.LuuSoTrucAsync(maKhoa, tinhHinh, banGiao));
+    private async Task Chot() { await ThucHien(() => TrucBanDv.ChotCaAsync(maKhoa, tinhHinh, banGiao)); xacNhanChot = false; caCuaToi = await TrucBanDv.LayCaCuaToiAsync(); }
+    private Task PhanCong(DateTime ngay, string? ma) => ThucHien(() => TrucBanDv.PhanCongAsync(maKhoa, ngay, ma));
+    private Task XepTuDong() => ThucHien(() => TrucBanDv.XepTuDongAsync(maKhoa, thang, thang.AddMonths(1).AddDays(-1)));
+
+    private void KhiDoi() => _ = InvokeAsync(async () => { if (dangGhi) return; await Tai(); await TaiTab(); StateHasChanged(); });
+    public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
+}
