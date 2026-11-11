@@ -3,7 +3,7 @@
 
 /* ---- Chuông có số chưa đọc ---- */
 .nut-thong-bao.rz-link { position: relative; text-decoration: none; }
-.huy-hieu-chuong { position: absolute; top: -.25rem; right: -.375rem; min-width: 1.25rem; height: 1.25rem; padding: 0 .3125rem; border: 2px solid var(--nen-the); border-radius: 999px; background: var(--mau-nguy-hiem); color: #fff; font-size: .6875rem; font-weight: 700; line-height: 1rem; text-align: center; animation: hien-mo 200ms ease-out; }
+.huy-hieu-chuong { position: absolute; top: -.25rem; right: -.375rem; min-width: 1.25rem; height: 1.25rem; padding: 0 .3125rem; border: 2px solid var(--nen-the); border-radius: 999px; background: var(--mau-nguy-hiem); color: var(--chu-tren-mau); font-size: .6875rem; font-weight: 700; line-height: 1rem; text-align: center; animation: hien-mo 200ms ease-out; }
 .nut-thong-bao.co-moi .rzi { animation: rung-chuong 700ms ease 2; }
 [data-giao-dien="toi"] .huy-hieu-chuong { color: #2a0f0d; }
 
@@ -15,7 +15,7 @@
 .tb-chuyen-muc { display: flex; flex-wrap: wrap; gap: .375rem; margin-top: .75rem; }
 .tb-chuyen-muc button { display: inline-flex; align-items: center; gap: .375rem; padding: .375rem .75rem; border: 1px solid var(--vien-the); border-radius: 999px; background: var(--nen-the); color: var(--chu-chinh); font-size: var(--cc-13); cursor: pointer; }
 .tb-chuyen-muc button small { color: var(--chu-phu); }
-.tb-chuyen-muc button.dang-chon { border-color: var(--mau-chinh); background: var(--mau-chinh); color: #fff; }
+.tb-chuyen-muc button.dang-chon { border-color: var(--mau-chinh); background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .tb-chuyen-muc button.dang-chon small { color: var(--mau-nhan-sang); }
 section.bang-thong-bao .bo-loc-tin { grid-template-columns: 1.4fr 1fr auto; align-items: end; }
 .tb-chua-doc { white-space: nowrap; padding-bottom: .5rem; }
@@ -24,7 +24,7 @@ section.bang-thong-bao .tb-muc .nhan-new { position: static; }
 section.bang-thong-bao .tb-muc strong { padding-right: 0; font-size: var(--cc-13); }
 section.bang-thong-bao .tb-muc.chua-doc strong { font-weight: 700; }
 section.bang-thong-bao .tb-muc.chua-doc .tb-o-ngay::after { content: ""; position: absolute; top: -.1875rem; right: -.1875rem; width: .625rem; height: .625rem; border: 2px solid var(--nen-the); border-radius: 50%; background: var(--mau-nguy-hiem); }
-.tb-o-ngay { position: relative; display: flex; flex: none; flex-direction: column; align-items: center; justify-content: center; width: 3rem; height: 3.25rem; border-radius: 8px; background: var(--mau-chinh); color: #fff; line-height: 1.1; }
+.tb-o-ngay { position: relative; display: flex; flex: none; flex-direction: column; align-items: center; justify-content: center; width: 3rem; height: 3.25rem; border-radius: 8px; background: var(--mau-chinh); color: var(--chu-tren-mau); line-height: 1.1; }
 .tb-o-ngay strong { font-size: var(--cc-18); padding: 0 !important; font-weight: 700; }
 .tb-o-ngay small { color: var(--mau-nhan-sang); font-size: .6875rem; }
 .tb-chu-muc { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: .1875rem; }
@@ -34,7 +34,7 @@ section.bang-thong-bao .tb-muc.chua-doc .tb-o-ngay::after { content: ""; positio
 .tb-loai .rzi { font-size: .875rem; }
 .tb-so { background: var(--trung-tinh-nen); color: var(--chu-phu); font-variant-numeric: tabular-nums; }
 .tb-muc-do.quan-trong { background: var(--canh-bao-nen); color: var(--canh-bao-chu); }
-.tb-muc-do.khan { background: var(--loi-chu); color: #fff; }
+.tb-muc-do.khan { background: var(--loi-chu); color: var(--chu-tren-mau); }
 .tb-het-han { background: var(--trung-tinh-nen); color: var(--chu-phu); text-decoration: line-through; }
 .tb-ghim { color: var(--mau-nhan); font-size: 1rem; }
 .tb-trich-yeu { display: -webkit-box; overflow: hidden; color: var(--chu-phu); font-size: var(--cc-12); -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

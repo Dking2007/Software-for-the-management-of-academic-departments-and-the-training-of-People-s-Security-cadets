@@ -61,7 +61,7 @@
                         <h1>@bai.TieuDe</h1>
                         <div class="bt-meta"><span><RadzenIcon Icon="person" />@bai.TacGia</span><span><RadzenIcon Icon="schedule" />@GioDang(bai.DangLuc)</span><span><RadzenIcon Icon="visibility" />@bai.LuotXem.ToString("N0") lượt xem</span></div>
                         <p class="bt-sapo">@bai.Sapo</p>
-                        <figure class="bt-anh-trong-bai"><AnhTin Bai="bai" Lon="true" />@if (bai.Anh is null) { <figcaption class="bt-chu-thich-anh">Ảnh minh hoạ cho bài viết “@bai.TieuDe”</figcaption> }</figure>
+                        <figure class="bt-anh-trong-bai"><AnhTin Bai="bai" Lon="true" PhongTo="true" />@if (bai.Anh is null) { <figcaption class="bt-chu-thich-anh">Ảnh minh hoạ cho bài viết “@bai.TieuDe”</figcaption> }</figure>
                         <div class="bt-noi-dung">
                             @foreach (var doan in bai.NoiDung.Split('\n', StringSplitOptions.RemoveEmptyEntries).Where(d => d.Trim() != bai.Sapo.Trim()))
                             {

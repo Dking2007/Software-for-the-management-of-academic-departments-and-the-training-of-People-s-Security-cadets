@@ -1,9 +1,11 @@
 @* Ảnh bài viết: ảnh đã tải lên; nếu chưa có thì dùng ảnh minh hoạ SVG vẽ sẵn theo nội dung bài (wwwroot/images/ban-tin, không dùng ảnh bên ngoài). *@
 <span class="bt-khung-anh">
-    <img class="bt-anh @(Lon ? "lon" : "")" src="@(Bai.Anh ?? DichVuBanTin.AnhMinhHoa(Bai))" alt="@(Bai.Anh is null ? $"Ảnh minh hoạ: {Bai.TieuDe}" : Bai.TieuDe)" loading="lazy" />
+    <img class="bt-anh @(Lon ? "lon" : "")" src="@(Bai.Anh ?? DichVuBanTin.AnhMinhHoa(Bai))" alt="@(Bai.Anh is null ? $"Ảnh minh hoạ: {Bai.TieuDe}" : Bai.TieuDe)" loading="lazy" data-phong-to="@(PhongTo ? "" : null)" tabindex="@(PhongTo ? "0" : null)" title="@(PhongTo ? "Bấm để xem ảnh lớn" : null)" />
 </span>
 
 @code {
     [Parameter, EditorRequired] public TinTuc Bai { get; set; } = default!;
     [Parameter] public bool Lon { get; set; }
+    /// <summary>Cho bấm để xem ảnh lớn (chỉ dùng khi ảnh không nằm trong liên kết).</summary>
+    [Parameter] public bool PhongTo { get; set; }
 }

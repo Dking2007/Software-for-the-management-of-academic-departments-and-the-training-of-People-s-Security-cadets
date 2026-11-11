@@ -1,6 +1,6 @@
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        @if (routeData.PageType == typeof(Nhom2_BTL.Components.Pages.DangNhap) || routeData.PageType == typeof(Nhom2_BTL.Components.Pages.DangKy))
+        @if (routeData.PageType == typeof(Nhom2_BTL.Components.Pages.DangNhap) || routeData.PageType == typeof(Nhom2_BTL.Components.Pages.DangKy) || routeData.PageType == typeof(Nhom2_BTL.Components.Pages.GioiThieu))
         {
             <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.BoCucDangNhap)" />
         }

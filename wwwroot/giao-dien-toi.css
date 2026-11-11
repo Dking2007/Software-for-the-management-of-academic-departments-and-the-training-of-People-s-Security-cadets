@@ -1,0 +1,48 @@
+/* ==========================================================================
+   Giao diện tối: mọi chỉnh sửa riêng cho chế độ tối gom về một chỗ, nạp sau cùng.
+   Nguyên tắc: ở chế độ tối, màu chủ đạo và màu trạng thái chuyển sang tông SÁNG để đọc được trên nền tối;
+   vì thế chữ/biểu tượng đặt trên các ô tô đặc màu đó phải là chữ TỐI, không phải chữ trắng.
+   Token --chu-tren-mau ("chữ trên màu") lo việc này: trắng ở chế độ sáng, xanh rất đậm ở chế độ tối.
+   Muốn thêm nút/nhãn tô đặc mới: dùng background: var(--mau-chinh) + color: var(--chu-tren-mau), đừng ghi #fff.
+   ========================================================================== */
+:root { --chu-tren-mau: #fff; }
+:root[data-giao-dien="toi"] { --chu-tren-mau: #0d1f15; --chu-tren-mau-phu: rgba(13, 31, 21, .72); }
+
+/* Số phụ màu vàng đồng trên ô đang chọn: ở chế độ tối nền đã sáng nên dùng chữ tối, nhạt hơn một bậc. */
+[data-giao-dien="toi"] :is(.tb-chuyen-muc button.dang-chon, .hang-cap button.dang-chon, .hv-tab-he a.dang-chon, .mt-bang thead th.hom-nay, .dau-ngay.hom-nay) :is(small, span),
+[data-giao-dien="toi"] .ln-cac-ngay button.dang-chon :is(span, small),
+[data-giao-dien="toi"] .tb-o-ngay small { color: var(--chu-tren-mau-phu); }
+
+/* Ảnh đại diện chữ cái trên thẻ cá nhân */
+[data-giao-dien="toi"] .phieu-avatar { color: var(--chu-tren-mau); box-shadow: 0 0 0 3px var(--nen-the), 0 0 0 4px rgba(153, 213, 175, .25); }
+
+/* Dải đầu khối hệ đào tạo: nền chuyển từ đậm sang màu chủ đạo, ở chế độ tối giữ toàn dải tông đậm để chữ trắng đọc rõ. */
+[data-giao-dien="toi"] .hv-he-dau { background: linear-gradient(120deg, #0b1d14, #1f4a33); }
+
+/* Nút sửa / xem trên từng dòng bảng (chế độ sáng là ô xanh nhạt chữ đậm) */
+[data-giao-dien="toi"] .actions-cell .nut-sua-dong.rz-button { background: #1d3550; color: #b9d8f7; }
+[data-giao-dien="toi"] .actions-cell .nut-xem-dong.rz-button { background: #22402f; color: #b6e9c7; }
+[data-giao-dien="toi"] .actions-cell .nut-xoa-dong.rz-button { background: #4a2523; color: #ffb4ad; }
+[data-giao-dien="toi"] .actions-cell :is(.nut-sua-dong, .nut-xem-dong, .nut-xoa-dong).rz-button .rzi { color: inherit; }
+[data-giao-dien="toi"] .actions-cell :is(.nut-sua-dong, .nut-xem-dong, .nut-xoa-dong).rz-button:hover { filter: brightness(1.2); }
+
+/* Nút xoá dạng biểu tượng nhỏ: đỏ đậm cố định bị chìm trên nền tối. */
+[data-giao-dien="toi"] :is(.nut-nho.nguy-hiem, .o-mo-rong .bat-buoc) { color: var(--mau-nguy-hiem); }
+[data-giao-dien="toi"] .bd-chu.chu-F { color: #ffb4ad; }
+
+/* Mã ví dụ (tên đăng nhập, mật khẩu demo) */
+[data-giao-dien="toi"] code { color: #f5b8d5; }
+
+/* Nút Radzen "Light"/"Base" mặc định của theme tối hơi chìm vào nền thẻ: tăng viền và nền một bậc. */
+[data-giao-dien="toi"] .rz-button.rz-light:not(.module-menu-toggle):not(.navbar-toggler) { background: #2a3d32; color: var(--chu-chinh); border: 1px solid var(--vien-the); }
+[data-giao-dien="toi"] .rz-button.rz-light:not(.module-menu-toggle):not(.navbar-toggler):not(.rz-state-disabled):hover { background: #34503f; }
+[data-giao-dien="toi"] .rz-button.rz-light .rzi { color: inherit; }
+
+/* Thanh báo lỗi kết nối Blazor: luôn nổi trên hộp thoại Radzen (trước đây bị lớp phủ hộp thoại che nên người dùng tưởng trang đơ),
+   màu cố định để đọc được ở cả Sáng và Tối. */
+#blazor-error-ui { z-index: 20000; background: #fdf3d8; color: #2a2108; box-shadow: 0 -6px 24px rgba(0,0,0,.25); font-size: var(--cc-15); }
+#blazor-error-ui .reload { padding: .375rem .875rem; border-radius: var(--bo-goc); background: #1b4b34; color: #fff; font-weight: 600; text-decoration: none; }
+#blazor-error-ui .dismiss.rz-button { background: transparent; color: #2a2108; border: 0; }
+
+/* Hộp gợi ý của biểu đồ thanh (BieuDoThanh): sáng hơn nền thẻ một bậc, có viền; chữ luôn tương phản cao. */
+[data-giao-dien="toi"] .goi-y-dong { background: #2a4034 !important; border: 1px solid #4b6a58; color: #f1f7f3 !important; }

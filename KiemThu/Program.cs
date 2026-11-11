@@ -197,11 +197,12 @@ KiemTra(cacStt.Count==10 && cacStt.Select(m=>int.Parse(m.Groups[1].Value)).Seque
 var trangCanBo=await HienThi<Nhom2_BTL.Components.Pages.CanBoGiangVien>();
 KiemTra(trangCanBo.Contains("Tất cả các khoa") && trangCanBo.Contains("Tất cả các tổ"),"HTML cán bộ có cả bộ lọc khoa và tổ");
 var trangChu=await HienThi<Nhom2_BTL.Components.Pages.Home>();
-KiemTra(trangChu.Contains("Xin chào, admin") && !trangChu.Contains("target=\"_blank\""),"HTML trang chủ chào đúng tài khoản và mở liên kết cùng tab");
+// Lời chào đổi theo giờ (Chào buổi sáng/trưa/chiều/tối), tên tài khoản nằm trong span nổi màu.
+KiemTra(trangChu.Contains("Chào buổi") && System.Text.RegularExpressions.Regex.IsMatch(trangChu, "class=\"hero-an-ten\"[^>]*>admin<") && !trangChu.Contains("target=\"_blank\""),"HTML trang chủ chào đúng tài khoản và mở liên kết cùng tab");
 KiemTra(System.Text.RegularExpressions.Regex.Matches(trangChu, "class=\"the-so-lieu\"").Count == 5, "Trang chủ có đủ năm thẻ số liệu (khoa, tổ, cán bộ, lớp, học viên)");
 await auth.DangXuatAsync(); KiemTra(await auth.DangNhapAsync("nguoixem", "demo123"),"Guest đăng nhập lại");
 var trangChuGuest = await HienThi<Nhom2_BTL.Components.Pages.Home>();
-KiemTra(trangChuGuest.Contains("Xin chào, nguoixem"), "Trang chủ chào đúng tài khoản Guest");
+KiemTra(System.Text.RegularExpressions.Regex.IsMatch(trangChuGuest, "class=\"hero-an-ten\"[^>]*>nguoixem<"), "Trang chủ chào đúng tài khoản Guest");
 await auth.DangXuatAsync();
 var trangChuKhach = await HienThi<Nhom2_BTL.Components.Pages.Home>();
 KiemTra(trangChuKhach.Contains("Tổng quan") && !trangChuKhach.Contains("Xin chào"), "Chưa đăng nhập: trang chủ không chào tên ai");

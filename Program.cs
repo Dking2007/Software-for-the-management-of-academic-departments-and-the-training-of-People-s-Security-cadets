@@ -81,6 +81,7 @@ boMayUngDung.Services.AddScoped<DichVuTruongTuyChinh>();
 boMayUngDung.Services.AddScoped<DichVuBanTin>();
 boMayUngDung.Services.AddScoped<DichVuChuongTrinh>();
 boMayUngDung.Services.AddScoped<DichVuTrucBan>();
+boMayUngDung.Services.AddScoped<DichVuHuongDan>();
 QuyTacDuLieu.HocVienXemBanCungLop = boMayUngDung.Configuration.GetValue("HocVienXemBanCungLop", true);
 
 // Hoàn tất cấu hình dịch vụ trước khi thiết lập các tuyến xử lý HTTP.

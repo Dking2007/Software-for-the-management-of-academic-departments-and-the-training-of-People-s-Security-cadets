@@ -74,6 +74,8 @@
             (dong, loi) = await Excel.DocTepHocVienAsync(ms);
         }
         catch (IOException) { loi = "Tệp vượt quá 5 MB hoặc không đọc được."; }
+        // Tệp hỏng hoặc không phải .xlsx thật: báo lỗi trong hộp thoại thay vì để lỗi làm sập kết nối (trang đơ).
+        catch (Exception) { loi = "Không đọc được tệp. Hãy dùng đúng tệp Excel (.xlsx) theo mẫu tải về."; }
         finally { dangDoc = false; }
     }
 
@@ -82,6 +84,7 @@
         if (dong is null) return;
         dangGhi = true;
         try { ketQua = await Excel.XacNhanNhapAsync(dong); }
+        catch (Exception) { loi = "Không ghi được dữ liệu. Vui lòng thử lại; nếu vẫn lỗi, kiểm tra lại tệp."; }
         finally { dangGhi = false; }
     }
 }

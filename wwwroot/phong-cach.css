@@ -1,0 +1,328 @@
+/* ==========================================================================
+   Phong cách "Sổ bộ" (12/11/2026) — Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân.
+   Hướng thiết kế đã đối chiếu bộ luật ui-ux-pro-max (nhóm sản phẩm Government/Public Service + Executive Dashboard):
+   "Minimalism & Swiss Style + Accessible & Ethical": dữ liệu trước, trang trí tối thiểu, không gradient,
+   tương phản cao, tối đa 4–6 chỉ số trên bảng điều khiển, trạng thái luôn có chữ đi kèm (không chỉ dựa vào màu).
+     • Một màu thương hiệu (xanh CAND, đổi được trong Cài đặt) + một màu nhấn đồng thau dùng rất ít (vạch, chấm, số nhỏ).
+     • Viền mảnh 1px phân lớp, không bóng đổ trang trí; chuyển động 150–250 ms, chỉ để báo phản hồi.
+     • Tiêu đề và con số: Be Vietnam Pro (phông do người Việt thiết kế, giấy phép OFL, đặt trong wwwroot/fonts);
+       nội dung: phông người dùng chọn trong Cài đặt (mặc định Segoe UI).
+   Nạp sau các tệp CSS khác, trước giao-dien-toi.css.
+   ========================================================================== */
+
+/* 1. Phông tiêu đề ----------------------------------------------------------- */
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 500; font-display: swap; src: url("fonts/BeVietnamPro-vietnamese-500.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 600; font-display: swap; src: url("fonts/BeVietnamPro-vietnamese-600.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 700; font-display: swap; src: url("fonts/BeVietnamPro-vietnamese-700.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 800; font-display: swap; src: url("fonts/BeVietnamPro-vietnamese-800.woff2") format("woff2"); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 500; font-display: swap; src: url("fonts/BeVietnamPro-latin-ext-500.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 600; font-display: swap; src: url("fonts/BeVietnamPro-latin-ext-600.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 700; font-display: swap; src: url("fonts/BeVietnamPro-latin-ext-700.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 800; font-display: swap; src: url("fonts/BeVietnamPro-latin-ext-800.woff2") format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 500; font-display: swap; src: url("fonts/BeVietnamPro-latin-500.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 600; font-display: swap; src: url("fonts/BeVietnamPro-latin-600.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 700; font-display: swap; src: url("fonts/BeVietnamPro-latin-700.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Be Vietnam Pro"; font-weight: 800; font-display: swap; src: url("fonts/BeVietnamPro-latin-800.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+    --font-tieu-de: "Be Vietnam Pro", var(--font);
+    --dong-thau: #8f6a1f;          /* màu nhấn duy nhất, chỉ cho vạch/chấm/nhãn nhỏ; đạt 4.5:1 trên nền trắng */
+    --dong-thau-nhat: #f6efe0;
+    --tg-nhanh: .18s;
+    --duong-cong-mem: cubic-bezier(.2, .8, .2, 1);
+}
+:root[data-giao-dien="toi"] { --dong-thau: #e2c27e; --dong-thau-nhat: #3a3020; }
+:root:is([data-phong="he-thong"], [data-phong="de-doc"], [data-phong="serif"]) { --font-tieu-de: var(--font); }
+:root[data-bo-goc="vua"] { --bo-goc-lon: 12px; --bo-goc-the: 10px; }
+
+/* 2. Chữ --------------------------------------------------------------------- */
+h1, h2, h3 { text-wrap: balance; }
+.page-heading h1, .dau-bieu-do h2, .dau-bang-tin h2, .dau-muc h2, .bang-dau h1,
+.the-so-lieu-gia-tri, .the-kpi strong, .ds-can-chu-y b { font-family: var(--font-tieu-de); letter-spacing: -.015em; }
+.the-so-lieu-gia-tri, .the-kpi strong, .ds-can-chu-y b, .record-code { font-variant-numeric: tabular-nums; }
+
+/* 3. Khung ứng dụng ------------------------------------------------------------ */
+.sidebar { border-right: 1px solid rgba(255, 255, 255, .06); }
+/* Mục con đang mở: vạch đồng thau bên trái thay cho chấm, rõ hơn khi lướt mắt. */
+.muc-con.active { position: relative; }
+.muc-con.active::after { display: none; }
+.muc-con.active::before { content: ""; position: absolute; left: -.8125rem; top: .5rem; bottom: .5rem; width: 2px; border-radius: 2px; background: #e2c27e; }
+/* Thanh trên: nền đặc, viền mảnh (bỏ kính mờ để chữ luôn sắc nét khi cuộn qua bảng). */
+.top-row::before { background: color-mix(in srgb, var(--nen-the) 94%, transparent); }
+.top-row { border-bottom: 1px solid var(--vien-the); }
+/* Đường dẫn luôn một dòng, đọc đủ chữ: "Trang chủ" chỉ còn biểu tượng nhà khi đã vào sâu; trang sâu từ 4 cấp
+   chỉ hiện ba cấp gần nhất (cấp cao hơn vẫn mở được qua menu bên trái). Không cắt chữ giữa chừng. */
+.duong-dan .rz-breadcrumb { display: flex; flex-wrap: nowrap; align-items: center; min-width: 0; overflow: hidden; font-size: .875rem; white-space: nowrap; }
+.duong-dan .rz-breadcrumb-item { flex: none; white-space: nowrap; }
+.duong-dan .rz-breadcrumb-item:first-child:not(:last-child) .rz-link-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.duong-dan .rz-breadcrumb-item:not(:first-child):nth-last-child(n+4) { display: none; }
+.duong-dan .rz-breadcrumb-item:last-child { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+
+/* Nút Sáng/Tối nhanh */
+.nut-sang-toi { display: inline-flex; flex: none; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--vien-the); border-radius: 10px; background: var(--nen-the); }
+.nut-sang-toi button { display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: 7px; background: transparent; color: var(--chu-phu); cursor: pointer; transition: background-color var(--tg-nhanh) ease, color var(--tg-nhanh) ease; }
+.nut-sang-toi button .rzi { font-size: 1.125rem; }
+.nut-sang-toi button:hover { color: var(--chu-chinh); }
+.nut-sang-toi button[aria-pressed="true"] { background: var(--mau-chinh); color: var(--chu-tren-mau); }
+@media (max-width: 600px) { .nut-sang-toi { display: none; } }
+
+/* 4. Đầu trang ------------------------------------------------------------------ */
+.page-heading-row { margin-bottom: 1.25rem; }
+.page-heading h1 { font-size: clamp(1.5rem, 1.2rem + .7vw, 1.875rem); font-weight: 700; line-height: 1.2; }
+.page-heading p { font-size: .9375rem; }
+.dau-trang-bieu-tuong { width: 2.75rem; height: 2.75rem; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--nhan) 28%, transparent); background: color-mix(in srgb, var(--nhan) 10%, var(--nen-the)); color: var(--nhan); box-shadow: none; }
+.dau-trang-bieu-tuong .rzi { font-size: 1.375rem; }
+[data-giao-dien="toi"] .dau-trang-bieu-tuong { background: color-mix(in srgb, var(--nhan) 22%, var(--nen-the)); color: color-mix(in srgb, var(--nhan) 45%, #fff); }
+/* Đầu trang lồng trong tab (ví dụ danh sách học viên trong trang lớp): hạ xuống cấp tiêu đề phụ, không lặp biểu tượng lớn. */
+.rz-tabview-panel .page-heading-row { margin-bottom: 1rem; }
+.rz-tabview-panel .dau-trang-bieu-tuong { display: none; }
+.rz-tabview-panel .page-heading h1 { font-size: 1.1875rem; }
+.rz-tabview-panel .page-heading p { font-size: .8125rem; }
+/* Liên kết "Quay lại" và liên kết phụ: theo màu thương hiệu thay vì xanh dương mặc định. */
+.content a.rz-link:not(.btn), .content .lien-ket-quay-lai { color: var(--mau-chinh); }
+
+/* Nút phụ của Radzen (Xuất/Nhập Excel…): viền mảnh trên nền thẻ thay cho khối xám đặc. */
+.thao-tac-dau-trang .rz-button.rz-light, .thao-tac-dau-trang .rz-button.rz-base { border: 1px solid var(--vien-the); background: var(--nen-the); color: var(--chu-chinh); box-shadow: none; }
+.thao-tac-dau-trang .rz-button.rz-light:not(.rz-state-disabled):hover { border-color: var(--mau-chinh-sang); background: var(--mau-chinh-nhat); }
+
+/* Bảng: tiêu đề cột được xuống hai dòng thay vì bị cắt "MÃ CÁ…". */
+.directory-grid .rz-grid-table thead th .rz-column-title-content, .directory-grid .rz-grid-table thead th .rz-column-title { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.25; }
+
+/* 5. Trang chủ: đầu bảng điều khiển ---------------------------------------------- */
+.bang-dau { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; margin: 0 0 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--vien-the); }
+.bang-dau-chu { min-width: 0; flex: 1 1 28rem; }
+.bang-dau-ngay { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .75rem; margin: 0 0 .5rem; color: var(--chu-phu); font-size: .8125rem; font-weight: 500; }
+.bang-dau-ngay .rzi { font-size: 1rem; }
+.bang-dau-ngay span { padding: .0625rem .5rem; border-radius: 6px; background: var(--dong-thau-nhat); color: var(--dong-thau); font-size: .75rem; font-weight: 600; }
+.bang-dau h1 { margin: 0 0 .375rem; font-size: clamp(1.625rem, 1.2rem + 1vw, 2.125rem); font-weight: 700; line-height: 1.15; }
+.hero-an-ten { color: var(--mau-chinh); }
+.bang-dau-tom-tat { max-width: 48rem; margin: 0; color: var(--chu-phu); font-size: .9375rem; line-height: 1.6; }
+.bang-dau-tom-tat b { color: var(--chu-chinh); font-weight: 700; }
+.bang-dau-nut { display: flex; flex-wrap: wrap; gap: .5rem; }
+.bang-dau-nut a { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; padding: .5rem 1rem; border-radius: 9px; font-size: .9375rem; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background-color var(--tg-nhanh) ease, border-color var(--tg-nhanh) ease, transform var(--tg-nhanh) var(--duong-cong-mem); }
+.bang-dau-nut a .rzi { font-size: 1.125rem; }
+.bang-dau-nut a:active { transform: translateY(1px); }
+.bang-dau-nut .nut-chinh { background: var(--mau-chinh); color: var(--chu-tren-mau); }
+.bang-dau-nut .nut-chinh:hover { background: var(--mau-chinh-sang); }
+.bang-dau-nut .nut-phu { border: 1px solid var(--vien-the); background: var(--nen-the); color: var(--chu-chinh); }
+.bang-dau-nut .nut-phu:hover { border-color: var(--mau-chinh-sang); }
+.bang-dau-nut .nut-phu b { display: inline-grid; place-items: center; min-width: 1.375rem; height: 1.375rem; padding: 0 .375rem; border-radius: 6px; background: var(--loi-chu); color: var(--chu-tren-mau); font-size: .75rem; }
+.bang-dau-nut a:focus-visible, .tc-loi-tat a:focus-visible, .the-kpi:focus-visible { outline: 2px solid var(--mau-chinh-sang); outline-offset: 2px; }
+
+/* Lối tắt theo vai trò: hàng chip gọn */
+.tc-loi-tat { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1.25rem; }
+.tc-loi-tat a { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.5rem; padding: .375rem .875rem; border: 1px solid var(--vien-the); border-radius: 9px; background: var(--nen-the); color: var(--chu-chinh); font-size: .875rem; font-weight: 500; text-decoration: none; transition: border-color var(--tg-nhanh) ease, color var(--tg-nhanh) ease; }
+.tc-loi-tat a .rzi { color: var(--mau-chinh); font-size: 1.125rem; }
+.tc-loi-tat a:hover { border-color: var(--mau-chinh-sang); color: var(--mau-chinh); }
+
+/* Chỉ số "Hôm nay": tối đa bốn ô, số lớn, nhãn trạng thái bằng chữ + vạch màu bên trái */
+.tc-chi-so { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .875rem; margin: 0 0 1.25rem; }
+.the-kpi { position: relative; display: flex; flex-direction: column; gap: .25rem; padding: 1rem 1.125rem 1rem 1.375rem; border: 1px solid var(--vien-the); border-radius: var(--bo-goc-lon); background: var(--nen-the); color: var(--chu-chinh); text-decoration: none; transition: border-color var(--tg-nhanh) ease, transform var(--tg-nhanh) var(--duong-cong-mem); }
+.the-kpi::before { content: ""; position: absolute; left: 0; top: .875rem; bottom: .875rem; width: 3px; border-radius: 0 3px 3px 0; background: var(--mau-chinh-sang); }
+.the-kpi.canh-bao::before { background: var(--canh-bao-chu); }
+.the-kpi.tot::before { background: var(--ok-chu); }
+.the-kpi.thong-tin::before { background: var(--tin-chu); }
+.the-kpi:hover { border-color: color-mix(in srgb, var(--mau-chinh-sang) 60%, var(--vien-the)); transform: translateY(-2px); }
+.the-kpi-nhan { display: inline-flex; align-items: center; gap: .375rem; color: var(--chu-phu); font-size: .8125rem; font-weight: 600; }
+.the-kpi-nhan .rzi { font-size: 1.0625rem; }
+.the-kpi.canh-bao .the-kpi-nhan .rzi { color: var(--canh-bao-chu); }
+.the-kpi.tot .the-kpi-nhan .rzi { color: var(--ok-chu); }
+.the-kpi.thong-tin .the-kpi-nhan .rzi { color: var(--tin-chu); }
+.the-kpi strong { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.the-kpi small { color: var(--chu-phu); font-size: .8125rem; }
+
+/* Tiêu đề mục trong trang (Quy mô Học viện…) */
+.dau-muc { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem 1rem; margin: 0 0 .75rem; }
+.dau-muc h2 { margin: 0; font-size: 1.125rem; font-weight: 700; }
+.dau-muc p { margin: 0; color: var(--chu-phu); font-size: .8125rem; }
+.quy-mo { margin: 0 0 1.25rem; }
+
+/* 6. Thẻ số liệu (quy mô): gọn, biểu tượng + nhãn một dòng, số lớn ------------------ */
+.luoi-so-lieu { margin: 0; gap: .875rem; }
+.the-so-lieu { padding: 1rem 1.125rem .875rem; border-radius: var(--bo-goc-lon); box-shadow: none; transition: border-color var(--tg-nhanh) ease, transform var(--tg-nhanh) var(--duong-cong-mem); }
+.the-so-lieu:hover, .the-so-lieu:focus-visible { border-color: color-mix(in srgb, var(--mau-chinh-sang) 60%, var(--vien-the)); box-shadow: none; transform: translateY(-2px); }
+.the-so-lieu-dau { flex-direction: row-reverse; justify-content: flex-end; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.the-so-lieu-dau .the-so-lieu-nhan { color: var(--chu-phu); font-size: .8125rem; font-weight: 600; line-height: 1.3; }
+.the-so-lieu-bieu-tuong { flex: none; width: 1.875rem; height: 1.875rem; border-radius: 8px; font-size: 1rem; }
+.the-so-lieu-gia-tri { margin: 0 0 .375rem; font-size: 1.75rem; font-weight: 700; }
+.the-so-lieu-phu { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding-top: .5rem; font-size: .75rem; }
+.the-so-lieu-phu .rzi { flex: none; font-size: .9375rem; color: var(--vien-o-nhap); transition: transform var(--tg-nhanh) var(--duong-cong-mem), color var(--tg-nhanh) ease; }
+.the-so-lieu:hover .the-so-lieu-phu .rzi { color: var(--mau-chinh); transform: translate(2px, -2px); }
+@media (max-width: 1280px) { .luoi-so-lieu { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); } }
+
+/* 7. Thẻ nội dung: đầu thẻ ngăn bằng vạch mảnh ------------------------------------- */
+.the-bieu-do { padding: 1.125rem 1.25rem 1.25rem; border-radius: var(--bo-goc-lon); }
+.dau-bieu-do { margin: -1.125rem -1.25rem 1rem; padding: .875rem 1.25rem; border-bottom: 1px solid var(--vien-nhat); align-items: center; }
+.dau-bieu-do h2 { font-size: 1.0625rem; line-height: 1.3; }
+.dau-bieu-do p { font-size: .8125rem; }
+.ds-can-chu-y a { border-radius: 10px; padding: .5rem .75rem; }
+.luoi-dieu-khien { gap: .875rem; margin-bottom: 1.25rem; }
+#tieu-de-can-chu-y { scroll-margin-top: 5rem; }
+
+/* Lối vào trang mượt: chỉ phần nội dung, một lần, 200 ms (không có hiệu ứng theo cuộn). */
+.content > * { animation: vao-trang .22s var(--duong-cong-mem) both; }
+@keyframes vao-trang { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .content > * { animation: none; } .the-kpi, .the-so-lieu { transition: none; } .the-kpi:hover, .the-so-lieu:hover { transform: none; } }
+:root[data-giam-chuyen-dong] .content > * { animation: none; }
+
+/* Hoạt động gần đây: nhãn không gãy dòng, nội dung co lại và cắt bằng dấu … thay vì tràn khỏi thẻ. */
+.ds-hoat-dong { grid-template-columns: minmax(0, 1fr); }
+.ds-hoat-dong li { min-width: 0; gap: .75rem; padding: .5rem 0; }
+.ds-hoat-dong li:last-child { border-bottom: 0; }
+.ds-hoat-dong .nhan-hanh-dong { flex: none; min-width: 4.75rem; text-align: center; white-space: nowrap; }
+.ds-hoat-dong li > span:last-child { flex: 1 1 auto; }
+.ds-hoat-dong small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 8. Chống tràn chữ chung ---------------------------------------------------- */
+/* Nhãn, chip, huy hiệu ngắn: không bao giờ gãy giữa chữ. */
+.tb-loai, .tb-so, .tb-muc-do, .nhan-new, .tb-het-han, .nhan-hanh-dong, .nhan-trang-thai, .record-code, .tag-tin, .chip-hieu-luc { white-space: nowrap; }
+/* Dòng nhãn của văn bản: xuống dòng theo cả chip, không chip nào lòi khỏi thẻ. */
+.tb-dong-nhan { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .375rem; min-width: 0; }
+.tb-chu-muc { min-width: 0; }
+.tb-chu-muc > strong { overflow-wrap: anywhere; }
+.tb-ngay-nho { white-space: nowrap; }
+/* Chế độ xem lịch trên điện thoại: các nút tự xuống hàng. */
+@media (max-width: 600px) { .chon-che-do { flex-wrap: wrap; } .chon-che-do button { flex: 1 1 calc(50% - .25rem); } }
+
+/* 9. Xem ảnh phóng to -------------------------------------------------------- */
+img[data-phong-to] { cursor: zoom-in; transition: filter .15s ease; }
+img[data-phong-to]:hover { filter: brightness(1.04); }
+.xa-goc { position: fixed; inset: 0; z-index: 15000; display: flex; flex-direction: column; background: rgba(5, 12, 9, .9); animation: xa-hien .16s ease-out; }
+.xa-thanh { display: flex; align-items: center; gap: .5rem; padding: .75rem 1rem; color: #e4eee7; }
+.xa-thanh strong { flex: 1; min-width: 0; overflow: hidden; font-size: .9375rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.xa-thanh button, .xa-thanh a { display: inline-flex; align-items: center; gap: .375rem; height: 2.5rem; padding: 0 .875rem; border: 1px solid rgba(255, 255, 255, .18); border-radius: 9px; background: rgba(255, 255, 255, .06); color: #fff; font: inherit; font-size: .875rem; text-decoration: none; cursor: pointer; }
+.xa-thanh button:hover, .xa-thanh a:hover { background: rgba(255, 255, 255, .14); }
+.xa-thanh .xa-dong { width: 2.5rem; padding: 0; justify-content: center; font-size: 1.375rem; }
+.xa-vung { flex: 1; min-height: 0; display: grid; place-items: center; overflow: auto; padding: 0 1rem 1rem; }
+.xa-vung img { max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); cursor: zoom-in; background: #fff; }
+.xa-vung.xa-that img { max-width: none; max-height: none; cursor: zoom-out; }
+.xa-goc :focus-visible { outline: 2px solid #e4cf8c; outline-offset: 2px; }
+@keyframes xa-hien { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 600px) { .xa-thanh .xa-nhan { display: none; } }
+
+/* Ảnh đính kèm văn bản: hiện trọn ảnh (không cắt), bấm để xem lớn. */
+section.bang-thong-bao .anh-thong-bao { object-fit: contain; max-height: 26rem; border: 1px solid var(--vien-nhat); background: var(--nen-dai); }
+
+/* 10. Điện thoại: menu là ngăn kéo thật ----------------------------------------
+   Trước đây khi menu ở trạng thái thu gọn, trên điện thoại vẫn hiện hai khối biểu tượng chiếm nửa màn hình
+   và có hai nút ba gạch. Nay: chỉ một dải logo + nút ba gạch; bấm thì mở menu đầy đủ (có chữ). */
+@media (max-width: 759px) {
+    .top-row .nut-sidebar { display: none; }
+    .sidebar { position: sticky; top: 0; z-index: 40; background: var(--mau-chinh-dam); }
+    .sidebar-menu:not(.menu-open) :is(.nav-scrollable, .menu-tro-giup, .menu-quan-tri) { display: none !important; }
+    .sidebar-menu.menu-open { max-height: calc(100vh - 4.5rem); overflow-y: auto; }
+    .sidebar-thu-gon .sidebar-menu.menu-open :is(.brand-copy, .ten-phan-he) { display: inline; }
+    .sidebar-thu-gon .sidebar-menu.menu-open .nhan-nhom-menu { display: block; }
+    .sidebar-thu-gon .sidebar-menu.menu-open .module-groups { display: grid; gap: .25rem; }
+    .sidebar-thu-gon .sidebar-menu.menu-open .module-menu-heading { display: flex; }
+    .sidebar-thu-gon .sidebar-menu.menu-open .module-menu-main { justify-content: flex-start; padding: 0 .75rem; }
+    .sidebar-thu-gon .sidebar-menu.menu-open .module-menu-toggle { display: grid; }
+    .sidebar-thu-gon .sidebar-menu.menu-open .menu-con { display: grid; }
+    .sidebar-thu-gon .brand-copy { display: flex; }
+    .navbar-toggler.rz-button { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, .3); }
+    .the-so-lieu-gia-tri { font-size: 1.875rem; }
+}
+/* Danh sách văn bản: cột danh sách không hẹp hơn 15rem; màn vừa (≤ 1200 px) bỏ ảnh thu nhỏ để chữ đủ chỗ, chỉ giữ ô ngày. */
+section.bang-thong-bao .noi-dung-bang-tin { grid-template-columns: minmax(15rem, 30fr) minmax(0, 70fr); }
+@media (max-width: 1200px) { section.bang-thong-bao .tb-anh-nho { display: none; } }
+@media (max-width: 1200px) and (min-width: 601px) { section.bang-thong-bao .noi-dung-bang-tin { grid-template-columns: minmax(15rem, 36fr) minmax(0, 64fr); gap: 1rem; } }
+@media (max-width: 600px) { section.bang-thong-bao .noi-dung-bang-tin { grid-template-columns: 1fr; } }
+
+/* 11. Chữ dễ đọc hơn (12/11) -------------------------------------------------------
+   Tiếng Việt nhiều dấu: không bóp khoảng chữ âm như tiêu đề tiếng Anh (dấu chồng lên nhau, khó đọc);
+   tiêu đề đậm vừa (600) thay vì 700; chữ phụ đậm hơn một bậc để đủ tương phản khi đọc lâu. */
+:root:not([data-giao-dien="toi"]) { --chu-phu: #4c5951; }
+.page-heading h1, .dau-bieu-do h2, .dau-bang-tin h2, .dau-muc h2, .bang-dau h1, .hv-khoa-dau h2 { font-weight: 600; letter-spacing: -.005em; line-height: 1.25; }
+.the-so-lieu-gia-tri, .the-kpi strong, .ds-can-chu-y b { letter-spacing: 0; }
+.bang-dau h1 { font-size: clamp(1.5rem, 1.15rem + .9vw, 1.875rem); }
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+/* 12. Màu theo mảng nghiệp vụ: biết mình đang ở mảng nào chỉ bằng một cái liếc ----------------
+   Khoa: xanh lá · Đào tạo: hổ phách · Học viên: xanh dương · Cá nhân: chàm · Bản tin, văn bản: hồng mận · Quản trị: xám.
+   Màu đậm dùng trên nền sáng, màu nhạt dùng trên thanh điều hướng tối; luôn đi kèm chữ, không mang nghĩa một mình. */
+:root { --m-khoa: #1f7a4f; --m-dao-tao: #9a6a0c; --m-hoc-vien: #1f6f99; --m-ca-nhan: #4f6bb0; --m-ban-tin: #9b3f6e; --m-quan-tri: #5d6a63; }
+:root[data-giao-dien="toi"] { --m-khoa: #7fd6a8; --m-dao-tao: #f2c66d; --m-hoc-vien: #8ccaf0; --m-ca-nhan: #a9bdf2; --m-ban-tin: #f2a7c8; --m-quan-tri: #c3cbd2; }
+.dau-trang-khoa { --nhan: var(--m-khoa); } .dau-trang-dao-tao { --nhan: var(--m-dao-tao); } .dau-trang-hoc-vien { --nhan: var(--m-hoc-vien); }
+.dau-trang-ca-nhan { --nhan: var(--m-ca-nhan); } .dau-trang-quan-tri { --nhan: var(--m-quan-tri); } .dau-trang-thong-tin { --nhan: var(--m-ban-tin); }
+/* Thanh điều hướng: biểu tượng mỗi mảng mang màu của mảng; mảng đang mở có vạch màu bên trái. */
+.module-menu-group[data-phan-he="khoa"] { --mm: #7fd6a8; } .module-menu-group[data-phan-he="dao-tao"] { --mm: #f2c66d; }
+.module-menu-group[data-phan-he="hoc-vien"] { --mm: #8ccaf0; } .module-menu-group[data-phan-he="ca-nhan"] { --mm: #a9bdf2; }
+.module-menu-group[data-phan-he="ban-tin"] { --mm: #f2a7c8; }
+.module-menu-group[data-phan-he] .module-menu-main > .rzi { color: var(--mm); }
+.module-menu-group[data-phan-he].dang-chon > .module-menu-heading { position: relative; }
+.module-menu-group[data-phan-he].dang-chon > .module-menu-heading::before { content: ""; position: absolute; left: 0; top: .5rem; bottom: .5rem; width: 3px; border-radius: 0 3px 3px 0; background: var(--mm); }
+.muc-con.active::before { background: var(--mm, #e2c27e); }
+/* Trang chủ: lối tắt và thẻ quy mô mang màu mảng đích */
+.tc-loi-tat a[href^="/khoa"] .rzi, .the-so-lieu[href^="/khoa"] .the-so-lieu-bieu-tuong { color: var(--m-khoa); }
+.tc-loi-tat a[href^="/dao-tao"] .rzi, .the-so-lieu[href^="/dao-tao"] .the-so-lieu-bieu-tuong { color: var(--m-dao-tao); }
+.tc-loi-tat a[href^="/quan-ly-hoc-vien"] .rzi, .tc-loi-tat a[href="/lop"] .rzi, .the-so-lieu[href="/lop"] .the-so-lieu-bieu-tuong, .the-so-lieu[href="/hoc-vien"] .the-so-lieu-bieu-tuong { color: var(--m-hoc-vien); }
+.tc-loi-tat a[href^="/quan-tri"] .rzi { color: var(--m-quan-tri); }
+.tc-loi-tat a[href="/giang-day"] .rzi, .tc-loi-tat a[href="/cua-toi"] .rzi { color: var(--m-ca-nhan); }
+.the-so-lieu[href^="/khoa"] .the-so-lieu-bieu-tuong { background: color-mix(in srgb, var(--m-khoa) 12%, var(--nen-the)); }
+.the-so-lieu[href="/lop"] .the-so-lieu-bieu-tuong, .the-so-lieu[href="/hoc-vien"] .the-so-lieu-bieu-tuong { background: color-mix(in srgb, var(--m-hoc-vien) 12%, var(--nen-the)); }
+/* Chỉ số "Hôm nay": ô biểu tượng tô màu nhạt theo trạng thái */
+.the-kpi-nhan .rzi { display: inline-grid; place-items: center; width: 1.625rem; height: 1.625rem; border-radius: 7px; background: var(--mau-chinh-nhat); color: var(--mau-chinh); }
+.the-kpi.canh-bao .the-kpi-nhan .rzi { background: var(--canh-bao-nen); }
+.the-kpi.tot .the-kpi-nhan .rzi { background: var(--ok-nen); }
+.the-kpi.thong-tin .the-kpi-nhan .rzi { background: var(--tin-nen); }
+.the-kpi:first-child .the-kpi-nhan .rzi { background: color-mix(in srgb, var(--m-dao-tao) 14%, var(--nen-the)); color: var(--m-dao-tao); }
+.the-kpi:first-child::before { background: var(--m-dao-tao); }
+
+/* 13. Điểm danh đi làm: bảng tuần gọn, các ngày rộng bằng nhau --------------------------------------------
+   Cột tên cố định khi cuộn ngang; hôm nay chỉ tô nền cột và nhãn "Hôm nay", không làm cột phình ra. */
+.khoi-cong .bang-cuon { overflow-x: auto; }
+.bang-cong { table-layout: fixed; min-width: 50rem; border-collapse: separate; border-spacing: 0; }
+.bang-cong th:first-child, .bang-cong td:first-child { width: 30%; min-width: 14rem; position: sticky; left: 0; z-index: 1; background: var(--nen-the); }
+.bang-cong thead th:first-child { background: var(--nen-dai); }
+.bang-cong th:last-child, .bang-cong td:last-child { width: 6rem; }
+.bang-cong thead th { padding: .5rem .375rem; border-bottom: 1px solid var(--vien-the); background: var(--nen-dai); color: var(--chu-phu); font-size: .75rem; font-weight: 600; }
+.bang-cong thead th small { color: var(--chu-phu); font-size: .6875rem; }
+.bang-cong thead th.hom-nay { background: var(--mau-chinh); color: var(--chu-tren-mau); }
+.bang-cong thead th.hom-nay small { color: var(--chu-tren-mau); opacity: .85; }
+.bang-cong thead th.hom-nay::after { content: "Hôm nay"; display: block; font-size: .625rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.bang-cong td { padding: .4375rem .375rem; border-bottom: 1px solid var(--vien-nhat); vertical-align: middle; }
+.bang-cong td.hom-nay { background: color-mix(in srgb, var(--mau-chinh-nhat) 70%, transparent); }
+.bang-cong td:first-child strong { font-weight: 600; }
+.bang-cong .o-cong { min-width: 2.25rem; }
+.bang-cong .o-cong-rong, .bang-cong td.hom-nay select.o-cong { width: 100%; max-width: 8.5rem; min-width: 0; }
+.bang-cong .dong-to td { position: static; padding: .5rem .625rem; background: var(--nen-dai); color: var(--m-khoa); font-size: .75rem; letter-spacing: .04em; }
+.bang-cong tbody tr:not(.dong-to):hover td { background: var(--nen-dai); }
+.bang-cong tbody tr:not(.dong-to):hover td.hom-nay { background: var(--mau-chinh-nhat); }
+.bang-cong td.so strong { color: var(--chu-chinh); }
+
+/* 14. Cột khoá · niên khoá thu gọn/mở rộng được ------------------------------------------------------------ */
+.hv-ds-khoa-dau { display: flex; align-items: center; gap: .5rem; width: 100%; padding: .375rem .5rem; border: 0; border-radius: 8px; background: transparent; color: var(--chu-phu); font: inherit; text-align: left; cursor: pointer; }
+.hv-ds-khoa-dau > span { flex: 1; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.hv-ds-khoa-dau strong { color: var(--chu-chinh); font-size: .875rem; }
+.hv-ds-khoa-dau .rzi { flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--vien-the); border-radius: 7px; background: var(--nen-the); color: var(--chu-chinh); font-size: 1.125rem; }
+.hv-ds-khoa-dau:hover .rzi { border-color: var(--mau-chinh-sang); color: var(--mau-chinh); }
+.hv-ds-khoa-dau:focus-visible { outline: 2px solid var(--mau-chinh-sang); outline-offset: 2px; }
+.hv-ds-khoa-than { display: flex; flex-direction: column; gap: .25rem; }
+.hv-ds-khoa-than[hidden] { display: none; }
+.hv-bo-cuc.thu-gon { grid-template-columns: minmax(0, 1fr); }
+.hv-bo-cuc.thu-gon .hv-ds-khoa { position: static; flex-direction: row; }
+.hv-bo-cuc.thu-gon .hv-ds-khoa-dau > span { flex: 0 0 auto; }
+.hv-bo-cuc.thu-gon .hv-ds-khoa-dau strong { flex: 1; }
+.hv-ds-khoa .hv-ds-khoa-dau { display: flex; padding: .375rem .5rem; }
+.hv-ds-khoa .hv-ds-khoa-dau:hover { background: transparent; }
+@media (max-width: 900px) { .hv-ds-khoa-than { flex-direction: row; flex-wrap: wrap; } }
+
+/* 15. Lịch theo ngày: nhãn trạng thái nói rõ tình hình buổi học so với giờ hiện tại */
+.ln-bang .nhan-buoi-gon { display: inline-flex; align-items: center; gap: .375rem; padding: .0625rem .5rem; border-radius: 6px; font-weight: 600; }
+.ln-bang .nhan-buoi-gon.tt-xong { background: var(--ok-nen); color: var(--ok-chu); }
+.ln-bang .nhan-buoi-gon.tt-thieu { background: var(--canh-bao-nen); color: var(--canh-bao-chu); }
+.ln-bang .nhan-buoi-gon.tt-sap { background: var(--tin-nen); color: var(--tin-chu); }
+.ln-bang .nhan-buoi-gon.tt-dang { background: var(--mau-chinh); color: var(--chu-tren-mau); }
+.ln-bang .nhan-buoi-gon.tt-dang::before { content: ""; width: .4375rem; height: .4375rem; border-radius: 50%; background: currentColor; animation: tt-nhip 1.6s ease-in-out infinite; }
+@keyframes tt-nhip { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .ln-bang .nhan-buoi-gon.tt-dang::before { animation: none; } }
+.ln-bang td { padding-block: .5rem; }
+.ln-bang .ln-tiet strong { font-weight: 600; }
+
+/* 16. Liên kết và nút dạng liên kết: không để màu xanh dương mặc định của Bootstrap hiện ra khi rê chuột. */
+a:hover { color: var(--mau-chinh-sang); }
+.bang-dau-nut .nut-chinh:hover, .bang-dau-nut .nut-chinh:focus { color: var(--chu-tren-mau); }
+.bang-dau-nut .nut-phu:hover, .tc-loi-tat a:hover { color: var(--mau-chinh); }
+a.the-kpi:hover, a.the-so-lieu:hover, a.o-bat-dau:hover, .ds-can-chu-y a:hover, .ds-uu-tien a:hover { color: var(--chu-chinh); }
+.sidebar a:hover, .module-menu-main:hover, .muc-con:hover { color: #fff; }
+.nut-len-dau:hover { color: var(--chu-tren-mau); }

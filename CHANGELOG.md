@@ -2,6 +2,26 @@
 
 Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân. Dữ liệu và tài khoản đều giả lập, phục vụ học tập. Mới nhất ở trên.
 
+## 11–13/11/2026: Giao diện "Sổ bộ", trang giới thiệu, sửa lỗi theo góp ý
+
+**Sửa lỗi**
+- Sửa văn bản kèm ảnh không còn làm đơ trang: biểu mẫu tách thành component riêng (`Components/BieuMauThongBao.razor`); lưu xong hộp thoại tự đóng và báo đã lưu, đóng được bằng × hoặc Esc. Nhập Excel bắt mọi lỗi đọc tệp; thanh "Tải lại trang" khi mất kết nối nổi trên hộp thoại.
+- Giao diện tối: chữ trên nút, nhãn tô màu đổi theo token `--chu-tren-mau`; hộp gợi ý biểu đồ đọc được ở cả hai chế độ.
+- Chữ tràn khỏi thẻ (Hoạt động gần đây, nhãn gãy dòng, danh sách văn bản ở màn vừa); hoạt động hiển thị tiêu đề thay cho mã GUID.
+- Lịch theo ngày và Điểm danh đi làm bị vỡ cột do trùng tên lớp CSS; bảng công làm lại: các ngày rộng bằng nhau, cột tên cố định khi cuộn ngang. Lịch theo ngày ghi rõ "Đang học", "Bắt đầu lúc…".
+
+**Tính năng**
+- Bấm ảnh văn bản/bản tin để xem lớn (`wwwroot/xem-anh.js`).
+- Hướng dẫn nhập môn nhớ theo tài khoản (bảng `HuongDanDaXem`): người mới được mời bằng thẻ nhỏ, xem hoặc bỏ qua thì không mời lại; hướng dẫn riêng từng trang chỉ gợi ý bằng chấm trên nút lá cờ.
+- Trang giới thiệu công khai `/gioi-thieu` (chưa đăng nhập mở `/` sẽ tới đây): bản chạy thử tự động trong khung ứng dụng, ba mảng nghiệp vụ, bảng phân quyền theo vai trò, năm bước, bảy quy tắc bảo vệ dữ liệu.
+- Cột Khoá · niên khoá (Hệ đào tạo) thu gọn/mở rộng được. Điện thoại: menu thành ngăn kéo.
+
+**Giao diện**
+- Phong cách "Sổ bộ" (`wwwroot/phong-cach.css`): tối giản, dữ liệu trước, một màu thương hiệu, mỗi mảng một màu nhận diện; phông tiêu đề Be Vietnam Pro (OFL, đặt sẵn trong `wwwroot/fonts`).
+- Trang chủ theo thứ tự ưu tiên: lời chào và tóm tắt việc hôm nay, lối tắt theo vai trò, bốn chỉ số "Hôm nay", vùng làm việc, quy mô Học viện.
+- Đường dẫn luôn một dòng; nút Sáng/Tối chỉ còn ở trang công khai (trong hệ thống dùng Cài đặt).
+- Kiểm thử: NghiepVu 502, TaiKhoan 74, ThongBao 29 đều đạt.
+
 ## 10/11/2026 (khuya): Xuất Excel lịch phân công trực ban
 
 - Tab Lịch trực có nút **Xuất Excel**: chọn khoảng ngày (mặc định tháng đang xem) và nội dung, xem trước số liệu rồi tải tệp.

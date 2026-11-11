@@ -14,7 +14,7 @@
 .bt-o-tim input { width: 11rem; border: 0; outline: 0; background: transparent; color: #fff; font-size: var(--cc-13); }
 .bt-o-tim input::placeholder { color: rgba(255,255,255,.7); }
 .bt-tin-moi { display: flex; align-items: center; border-top: 1px solid var(--vien-nhat); }
-.bt-tin-moi > strong { flex: none; padding: .5rem .875rem; background: var(--bt-do); color: #fff; font-size: var(--cc-12); letter-spacing: .06em; }
+.bt-tin-moi > strong { flex: none; padding: .5rem .875rem; background: var(--bt-do); color: var(--chu-tren-mau); font-size: var(--cc-12); letter-spacing: .06em; }
 .bt-tin-moi-khung { flex: 1; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent); }
 .bt-tin-moi-chay { display: inline-flex; gap: 2.5rem; padding: .5rem 0; white-space: nowrap; animation: chay-tin 55s linear infinite; }
 .bt-tin-moi-khung:hover .bt-tin-moi-chay, .bt-tin-moi-khung:focus-within .bt-tin-moi-chay { animation-play-state: paused; }

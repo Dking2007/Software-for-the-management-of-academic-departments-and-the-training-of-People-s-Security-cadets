@@ -61,11 +61,23 @@ public sealed class DichVuTongQuan(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, K
         return ds;
     }
 
-    public async Task<List<NhatKy>> LayHoatDongGanDayAsync(int soLuong = 6)
+    /// <summary>Một dòng "Hoạt động gần đây": bản ghi nhật ký kèm nhãn dễ đọc (tiêu đề/họ tên thay cho mã GUID).</summary>
+    public sealed record HoatDong(NhatKy NhatKy, string Ten);
+
+    public async Task<List<HoatDong>> LayHoatDongGanDayAsync(int soLuong = 6)
     {
         var nd = await phanQuyen.LayNguoiDungAsync();
         if (!nd.LaAdmin) return [];
         await using var db = await csdl.CreateDbContextAsync();
-        return await db.NhatKy.AsNoTracking().OrderByDescending(x => x.Id).Take(soLuong).ToListAsync();
+        var ds = await db.NhatKy.AsNoTracking().OrderByDescending(x => x.Id).Take(soLuong).ToListAsync();
+        // Sửa một vài trường (ví dụ chỉ đổi ảnh) thì nhật ký không chứa tiêu đề: tra tiêu đề hiện tại của thông báo theo mã.
+        var maTb = ds.Where(x => x.DoiTuong == "Thông báo" && Guid.TryParse(x.MaDoiTuong, out _)).Select(x => Guid.Parse(x.MaDoiTuong)).Distinct().ToList();
+        var tieuDe = maTb.Count == 0 ? [] : await db.ThongBao.AsNoTracking().Where(t => maTb.Contains(t.Ma)).ToDictionaryAsync(t => t.Ma.ToString(), t => t.TieuDe);
+        return ds.Select(x =>
+        {
+            var ten = DichVuNhatKy.TenHienThi(x);
+            if (ten == x.DoiTuong && tieuDe.TryGetValue(x.MaDoiTuong, out var td)) ten = $"{x.DoiTuong}: {td}";
+            return new HoatDong(x, ten);
+        }).ToList();
     }
 }

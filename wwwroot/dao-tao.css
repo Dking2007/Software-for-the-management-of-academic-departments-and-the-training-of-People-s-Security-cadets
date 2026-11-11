@@ -100,7 +100,7 @@ details[open] > summary .mui-ten-thu-gon { transform: rotate(180deg); }
 .hang-cap button { display: inline-flex; align-items: baseline; gap: .375rem; padding: .3125rem .75rem; border: 1px solid var(--vien-the); border-radius: 999px; background: var(--nen-the); color: var(--chu-chinh); font-size: var(--cc-13); cursor: pointer; }
 .hang-cap button small { color: var(--chu-phu); font-size: var(--cc-12); }
 .hang-cap button:hover { border-color: var(--mau-chinh-sang); }
-.hang-cap button.dang-chon { border-color: var(--mau-chinh); background: var(--mau-chinh); color: #fff; }
+.hang-cap button.dang-chon { border-color: var(--mau-chinh); background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .hang-cap button.dang-chon small { color: var(--mau-nhan-sang); }
 .duong-cap { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; padding-top: .5rem; border-top: 1px dashed var(--vien-nhat); color: var(--chu-phu); font-size: var(--cc-13); }
 .duong-cap strong { color: var(--chu-chinh); }
@@ -248,7 +248,7 @@ select.o-cong:focus-visible { outline: 2px solid var(--mau-nhan); }
 .lt-cua-toi { display: grid; gap: .625rem; }
 .lt-the { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: .875rem; padding: .75rem; border: 1px solid var(--vien-the); border-radius: 12px; background: var(--nen-the); }
 .lt-the.khong-du { border-color: color-mix(in srgb, #c0392b 40%, var(--vien-the)); }
-.lt-ngay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .5rem; border-radius: 10px; background: var(--mau-chinh); color: #fff; text-align: center; }
+.lt-ngay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .5rem; border-radius: 10px; background: var(--mau-chinh); color: var(--chu-tren-mau); text-align: center; }
 .lt-ngay strong { font-size: 1.5rem; line-height: 1; } .lt-ngay small { font-size: var(--cc-12); opacity: .9; }
 .lt-noi-dung h3 { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .25rem; font-size: var(--cc-15); }
 .lt-noi-dung .xn-luoi { margin: .375rem 0 0; }
@@ -261,7 +261,7 @@ select.o-cong:focus-visible { outline: 2px solid var(--mau-nhan); }
 .tdl-loai button span { flex: 1; }
 .tdl-loai button small { min-width: 1.5rem; padding: 0 .375rem; border-radius: 999px; background: var(--nen-dai); text-align: center; font-size: var(--cc-12); }
 .tdl-loai button:hover { background: var(--nen-dai); }
-.tdl-loai button.dang-chon { background: var(--mau-chinh); color: #fff; }
+.tdl-loai button.dang-chon { background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .tdl-loai button.dang-chon small { background: rgb(255 255 255 / .2); }
 .tdl-noi-dung { display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
 .tdl-bang td { vertical-align: top; }

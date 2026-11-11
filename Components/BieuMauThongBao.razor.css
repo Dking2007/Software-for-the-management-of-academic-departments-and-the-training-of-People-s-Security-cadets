@@ -1,0 +1,21 @@
+/* Biểu mẫu soạn/sửa văn bản. Chỉ dùng biến màu để đẹp ở cả giao diện Sáng và Tối. */
+label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .4rem; }
+.soan-thong-bao { border: 1px solid var(--vien-the); background: var(--nen-dai); border-radius: var(--bo-goc-the); padding: 1.2rem; margin-bottom: 1.5rem; color: var(--chu-chinh); }
+.soan-thong-bao label { margin-top: 1rem; }
+.soan-thong-bao small { display: block; color: var(--chu-phu); margin-top: .4rem; }
+.dang-sua .soan-thong-bao { margin: 0; padding: 0; border: 0; background: transparent; }
+.dau-hop-soan h2 { margin: 0; font-size: 1.5rem; }
+.tags-tin { display: flex; gap: .4rem; flex-wrap: wrap; margin: 1rem 0; }
+.tag-tin { border: 0; background: var(--mau-chinh-nhat); color: var(--mau-chinh); border-radius: 5px; padding: .25rem .6rem; font-size: .75rem; cursor: pointer; }
+.anh-xem-truoc { display: block; max-width: 100%; max-height: 180px; margin: 1rem 0; border-radius: var(--bo-goc); }
+.trang-thai-tai-anh { display: flex; align-items: center; gap: .5rem; margin: .5rem 0 0; color: var(--chu-phu); font-size: var(--cc-13); }
+.phan-hoi-tin { margin: 1rem 0; padding: 1rem 1.2rem; border: 1px solid; border-left-width: 5px; border-radius: var(--bo-goc); }
+.phan-hoi-tin strong { display: block; font-size: 1rem; }
+.phan-hoi-tin p { margin: .4rem 0 0; }
+.phan-hoi-loi { color: var(--loi-chu); background: var(--loi-nen); border-color: var(--loi-chu); }
+.hanh-dong-tin { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
+/* Trong hộp thoại: thanh nút dính đáy để luôn bấm được Lưu/Hủy dù nội dung dài. */
+.dang-sua .hanh-dong-tin { position: sticky; bottom: -1.5rem; z-index: 2; padding: 1rem 0; background: var(--nen-the); border-top: 1px solid var(--vien-the); }
+.soan-thong-bao ::deep .validation-message { color: var(--loi-chu); font-weight: 600; margin-top: .35rem; }
+.soan-thong-bao ::deep .validation-errors { color: var(--loi-chu); margin: .6rem 0 0; }
+.soan-thong-bao ::deep .invalid { border: 2px solid var(--loi-chu); background: var(--loi-nen); }

@@ -2,7 +2,10 @@
 @code {
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender) DieuHuong.NavigateTo("/dang-nhap", replace: true);
+        // Chưa đăng nhập mà mở trang chủ: đưa tới trang giới thiệu công khai; trang khác: tới trang đăng nhập.
+        if (!firstRender) return;
+        var duongDan = DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0].Trim('/');
+        DieuHuong.NavigateTo(duongDan == "" ? "/gioi-thieu" : "/dang-nhap", replace: true);
     }
 }
 

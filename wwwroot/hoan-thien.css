@@ -131,7 +131,7 @@ html, body { overscroll-behavior: none; }
 .hv-tab-he a { display: inline-flex; align-items: center; gap: .375rem; padding: .4375rem .875rem; border-radius: 9px; color: var(--chu-chinh); font-size: var(--cc-13); font-weight: 600; text-decoration: none; }
 .hv-tab-he a small { color: var(--chu-phu); font-weight: 400; }
 .hv-tab-he a:hover { background: var(--nen-dai); }
-.hv-tab-he a.dang-chon { background: var(--mau-chinh); color: #fff; }
+.hv-tab-he a.dang-chon { background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .hv-tab-he a.dang-chon small { color: var(--mau-nhan-sang); }
 .hv-bo-cuc { display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1rem; align-items: start; }
 .hv-ds-khoa { position: sticky; top: calc(var(--chieu-cao-header) + .75rem); display: flex; flex-direction: column; gap: .25rem; padding: .5rem; border: 1px solid var(--vien-the); border-radius: 12px; background: var(--nen-the); }

@@ -10,6 +10,31 @@ namespace Nhom2_BTL.Services;
 /// </summary>
 public sealed class DichVuNhatKy(IDbContextFactory<CoSoDuLieuNghiepVu> csdl, DichVuPhanQuyenDemo phanQuyen)
 {
+    private static readonly string[] TruongTen = ["TieuDe", "HoTen", "TenLop", "TenKhoa", "TenTo", "TenChuyenDe", "TenPhong", "Ten", "MaLop", "TieuDeTin"];
+
+    /// <summary>
+    /// Nhãn dễ đọc cho một dòng nhật ký, dùng ở "Hoạt động gần đây": ưu tiên tiêu đề/họ tên lấy từ giá trị mới (hoặc cũ khi xoá),
+    /// vì mã nhiều đối tượng là chuỗi GUID dài (ví dụ thông báo). Không có tên thì giữ mã, mã GUID thì rút gọn.
+    /// </summary>
+    public static string TenHienThi(NhatKy x)
+    {
+        foreach (var json in new[] { x.GiaTriMoi, x.GiaTriCu })
+        {
+            if (string.IsNullOrWhiteSpace(json)) continue;
+            try
+            {
+                using var tl = System.Text.Json.JsonDocument.Parse(json);
+                if (tl.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object) continue;
+                foreach (var ten in TruongTen)
+                    if (tl.RootElement.TryGetProperty(ten, out var v) && v.ValueKind == System.Text.Json.JsonValueKind.String && v.GetString() is { Length: > 0 } giaTri)
+                        return $"{x.DoiTuong}: {giaTri}";
+            }
+            catch (System.Text.Json.JsonException) { }
+        }
+        if (Guid.TryParse(x.MaDoiTuong, out _)) return x.DoiTuong;
+        return string.IsNullOrWhiteSpace(x.MaDoiTuong) ? x.DoiTuong : $"{x.DoiTuong} {x.MaDoiTuong}";
+    }
+
     public async Task<List<NhatKy>> LayAsync(DateTime? tuNgay = null, DateTime? denNgay = null, string? tuKhoa = null, int toiDa = 1000)
     {
         var nd = await phanQuyen.LayNguoiDungAsync();

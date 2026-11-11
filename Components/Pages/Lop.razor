@@ -76,9 +76,15 @@
 else
 {
     @* ----- Một hệ: cột khoá bên trái, lớp của khoá đang chọn bên phải ----- *@
-    <div class="hv-bo-cuc">
+    @* Cột khoá thu gọn/mở rộng được: thu gọn thì nhường chỗ cho thẻ lớp, chỉ còn một dòng nêu khoá đang xem. *@
+    <div class="hv-bo-cuc @(dsKhoaThuGon ? "thu-gon" : "")">
         <nav class="hv-ds-khoa" aria-label="Khoá của hệ @HeDangXem">
-            <span>Khoá · niên khoá</span>
+            <button type="button" class="hv-ds-khoa-dau" aria-expanded="@(dsKhoaThuGon ? "false" : "true")" aria-controls="ds-khoa-cua-he" @onclick="() => dsKhoaThuGon = !dsKhoaThuGon" title="@(dsKhoaThuGon ? "Mở danh sách khoá" : "Thu gọn danh sách khoá")">
+                <span>Khoá · niên khoá</span>
+                @if (dsKhoaThuGon) { <strong>@(KhoaDangXem is null ? "Tất cả khoá" : "Khoá " + KhoaDangXem)</strong> }
+                <RadzenIcon Icon="@(dsKhoaThuGon ? "expand_more" : "expand_less")" />
+            </button>
+            <div class="hv-ds-khoa-than" id="ds-khoa-cua-he" hidden="@dsKhoaThuGon">
             <button type="button" class="@(KhoaDangXem is null ? "dang-chon" : "")" @onclick="() => ChonKhoa(null)"><strong>Tất cả khoá</strong><small>@LopCuaHe.Count lớp · @LopCuaHe.Sum(l => l.SiSo).ToString("N0") HV</small></button>
             @foreach (var kh in CacKhoaCuaHe)
             {
@@ -86,6 +92,7 @@ else
                     <strong>Khoá @kh.Khoa</strong><small>@kh.NienKhoa · @kh.SoLop lớp</small><span class="nhan-nam @LopNam(kh.NienKhoa)">@NhanNam(kh.NienKhoa)</span>
                 </button>
             }
+            </div>
         </nav>
 
         <section>
@@ -183,6 +190,7 @@ else
     private List<LopDaoTao> danhSachLop = [];
     private string tuKhoa = string.Empty;
     private string? nganhLoc;
+    private bool dsKhoaThuGon;
     /// <summary>Các khoá đang mở trong chế độ "Tất cả khoá" (null: mặc định chỉ mở khoá mới nhất).</summary>
     private HashSet<string>? khoaMo;
     private void DoiKhoaMo(string khoa, string macDinh)

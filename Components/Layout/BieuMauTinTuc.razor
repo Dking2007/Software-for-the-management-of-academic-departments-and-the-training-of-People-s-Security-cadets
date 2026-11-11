@@ -10,14 +10,15 @@
         <RadzenFormField Text="Đoạn dẫn (sapo)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.Sapo" MaxLength="400" Rows="2" Style="width:100%" /></RadzenFormField>
         <RadzenFormField Text="Nội dung (mỗi dòng một đoạn)" Variant="Variant.Outlined" class="toan-hang"><RadzenTextArea @bind-Value="banSao.NoiDung" Rows="8" Style="width:100%" /></RadzenFormField>
         <p class="phu-dong toan-hang">Chèn liên kết tới trang trong hệ thống bằng cú pháp <code>[chữ hiển thị](/duong-dan)</code>, ví dụ <code>[Lịch đào tạo](/dao-tao/lich)</code>. Chỉ nhận đường dẫn nội bộ bắt đầu bằng dấu /.</p>
-        <div class="toan-hang"><label for="anh-bai">Ảnh đại diện (PNG, JPEG, WebP; tối đa 3 MB; để trống dùng ảnh minh hoạ)</label><InputFile id="anh-bai" OnChange="ChonAnh" accept="image/png,image/jpeg,image/webp" /></div>
-        @if (anhXemTruoc is not null) { <img class="anh-xem-truoc" src="@anhXemTruoc" alt="Ảnh đang chọn" /> <RadzenButton Text="Bỏ ảnh" Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="BoAnh" /> }
+        <div class="toan-hang"><label for="anh-bai">Ảnh đại diện (PNG, JPEG, WebP; tối đa 3 MB; để trống dùng ảnh minh hoạ)</label><InputFile id="anh-bai" OnChange="ChonAnh" accept="image/png,image/jpeg,image/webp" disabled="@(dangLuu || dangTaiAnh)" />
+            @if (dangTaiAnh) { <p class="phu-dong" role="status">Đang đọc ảnh, vui lòng chờ…</p> }</div>
+        @if (anhXemTruoc is not null) { <img class="anh-xem-truoc" src="@anhXemTruoc" alt="Ảnh đang chọn" data-phong-to tabindex="0" title="Bấm để xem ảnh lớn" /> <RadzenButton Text="Bỏ ảnh" Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="BoAnh" /> }
     </div>
     <ValidationSummary class="loi-bieu-mau" />
     @if (loi is not null) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
     <div class="thao-tac-bieu-mau">
-        <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" />
-        <RadzenButton Text="@(banSao.Id == 0 ? "Đăng bài" : "Lưu bài")" Icon="send" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="dangLuu" />
+        <RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close(null)" Disabled="dangLuu" />
+        <RadzenButton Text="@(banSao.Id == 0 ? "Đăng bài" : "Lưu bài")" Icon="send" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" IsBusy="dangLuu" BusyText="Đang lưu…" Disabled="dangTaiAnh" />
     </div>
 </RadzenTemplateForm>
 
@@ -26,24 +27,31 @@
     private TinTuc banSao = new();
     private byte[]? anhMoi;
     private string? anhXemTruoc, loi;
-    private bool xoaAnh, dangLuu;
+    private bool xoaAnh, dangLuu, dangTaiAnh;
     protected override void OnInitialized() { banSao = DuLieuBanDau.TaoBanSao(); anhXemTruoc = banSao.Anh; }
     private async Task ChonAnh(InputFileChangeEventArgs e)
     {
-        loi = null;
+        loi = null; dangTaiAnh = true;
         try
         {
+            if (e.File.Size > DichVuThongBao.GioiHanAnh) throw new ArgumentException();
             using var ms = new MemoryStream();
             await using (var s = e.File.OpenReadStream(DichVuThongBao.GioiHanAnh)) await s.CopyToAsync(ms);
-            anhXemTruoc = DichVuThongBao.TaoAnh(ms.ToArray()); anhMoi = ms.ToArray(); xoaAnh = false;
+            var duLieu = ms.ToArray();
+            anhXemTruoc = DichVuThongBao.TaoAnh(duLieu); anhMoi = duLieu; xoaAnh = false;
         }
-        catch (Exception ex) when (ex is IOException or ArgumentException) { loi = "Chỉ nhận ảnh PNG, JPEG, WebP không quá 3 MB."; }
+        catch (Exception ex) when (ex is IOException or ArgumentException or InvalidOperationException or TaskCanceledException) { loi = "Chỉ nhận ảnh PNG, JPEG, WebP không quá 3 MB."; }
+        finally { dangTaiAnh = false; }
     }
     private void BoAnh() { anhMoi = null; anhXemTruoc = null; xoaAnh = true; }
     private async Task Luu()
     {
+        if (dangLuu || dangTaiAnh) return;
         dangLuu = true; loi = null;
-        try { var kq = await BanTinDv.LuuAsync(banSao, anhMoi, xoaAnh); if (kq.ThanhCong) HoiThoai.Close(kq); else loi = kq.ThongBao; }
+        KetQuaThaoTac? kq = null;
+        try { kq = await BanTinDv.LuuAsync(banSao, anhMoi, xoaAnh); if (!kq.ThanhCong) loi = kq.ThongBao; }
+        catch { loi = "Không lưu được bài. Vui lòng thử lại."; }
         finally { dangLuu = false; }
+        if (kq is { ThanhCong: true }) HoiThoai.Close(kq);
     }
 }

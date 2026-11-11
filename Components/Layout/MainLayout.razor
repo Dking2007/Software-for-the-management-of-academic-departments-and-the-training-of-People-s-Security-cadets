@@ -76,7 +76,9 @@
 
 <div id="blazor-error-ui">
     @* Giữ bộ chọn CSS của Blazor nhưng dùng Radzen cho điều khiển trong thông báo lỗi. *@
-    Đã xảy ra lỗi. <RadzenLink Path="" class="reload">Tải lại trang</RadzenLink>
+    @* Nằm trên mọi hộp thoại (xem giao-dien-toi.css). Dùng thẻ a thường + location.reload vì lúc này kết nối Blazor đã ngắt. *@
+    <span><strong>Trang mất kết nối do một lỗi.</strong> Các thay đổi đã bấm lưu thành công vẫn được giữ.</span>
+    <a href="" class="reload" onclick="location.reload(); return false;">Tải lại trang</a>
     <RadzenButton class="dismiss" Text="@TuyChon.Dich("×")" ButtonStyle="ButtonStyle.Light" aria-label="@TuyChon.Dich("Đóng thông báo lỗi")" />
 </div>
 
@@ -86,7 +88,19 @@
 @code {
     protected override void OnInitialized() => TuyChon.DaThayDoi += KhiDoiTuyChon;
     private void KhiDoiTuyChon() => _ = InvokeAsync(StateHasChanged);
-    public void Dispose() => TuyChon.DaThayDoi -= KhiDoiTuyChon;
+    public void Dispose() { TuyChon.DaThayDoi -= KhiDoiTuyChon; cauNoiHuongDan?.Dispose(); }
+
+    // Hướng dẫn nhập môn nhớ theo tài khoản ở máy chủ: gửi danh sách đã xem cho huong-dan.js,
+    // và cho JS gọi ngược DanhDauHuongDan khi người dùng xem/bỏ qua. Tên tài khoản lấy từ phiên, không từ trình duyệt.
+    [Inject] private DichVuHuongDan HuongDan { get; set; } = default!;
+    private DotNetObjectReference<MainLayout>? cauNoiHuongDan;
+    [JSInvokable] public Task DanhDauHuongDan(string khoa) => HuongDan.DanhDauAsync(khoa);
+    private async Task KetNoiHuongDanAsync()
+    {
+        var daXem = await HuongDan.LayDaXemAsync();
+        cauNoiHuongDan ??= DotNetObjectReference.Create(this);
+        await JavaScript.InvokeVoidAsync("huongDan.ketNoi", cauNoiHuongDan, daXem.ToArray());
+    }
 
     [Inject] private NavigationManager DieuHuong { get; set; } = default!;
 
@@ -110,6 +124,10 @@
         }
         catch (JSException) { }
         catch (InvalidOperationException) { }
+        try { await KetNoiHuongDanAsync(); }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+        catch (Microsoft.Data.Sqlite.SqliteException) { /* thiếu bảng/khóa CSDL: bỏ qua hướng dẫn, không làm hỏng trang */ }
     }
 
     private bool menuNguoiDungMo;

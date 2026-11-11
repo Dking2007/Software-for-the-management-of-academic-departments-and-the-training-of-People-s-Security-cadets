@@ -16,7 +16,7 @@
             <Authorized>
                 <span class="nhan-nhom-menu">@TuyChon.Dich("Thông tin")</span>
                 <div class="module-groups" style="margin-bottom:.75rem">
-                    <section class="module-menu-group @(phanHe == "ban-tin" ? "dang-chon" : "")">
+                    <section class="module-menu-group @(phanHe == "ban-tin" ? "dang-chon" : "")" data-phan-he="ban-tin">
                         <div class="module-menu-heading"><NavLink class="module-menu-main" href="/ban-tin"><RadzenIcon Icon="newspaper" /><span class="ten-phan-he">@TuyChon.Dich("Bản tin Học viện")</span></NavLink></div>
                         <div class="menu-bay"><strong>@TuyChon.Dich("Bản tin Học viện")</strong><RadzenLink Path="/ban-tin" Text="Trang nhất" /><RadzenLink Path="/thong-bao" Text="Văn bản, thông báo" /></div>
                     </section>
@@ -25,7 +25,7 @@
                 <div class="module-groups">
                     @foreach (var nhom in cacNhom)
                     {
-                        <section class="module-menu-group @(phanHe == nhom.Ma ? "dang-chon" : "")">
+                        <section class="module-menu-group @(phanHe == nhom.Ma ? "dang-chon" : "")" data-phan-he="@nhom.Ma">
                             <div class="module-menu-heading">
                                 <NavLink class="module-menu-main" href="@nhom.DuongDan" Match="NavLinkMatch.All"><RadzenIcon Icon="@nhom.BieuTuong" /><span class="ten-phan-he">@TuyChon.Dich(nhom.Ten)</span></NavLink>
                                 <RadzenButton class="module-menu-toggle" Icon="@(nhomMo.Contains(nhom.Ma) ? "expand_less" : "expand_more")" ButtonStyle="ButtonStyle.Light" Click="@(() => DoiNhom(nhom.Ma))" aria-label="@($"Mở/đóng {nhom.Ten}")" aria-expanded="@(nhomMo.Contains(nhom.Ma) ? "true" : "false")" aria-controls="@($"menu-{nhom.Ma}")" />

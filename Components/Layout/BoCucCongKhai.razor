@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+
+@* Bố cục trang công khai (chưa cần đăng nhập): thanh trên tối có chỉ vàng, mục lục, nút Sáng/Tối, nút Đăng nhập; chân trang.
+   Không chứa dữ liệu nghiệp vụ; trang dùng bố cục này phải tự chỉ hiện thông tin công khai. *@
+<div class="gt">
+    <a class="gt-bo-qua" href="#noi-dung-chinh">Bỏ qua tới nội dung</a>
+    <header class="gt-thanh">
+        <div class="gt-trong">
+            <a class="gt-hieu" href="/gioi-thieu">
+                <img src="images/logo-hoc-vien-an-ninh.png" alt="" />
+                <span><small>Học viện An ninh nhân dân</small><strong>Quản lý Khoa/Lớp đào tạo</strong></span>
+            </a>
+            <nav class="gt-muc-luc" aria-label="Mục lục trang giới thiệu">
+                <a href="/gioi-thieu#mang-nghiep-vu">Nghiệp vụ</a>
+                <a href="/gioi-thieu#phan-quyen">Phân quyền</a>
+                <a href="/gioi-thieu#quy-trinh">Quy trình</a>
+                <a href="/gioi-thieu#bao-mat">Bảo mật</a>
+            </nav>
+            <div class="gt-cong-cu">
+                <NutSangToi />
+                <AuthorizeView>
+                    <Authorized><a class="gt-nut gt-nut-chinh nho" href="/">Vào hệ thống</a></Authorized>
+                    <NotAuthorized><a class="gt-nut gt-nut-chinh nho" href="/dang-nhap">Đăng nhập</a></NotAuthorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    </header>
+    <main id="noi-dung-chinh">@Body</main>
+    <footer class="gt-chan">
+        <div class="gt-trong">
+            <span class="gt-hieu"><img src="images/logo-hoc-vien-an-ninh.png" alt="" /><span><small>Bài tập lớn · Nhóm 2</small><strong>Hệ thống quản lý Khoa/Lớp đào tạo</strong></span></span>
+            <p>Ứng dụng học tập; dữ liệu hoàn toàn giả lập, không phải hệ thống nghiệp vụ thật. Đăng nhập và phân quyền chỉ để minh hoạ.</p>
+        </div>
+    </footer>
+</div>
+<RadzenComponents />

@@ -53,6 +53,8 @@ window.tuyChonGiaoDien = (() => {
             try { localStorage.setItem(KHOA, JSON.stringify(hienTai)); } catch { /* Vẫn áp dụng nếu trình duyệt chặn lưu. */ }
             return giaoDienThuc(hienTai.giaoDien);
         },
+        /// Nút Sáng/Tối trên thanh trên: chỉ đổi giao diện, giữ nguyên mọi tuỳ chọn khác.
+        datGiaoDien(g) { return this.luuDayDu({ ...hienTai, giaoDien: g }); },
         macDinh() { return { ...MAC_DINH }; },
         giaoDienThuc() { return giaoDienThuc(hienTai.giaoDien); }
     };

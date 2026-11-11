@@ -85,7 +85,13 @@
     private TuyChonDaLuu t = new();
     private static readonly (string Ma, string Nhan, string Mau)[] CacMau =
         [("xanh-la", "Xanh CAND", "#1b4b34"), ("xanh-duong", "Xanh dương", "#1d4e89"), ("do-do", "Đỏ đô", "#8b1e2b"), ("tim", "Tím than", "#4b3a8c"), ("nau", "Nâu đồng", "#7a4a1f"), ("xam", "Xám than", "#37474f")];
-    private void DoiTrangThai() => dangMo = !dangMo;
+    private async Task DoiTrangThai()
+    {
+        dangMo = !dangMo;
+        if (!dangMo) return;
+        try { t = await JavaScript.InvokeAsync<TuyChonDaLuu>("tuyChonGiaoDien.doc"); }
+        catch (JSException) { } catch (InvalidOperationException) { }
+    }
     private void Dong() => dangMo = false;
     private void KhiNhanPhim(KeyboardEventArgs e) { if (e.Key == "Escape") Dong(); }
     protected override async Task OnAfterRenderAsync(bool firstRender)

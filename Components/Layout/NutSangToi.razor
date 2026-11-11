@@ -1,0 +1,32 @@
+@inject TuyChonGiaoDien TuyChon
+@inject IJSRuntime JavaScript
+@implements IDisposable
+@* Nút đổi nhanh Sáng/Tối trên thanh trên. Lưu cùng chỗ với bảng Cài đặt (localStorage qua tuy-chon-giao-dien.js),
+   nên hai nơi luôn khớp nhau; các tuỳ chọn khác (màu, cỡ chữ…) giữ nguyên. *@
+<div class="nut-sang-toi" role="group" aria-label="@TuyChon.Dich("Giao diện")">
+    <button type="button" aria-pressed="@(TuyChon.GiaoDien != "toi" ? "true" : "false")" title="@TuyChon.Dich("Sáng")" aria-label="@TuyChon.Dich("Sáng")" @onclick="@(() => Dat("sang"))"><RadzenIcon Icon="light_mode" /></button>
+    <button type="button" aria-pressed="@(TuyChon.GiaoDien == "toi" ? "true" : "false")" title="@TuyChon.Dich("Tối")" aria-label="@TuyChon.Dich("Tối")" @onclick="@(() => Dat("toi"))"><RadzenIcon Icon="dark_mode" /></button>
+</div>
+
+@code {
+    protected override void OnInitialized() => TuyChon.DaThayDoi += KhiDoi;
+    protected override async Task OnAfterRenderAsync(bool lanDau)
+    {
+        if (!lanDau) return;
+        try { TuyChon.CapNhat(await JavaScript.InvokeAsync<string>("tuyChonGiaoDien.giaoDienThuc"), TuyChon.NgonNgu); }
+        catch (JSException) { } catch (InvalidOperationException) { }
+    }
+    private void KhiDoi() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => TuyChon.DaThayDoi -= KhiDoi;
+
+    private async Task Dat(string giaoDien)
+    {
+        try
+        {
+            var gd = await JavaScript.InvokeAsync<string>("tuyChonGiaoDien.datGiaoDien", giaoDien);
+            TuyChon.CapNhat(gd, TuyChon.NgonNgu);
+        }
+        catch (JSException) { }
+        catch (InvalidOperationException) { }
+    }
+}

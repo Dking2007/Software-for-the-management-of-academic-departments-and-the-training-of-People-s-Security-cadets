@@ -1,11 +1,22 @@
 // Hướng dẫn nhập môn kiểu game: làm mờ màn hình, khoét sáng từng vùng, kèm bong bóng giải thích theo vai trò và theo trang.
-// Tự chạy một lần cho mỗi tài khoản trên trình duyệt này; nút hình lá cờ trên thanh trên mở lại bất kỳ lúc nào.
-// Chỉ đọc giao diện đang hiển thị, không gọi máy chủ, không chứa dữ liệu nghiệp vụ. Bước nào không có vùng tương ứng thì tự bỏ qua.
+// Khi nào hiện (nhớ theo TÀI KHOẢN ở máy chủ, qua MainLayout → DichVuHuongDan, không theo trình duyệt):
+//  - Tài khoản chưa từng xem: hiện một thẻ mời nhỏ ở góc (không che màn hình) với ba lựa chọn: Xem / Để sau / Không cần.
+//    Bấm Xem hoặc Không cần là ghi nhận ngay, không bao giờ mời lại (kể cả máy khác). "Để sau" chỉ ẩn trong phiên này; sau 3 lần tự thôi.
+//  - Hướng dẫn riêng từng trang KHÔNG tự bật; nút lá cờ có chấm nhỏ cho tới khi người dùng xem trang đó một lần.
+//  - Nút lá cờ trên thanh trên luôn mở lại được. Bước nào không có vùng tương ứng thì tự bỏ qua.
 window.huongDan = (() => {
     const KHOA = "huongDan.daXem.v1.";
     const NUT = {
         tiep: { vi: "Tiếp", en: "Next", lo: "ຕໍ່ໄປ" }, lui: { vi: "Quay lại", en: "Back", lo: "ກັບຄືນ" }, boQua: { vi: "Bỏ qua", en: "Skip", lo: "ຂ້າມ" },
-        xong: { vi: "Hoàn tất", en: "Finish", lo: "ສຳເລັດ" }, buoc: { vi: "Bước", en: "Step", lo: "ຂັ້ນຕອນ" }, chung: { vi: "Xem giới thiệu chung", en: "See the general tour", lo: "See the general tour" }
+        xong: { vi: "Hoàn tất", en: "Finish", lo: "ສຳເລັດ" }, buoc: { vi: "Bước", en: "Step", lo: "ຂັ້ນຕອນ" }, chung: { vi: "Xem giới thiệu chung", en: "See the general tour", lo: "See the general tour" },
+        moiTieuDe: { vi: "Chào mừng bạn đến với hệ thống!", en: "Welcome aboard!", lo: "ຍິນດີຕ້ອນຮັບ!" },
+        moiNoiDung: { vi: "Lần đầu dùng? Chuyến tham quan khoảng 1 phút sẽ chỉ cho bạn menu, ô tìm kiếm, thông báo và cài đặt.", en: "First time here? A one-minute tour shows you the menu, search, notices and settings.", lo: "First time here? A one-minute tour shows you the menu, search, notices and settings." },
+        moiXem: { vi: "Xem hướng dẫn", en: "Take the tour", lo: "ເບິ່ງຄຳແນະນຳ" },
+        moiDeSau: { vi: "Để sau", en: "Later", lo: "ພາຍຫຼັງ" },
+        moiKhong: { vi: "Tôi đã quen, không cần", en: "I know my way around", lo: "I know my way around" },
+        moiGhiChu: { vi: "Xem lại bất cứ lúc nào bằng nút lá cờ trên thanh trên.", en: "Replay any time with the flag button at the top.", lo: "Replay any time with the flag button at the top." },
+        goiYTrang: { vi: "Trang này có hướng dẫn riêng, bấm để xem", en: "This page has its own tour. Select to view", lo: "This page has its own tour. Select to view" },
+        tieuDeNut: { vi: "Hướng dẫn nhanh", en: "Quick tour", lo: "Quick tour" }
     };
 
     const VAI_TRO = {
@@ -68,7 +79,10 @@ window.huongDan = (() => {
         ] }
     ];
 
-    let cacBuoc = [], chiSo = 0, goc = null, khoet = null, pop = null, dangChay = false, tuDongDaChay = false, truocDo = null, cheDo = "chung";
+    let cacBuoc = [], chiSo = 0, goc = null, khoet = null, pop = null, dangChay = false, truocDo = null, cheDo = "chung";
+    // daXem: tập khoá đã xem của tài khoản, nạp từ máy chủ khi MainLayout gọi ketNoi(); null = chưa biết (chưa làm gì cả).
+    let cauNoi = null, daXem = null, the = null, duongDanTruoc = null;
+    const KHOA_CHUNG = "chung";
 
     const ngon = () => { const n = window.tuyChonGiaoDien?.doc?.()?.ngonNgu; return n === "en" || n === "lo" ? n : "vi"; };
     // Tiếng Lào: tra theo câu tiếng Việt; câu chưa có bản Lào thì dùng tiếng Anh.
@@ -164,6 +178,10 @@ window.huongDan = (() => {
         cheDo = che === "chung" || trang.length === 0 ? "chung" : che;
         cacBuoc = (cheDo === "chung" ? CHUNG(vaiTro) : cheDo === "day-du" ? [...CHUNG(vaiTro), ...trang] : trang).filter(coDich);
         if (cacBuoc.length === 0) return;
+        dongThe();
+        if (cheDo !== "trang") danhDau(KHOA_CHUNG);
+        if (cheDo !== "chung") danhDau(khoaTrang());
+        capNhatGoiY();
         truocDo = document.activeElement;
         dungKhung();
         dangChay = true; chiSo = 0;
@@ -190,8 +208,6 @@ window.huongDan = (() => {
         window.removeEventListener("resize", datViTri);
         window.removeEventListener("scroll", datViTri, true);
         goc?.remove(); goc = khoet = pop = null;
-        const ten = thongTin()?.dataset.huongDanNguoi;
-        if (ten) try { localStorage.setItem(KHOA + ten, "1"); } catch { }
         truocDo?.focus?.({ preventScroll: true });
     }
 
@@ -283,20 +299,93 @@ window.huongDan = (() => {
         pop.style.transform = `translate(${Math.round(viTri[0])}px, ${Math.round(viTri[1])}px)`;
     }
 
-    // Lần đầu tài khoản này vào hệ thống trên trình duyệt: chờ giao diện dựng xong rồi tự chạy.
-    function thuTuDong() {
-        const t = thongTin();
-        if (!t || tuDongDaChay || dangChay) return;
-        let daXem = false;
-        try { daXem = localStorage.getItem(KHOA + t.dataset.huongDanNguoi) === "1"; } catch { daXem = true; }
-        tuDongDaChay = true;
-        if (!daXem) setTimeout(() => { if (!document.querySelector(".rz-dialog")) batDau("day-du"); }, giamChuyenDong() ? 300 : 900);
+    // ---------- Ghi nhận theo tài khoản ----------
+    function danhDau(khoa) {
+        if (!khoa || daXem?.has(khoa)) return;
+        daXem?.add(khoa);
+        cauNoi?.invokeMethodAsync("DanhDauHuongDan", khoa).catch(() => { });
     }
-    new MutationObserver(thuTuDong).observe(document.documentElement, { childList: true, subtree: true });
+    // Khoá hướng dẫn của trang đang mở: trang có kịch bản riêng, hoặc kịch bản chung cho mọi trang danh sách.
+    function khoaTrang() {
+        const p = duongDan().toLowerCase();
+        if (THEO_TRANG.some(x => x.khop.test(p))) return "trang:" + p;
+        return document.querySelector(".panel-toolbar .search-box") ? "trang:danh-sach" : null;
+    }
+    const tenNguoi = () => thongTin()?.dataset.huongDanNguoi || "";
+
+    /** Gọi từ MainLayout sau khi dựng xong: cầu nối .NET và danh sách khoá đã xem của tài khoản. */
+    function ketNoi(ref, ds) {
+        cauNoi = ref; daXem = new Set(ds || []);
+        // Chuyển tiếp từ bản cũ: ai đã xem trên trình duyệt này (localStorage) thì coi như đã xem, không mời lại.
+        try { if (localStorage.getItem(KHOA + tenNguoi()) === "1") danhDau(KHOA_CHUNG); } catch { }
+        kiemTra();
+    }
+
+    function kiemTra() {
+        if (!daXem || !thongTin()) return;
+        if (!daXem.has(KHOA_CHUNG)) moiNguoiMoi();
+        capNhatGoiY();
+    }
+
+    // Chấm nhỏ trên nút lá cờ: trang có hướng dẫn riêng mà tài khoản chưa xem. Chỉ gợi ý sau khi đã qua phần giới thiệu chung.
+    function capNhatGoiY() {
+        const nut = document.querySelector("[data-mo-huong-dan]");
+        if (!nut || !daXem) return;
+        const k = khoaTrang();
+        const co = daXem.has(KHOA_CHUNG) && !!k && !daXem.has(k);
+        nut.classList.toggle("co-goi-y", co);
+        nut.title = co ? nhan("goiYTrang") : nhan("tieuDeNut");
+    }
+
+    // ---------- Thẻ mời người mới (không chặn thao tác) ----------
+    const KHOA_DE_SAU = "huongDan.deSau.";
+    function moiNguoiMoi() {
+        if (the || dangChay) return;
+        try { if (sessionStorage.getItem(KHOA_DE_SAU + tenNguoi())) return; } catch { }
+        setTimeout(() => {
+            if (the || dangChay || daXem?.has(KHOA_CHUNG)) return;
+            if (document.querySelector(".rz-dialog")) { setTimeout(moiNguoiMoi, 3000); return; }
+            the = document.createElement("section");
+            the.className = "hd-the-moi"; the.setAttribute("translate", "no");
+            the.setAttribute("role", "dialog"); the.setAttribute("aria-labelledby", "hd-moi-tieu-de");
+            const bt = document.createElement("span"); bt.className = "hd-moi-bieu-tuong"; bt.setAttribute("aria-hidden", "true"); bt.textContent = "👋";
+            const h = document.createElement("h2"); h.id = "hd-moi-tieu-de"; h.textContent = nhan("moiTieuDe");
+            const p = document.createElement("p"); p.textContent = nhan("moiNoiDung");
+            const nut = document.createElement("div"); nut.className = "hd-nut";
+            const xem = taoNut("hd-tiep", nhan("moiXem"), () => { dongThe(); batDau("chung"); });
+            const sau = taoNut("hd-lui", nhan("moiDeSau"), deSau);
+            nut.append(xem, sau);
+            const khong = taoNut("hd-phu hd-moi-khong", nhan("moiKhong"), () => { danhDau(KHOA_CHUNG); dongThe(); capNhatGoiY(); });
+            const ghi = document.createElement("small"); ghi.textContent = nhan("moiGhiChu");
+            const x = taoNut("hd-moi-dong", "×", deSau); x.setAttribute("aria-label", nhan("moiDeSau"));
+            the.append(x, bt, h, p, nut, khong, ghi);
+            the.addEventListener("keydown", e => { if (e.key === "Escape") { e.preventDefault(); deSau(); } });
+            document.body.appendChild(the);
+            xem.focus({ preventScroll: true });
+        }, giamChuyenDong() ? 300 : 1200);
+    }
+    function deSau() {
+        const ten = tenNguoi();
+        try {
+            sessionStorage.setItem(KHOA_DE_SAU + ten, "1");
+            const lan = (+localStorage.getItem(KHOA_DE_SAU + ten) || 0) + 1;
+            localStorage.setItem(KHOA_DE_SAU + ten, String(lan));
+            if (lan >= 3) danhDau(KHOA_CHUNG); // hoãn 3 lần: coi như không cần, thôi mời
+        } catch { }
+        dongThe();
+    }
+    function dongThe() { the?.remove(); the = null; }
+
+    // Đổi trang trong ứng dụng (Blazor không tải lại trang): cập nhật chấm gợi ý theo trang mới.
+    new MutationObserver(() => {
+        if (location.pathname === duongDanTruoc) return;
+        duongDanTruoc = location.pathname;
+        setTimeout(kiemTra, 600);
+    }).observe(document.documentElement, { childList: true, subtree: true });
 
     document.addEventListener("click", e => {
         if (e.target.closest?.("[data-mo-huong-dan]")) batDau("trang");
     });
 
-    return { batDau, dong };
+    return { batDau, dong, ketNoi };
 })();

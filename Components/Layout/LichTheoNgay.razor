@@ -41,7 +41,7 @@ else
                                 <td>@b.TenGiangVien</td>
                                 <td>@b.TenPhong</td>
                                 <td class="so">@b.SiSo</td>
-                                <td><span class="nhan-buoi-gon">@DichVuBaoCaoExcel.TrangThaiBuoi(b)</span></td>
+                                @{ var (nhanTt, lopTt) = NhanTrangThai(b); }<td><span class="nhan-buoi-gon @lopTt">@nhanTt</span></td>
                                 @if (CoThaoTac)
                                 {
                                     <td class="ln-nut">
@@ -76,4 +76,19 @@ else
     [Parameter] public EventCallback<BuoiHoc> KhiSua { get; set; }
     [Parameter] public EventCallback<BuoiHoc> KhiXoa { get; set; }
     private int SoCot => CoThaoTac ? 8 : 7;
+    /// <summary>
+    /// Nhãn trạng thái để đọc nhanh (chỉ hiển thị; bộ lọc vẫn dùng DichVuBaoCaoExcel.TrangThaiBuoi).
+    /// Buổi hôm nay nói rõ đang ở đâu so với giờ hiện tại thay vì chỉ ghi "Hôm nay".
+    /// </summary>
+    private static (string Nhan, string Lop) NhanTrangThai(BuoiHocHienThi b)
+    {
+        if (b.DaDiemDanh) return ("Đã điểm danh", "tt-xong");
+        var bayGio = DateTime.Now;
+        if (b.Buoi.Ngay.Date < bayGio.Date) return ("Chưa điểm danh", "tt-thieu");
+        if (b.Buoi.Ngay.Date > bayGio.Date) return ("Sắp tới", "tt-sap");
+        var batDau = QuyTacHocVu.BatDau(b.Buoi); var ketThuc = QuyTacHocVu.KetThuc(b.Buoi);
+        if (bayGio < batDau) return ($"Bắt đầu lúc {batDau:HH:mm}", "tt-sap");
+        if (bayGio <= ketThuc) return ("Đang học", "tt-dang");
+        return ("Đã xong, chưa điểm danh", "tt-thieu");
+    }
 }

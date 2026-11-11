@@ -5,12 +5,12 @@
 .sd-tab button span { display: flex; flex-direction: column; }
 .sd-tab button small { color: var(--chu-phu); }
 .sd-tab button.dang-chon { border-color: var(--mau-chinh); box-shadow: inset 0 -3px 0 var(--mau-chinh); }
-.sd-tab button.dang-chon > .rzi { background: var(--mau-chinh); color: #fff; }
+.sd-tab button.dang-chon > .rzi { background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .sd-chip-thong-ke { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .75rem; }
 .sd-chip-thong-ke > span { display: inline-flex; align-items: baseline; gap: .375rem; padding: .3125rem .75rem; border: 1px solid var(--vien-the); border-radius: 999px; background: var(--nen-the); color: var(--chu-phu); font-size: var(--cc-13); }
 .sd-chip-thong-ke strong { color: var(--chu-chinh); font-size: var(--cc-15); }
 .sd-nut-ra-soat { display: inline-flex; align-items: center; gap: .375rem; padding: .3125rem .75rem; border: 1px solid var(--canh-bao-chu); border-radius: 999px; background: var(--canh-bao-nen); color: var(--canh-bao-chu); font-size: var(--cc-13); font-weight: 600; cursor: pointer; }
-.sd-nut-ra-soat.dang-chon { background: var(--canh-bao-chu); color: #fff; }
+.sd-nut-ra-soat.dang-chon { background: var(--canh-bao-chu); color: var(--chu-tren-mau); }
 .sd-thanh-cong-cu .search-box { min-width: 18rem; flex: 1; max-width: 32rem; }
 
 .sd-vung { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem); gap: 1rem; align-items: start; }
@@ -30,7 +30,7 @@
 .sd-mui-ten { color: var(--chu-phu); }
 .sd-icon-canh-bao { color: var(--canh-bao-chu); font-size: 1.125rem; }
 .sd-muc.tren-duong { background: var(--mau-chinh-nhat); }
-.sd-muc.dang-chon { background: var(--mau-chinh); color: #fff; }
+.sd-muc.dang-chon { background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .sd-muc.dang-chon > .rzi, .sd-muc.dang-chon small { color: inherit; }
 .sd-muc.khop strong { box-shadow: inset 0 -.5em 0 color-mix(in srgb, var(--mau-nhan-sang) 70%, transparent); }
 .sd-muc.mo, .sd-the.mo { opacity: .35; }
@@ -147,14 +147,14 @@ a.tag-tin { text-decoration: none; }
 .sd-xoa-tim:hover { background: var(--nen-dai); color: var(--chu-chinh); }
 .sd-muc.khop strong { box-shadow: none; }
 .sd-muc.khop:not(.dang-chon) { box-shadow: inset 3px 0 0 var(--mau-nhan); background: color-mix(in srgb, var(--mau-nhan-sang) 14%, transparent); }
-.sd-dem-khop { flex: none; display: grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .375rem; border-radius: 999px; background: var(--mau-nhan); color: #fff; font-size: var(--cc-12); font-weight: 700; line-height: 1; }
+.sd-dem-khop { flex: none; display: grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .375rem; border-radius: 999px; background: var(--mau-nhan); color: var(--chu-tren-mau); font-size: var(--cc-12); font-weight: 700; line-height: 1; }
 .sd-muc.dang-chon .sd-dem-khop { background: #fff; color: var(--mau-chinh); }
 .sd-cot-ket-qua { flex-basis: 19rem; background: color-mix(in srgb, var(--mau-nhan-sang) 7%, var(--nen-the)); }
 .sd-cot-ket-qua .sd-dau-cot { background: color-mix(in srgb, var(--mau-nhan-sang) 22%, var(--nen-dai)); color: var(--chu-chinh); }
 .sd-nhom-kq { margin: .375rem .25rem .125rem; color: var(--chu-phu); font-size: var(--cc-12); font-weight: 700; }
 .sd-kq { display: flex; align-items: center; gap: .625rem; width: 100%; padding: .4375rem .5rem; border: 0; border-radius: 8px; background: transparent; color: var(--chu-chinh); text-align: left; cursor: pointer; }
 .sd-kq:hover { background: var(--nen-dai); }
-.sd-kq.dang-chon { background: var(--mau-chinh); color: #fff; }
+.sd-kq.dang-chon { background: var(--mau-chinh); color: var(--chu-tren-mau); }
 .sd-kq.dang-chon small { color: inherit; opacity: .85; }
 .sd-avatar { flex: none; display: grid; place-items: center; width: 2.125rem; height: 2.125rem; border-radius: 50%; background: var(--mau-chinh-nhat); color: var(--mau-chinh); font-weight: 700; }
 .sd-avatar .rzi { font-size: 1.125rem; }
@@ -174,7 +174,7 @@ a.tag-tin { text-decoration: none; }
 .sd-nut-thu-cot .rzi { font-size: 1.125rem; }
 .sd-cot-kq-gon { flex: 0 0 2.75rem; display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .625rem 0; border: 0; border-right: 1px solid var(--vien-nhat); background: color-mix(in srgb, var(--mau-nhan-sang) 14%, var(--nen-the)); color: var(--chu-chinh); cursor: pointer; }
 .sd-cot-kq-gon span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: var(--cc-12); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.sd-cot-kq-gon strong { display: grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .25rem; border-radius: 999px; background: var(--mau-nhan); color: #fff; font-size: var(--cc-12); }
+.sd-cot-kq-gon strong { display: grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .25rem; border-radius: 999px; background: var(--mau-nhan); color: var(--chu-tren-mau); font-size: var(--cc-12); }
 .sd-cot-kq-gon:hover { background: color-mix(in srgb, var(--mau-nhan-sang) 24%, var(--nen-the)); }
 .sd-kq.tinh { cursor: default; }
 .sd-kq.tinh:hover { background: transparent; }

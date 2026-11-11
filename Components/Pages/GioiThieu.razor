@@ -1,0 +1,309 @@
+@page "/gioi-thieu"
+@layout Layout.BoCucCongKhai
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inject DichVuQuanLyDuLieuDemo DuLieu
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment MoiTruong
+
+@* Trang giới thiệu công khai (trước khi đăng nhập). Chỉ có nội dung tĩnh và các con số tổng hợp của dữ liệu mẫu
+   (số khoa, lớp, học viên…): không có tên người, không có danh sách, nên không vượt hàng rào phân quyền.
+   Bố cục theo nguyên tắc trang giới thiệu phần mềm: tiêu đề nói thẳng sản phẩm là gì và cho ai, màn hình đầu có một
+   con số cụ thể, hình minh hoạ là giao diện thật của phần mềm dựng bằng HTML, một khoảnh khắc chuyển động duy nhất
+   (danh sách điểm danh tự cập nhật trong khung ứng dụng). Không có hiệu ứng hiện dần khi cuộn.
+   Phần bấm chọn (mảng nghiệp vụ, vai trò trong bảng phân quyền) viết bằng C#/Blazor. *@
+<PageTitle>Phần mềm quản lý khoa, lớp đào tạo | Học viện An ninh nhân dân</PageTitle>
+
+<section class="gt-hero" aria-labelledby="gt-tieu-de">
+    <div class="gt-trong gt-hero-luoi">
+        <div class="gt-hero-chu">
+            <p class="gt-nhan-tren">Học viện An ninh nhân dân · Bản học tập, dữ liệu mẫu</p>
+            <h1 id="gt-tieu-de"><span>Phần mềm quản lý khoa và lớp đào tạo</span> <span class="gt-nhan-ten">cho Học viện An&nbsp;ninh&nbsp;nhân&nbsp;dân</span></h1>
+            <p class="gt-dan">@MoTaQuyMo Lịch học, điểm danh, điểm số và văn bản hành chính ở một nơi; mỗi vai trò chỉ thấy phần việc của mình.</p>
+            <div class="gt-hero-nut">
+                <a class="gt-nut gt-nut-chinh" href="/dang-nhap">Đăng nhập hệ thống</a>
+                <a class="gt-nut gt-nut-vien" href="#phan-quyen">Xem bảng phân quyền</a>
+            </div>
+            @if (MoiTruong.IsDevelopment())
+            {
+                @* Chỉ hiện ở môi trường phát triển, nơi có tài khoản mẫu. Chỉ điền sẵn tên đăng nhập, không điền mật khẩu. *@
+                <p class="gt-thu"><span>Tài khoản mẫu:</span>@foreach (var (ten, nhan) in TaiKhoanMau) { <a href="@($"/dang-nhap?tenDangNhap={ten}")">@nhan</a> }</p>
+            }
+        </div>
+
+        @* Khung ứng dụng: bản chạy thử tự động (18 giây, lặp lại) dựng bằng HTML + CSS, không phải ảnh hay video.
+           Con trỏ chuột lần lượt: điểm danh hai buổi trên trang chủ → sang Quản lý đào tạo, xếp lịch bị chặn vì trùng giờ
+           → sang Quản lý học viên, bảng điểm tự tổng kết → về trang chủ. Mọi kích thước tính theo bề rộng khung (đơn vị cqw)
+           nên con trỏ luôn trỏ đúng nút ở mọi cỡ màn hình. Giảm chuyển động: đứng yên ở trang chủ. *@
+        <div class="gt-ung-dung" aria-hidden="true">
+            <div class="ud-goc">
+                <div class="ud-thanh"><i></i><i></i><i></i><span class="ud-url"><b class="u1">demo.local/trang-chu</b><b class="u2">demo.local/dao-tao/lich</b><b class="u3">demo.local/lop/B10D58?tab=diem</b></span></div>
+                <div class="ud-menu">
+                    <img src="images/logo-hoc-vien-an-ninh.png" alt="" />
+                    <span class="ud-menu-chon"></span>
+                    <span class="m m1"><b class="k1"></b>Trang chủ</span>
+                    <span class="m m2"><b class="k2"></b>Quản lý khoa</span>
+                    <span class="m m3"><b class="k3"></b>Quản lý đào tạo</span>
+                    <span class="m m4"><b class="k4"></b>Quản lý học viên</span>
+                </div>
+
+                <section class="ud-canh ud-a">
+                    <div class="ud-dau"><small>Thứ Hai, 16/11/2026 <em>Quản lý đào tạo</em></small><strong>Chào buổi sáng, <span>quanlydaotao</span></strong></div>
+                    <div class="ud-kpi">
+                        <span><small>Buổi học hôm nay</small><b>19</b></span>
+                        <span class="canh"><small>Chưa điểm danh</small><b class="ud-dem"><i>2</i><i>1</i><i>0</i></b></span>
+                        <span><small>Lớp đào tạo</small><b>@SoHoacGach(thongKe?.SoLop)</b></span>
+                        <span><small>Học viên</small><b>@SoHoacGach(thongKe?.SoHocVien)</b></span>
+                    </div>
+                    <div class="ud-bang">
+                        <div class="ud-bang-dau"><strong>Lịch hôm nay</strong><small>Ca sáng · 4 buổi</small></div>
+                        <p><b>07:30</b><span class="ma">B10D58</span><span>Triết học Mác – Lênin</span><i class="tt xong"><em>Đã điểm danh</em></i><i class="nut xong"><em>✓ Đã lưu</em></i></p>
+                        <p><b>07:30</b><span class="ma">B3K5</span><span>Luật Hình sự</span><i class="tt d2"><em>Chưa điểm danh</em><em>Đã điểm danh</em></i><i class="nut d2"><em>Điểm danh</em><em>✓ Đã lưu</em></i></p>
+                        <p><b>09:30</b><span class="ma">B12D57</span><span>An ninh mạng</span><i class="tt d3"><em>Chưa điểm danh</em><em>Đã điểm danh</em></i><i class="nut d3"><em>Điểm danh</em><em>✓ Đã lưu</em></i></p>
+                        <p><b>09:30</b><span class="ma">B7D56</span><span>Điều tra hình sự</span><i class="tt xong"><em>Đã điểm danh</em></i><i class="nut xong"><em>✓ Đã lưu</em></i></p>
+                    </div>
+                    <div class="ud-toast"><b>✓</b>Đã lưu điểm danh: 40/40 học viên</div>
+                </section>
+
+                <section class="ud-canh ud-b">
+                    <div class="ud-dau"><small>Quản lý đào tạo · Tuần 47 (16–20/11)</small><strong>Lịch tuần · Lớp B10D58</strong></div>
+                    <div class="ud-tuan">
+                        <span class="thu">T2</span><span class="thu">T3</span><span class="thu">T4</span><span class="thu">T5</span><span class="thu">T6</span>
+                        <i class="a" style="--c:1;--r:1;--k:0">Triết học</i><i class="b" style="--c:2;--r:2;--k:1">Luật Hình sự</i><i class="a" style="--c:3;--r:1;--k:2">Triết học</i>
+                        <i class="c" style="--c:4;--r:2;--k:3">An ninh mạng</i><i class="b" style="--c:5;--r:1;--k:4">Luật Hình sự</i><i class="c" style="--c:2;--r:3;--k:5">Tiếng Anh</i>
+                        <i class="a" style="--c:4;--r:3;--k:6">Điều tra</i>
+                        <i class="trung" style="--c:3;--r:2">Luật Hình sự</i>
+                    </div>
+                    <div class="ud-loi"><b>⊘</b>Giảng viên đã có lớp B3K5 lúc 09:30 thứ Tư · Không lưu</div>
+                </section>
+
+                <section class="ud-canh ud-c">
+                    <div class="ud-dau"><small>Quản lý học viên · Lớp B10D58</small><strong>Bảng điểm · Triết học Mác – Lênin</strong></div>
+                    <div class="ud-diem">
+                        <p class="dau"><span>Mã học viên</span><span>Chuyên cần</span><span>Kiểm tra</span><span>Tổng kết</span><span>Xếp loại</span></p>
+                        @foreach (var (ma, cc, kt, tk, xl, lop, k) in new[] { ("HV00383", "9,0", "8,5", "8,7", "Giỏi", "gioi", 0), ("HV00378", "10", "7,5", "8,3", "Giỏi", "gioi", 1), ("HV00385", "8,0", "6,0", "6,6", "Khá", "kha", 2), ("HV00371", "9,5", "9,0", "9,2", "Xuất sắc", "xs", 3) })
+                        {
+                            <p style="--k:@k"><span class="ma">@ma</span><span class="o o1">@cc</span><span class="o o2">@kt</span><span class="o o3">@tk</span><span class="xl @lop">@xl</span></p>
+                        }
+                    </div>
+                    <div class="ud-cong-thuc">Tổng kết = 30% chuyên cần + 70% kiểm tra · tự tính, ghi rõ nếu còn thiếu điểm</div>
+                </section>
+
+                <span class="ud-con-tro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2l15 11.2-6.6 1.1 3.9 7.4-2.8 1.4-3.9-7.5L4 20z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg></span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="gt-khoi" id="mang-nghiep-vu" aria-labelledby="gt-mnv">
+    <div class="gt-trong">
+        <header class="gt-dau lo-dien"><h2 id="gt-mnv">Ba mảng nghiệp vụ trong một phần mềm</h2><p>Mỗi mảng có người quản lý riêng; các mảng khác chỉ xem số liệu tổng hợp qua mặt cắt đã định sẵn.</p></header>
+        <div class="gt-mang lo-dien">
+            <div class="gt-mang-the" role="tablist" aria-label="Chọn mảng nghiệp vụ">
+                @for (var i = 0; i < BaMang.Length; i++)
+                {
+                    var so = i;
+                    <button type="button" role="tab" id="@($"tab-mang-{so}")" aria-selected="@(chonMang == so ? "true" : "false")" aria-controls="o-mang" tabindex="@(chonMang == so ? 0 : -1)"
+                            class="@(chonMang == so ? "dang" : "")" @onclick="() => chonMang = so" @onkeydown="e => PhimTab(e, so)">
+                        <RadzenIcon Icon="@BaMang[so].BieuTuong" />
+                        <span><strong>@BaMang[so].Ten</strong><small>@BaMang[so].Ngan</small></span>
+                    </button>
+                }
+            </div>
+            @{ var m = BaMang[chonMang]; }
+            <div class="gt-mang-o" id="o-mang" role="tabpanel" aria-labelledby="@($"tab-mang-{chonMang}")" @key="chonMang">
+                <div class="gt-mang-chu">
+                    <h3>@m.Ten</h3>
+                    <p>@m.MoTa</p>
+                    <ul>@foreach (var y in m.Y) { <li><RadzenIcon Icon="check" />@y</li> }</ul>
+                </div>
+                <div class="gt-manh" aria-hidden="true">
+                    @switch (chonMang)
+                    {
+                        case 0:
+                            <div class="manh-dau"><strong>Khoa Lý luận chính trị</strong><small>3 tổ · 9 cán bộ</small></div>
+                            <ul class="manh-cay">
+                                <li class="mo"><span>Tổ Triết học</span><small>4 cán bộ</small></li>
+                                <li class="con"><i>TK</i><span>Trưởng khoa</span><em>Thượng tá · Tiến sĩ</em></li>
+                                <li class="con"><i>GV</i><span>Giảng viên</span><em>Trung tá · Thạc sĩ</em></li>
+                                <li><span>Tổ Kinh tế chính trị</span><small>3 cán bộ</small></li>
+                                <li><span>Tổ Chủ nghĩa xã hội khoa học</span><small>2 cán bộ</small></li>
+                            </ul>
+                            <p class="manh-the manh-cccd"><RadzenIcon Icon="lock" />CCCD <span class="cccd"><i>079•••••••123</i><i>079204001123</i></span><b class="cccd-nhan"><em>Bấm "Hiện đủ"</em><em>Đã ghi nhật ký</em></b></p>
+                            break;
+                        case 1:
+                            <div class="manh-dau"><strong>Lịch tuần 47 · Lớp B10D58</strong><small>16 – 20/11</small></div>
+                            <div class="manh-lich">
+                                @foreach (var t in new[] { "T2", "T3", "T4", "T5", "T6" }) { <span class="thu">@t</span> }
+                                <i style="--c:1;--r:1" class="a">Triết học</i><i style="--c:2;--r:2" class="b">Luật Hình sự</i><i style="--c:3;--r:1" class="a">Triết học</i>
+                                <i style="--c:4;--r:2" class="c">An ninh mạng</i><i style="--c:5;--r:1" class="b">Luật Hình sự</i>
+                                <i style="--c:3;--r:2" class="trung">Trùng giờ</i>
+                            </div>
+                            <p class="manh-the loi"><RadzenIcon Icon="block" />Giảng viên đã có lớp B3K5 lúc 09:30 thứ Tư<b>Không lưu</b></p>
+                            break;
+                        default:
+                            <div class="manh-dau"><strong>Điểm danh · B10D58 · Triết học</strong><small>07:30, 16/11</small></div>
+                            <ul class="manh-dd">
+                                @foreach (var (ma, tt, lop) in new[] { ("HV00383", "Có mặt", "ok"), ("HV00378", "Có mặt", "ok"), ("HV00385", "Đi muộn", "muon"), ("HV00371", "Vắng có phép", "phep") })
+                                {
+                                    <li><span>@ma</span><i></i><b class="@lop">@tt</b></li>
+                                }
+                            </ul>
+                            <p class="manh-the"><RadzenIcon Icon="calculate" />30% chuyên cần + 70% kiểm tra<b>8,6 · Giỏi</b></p>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="gt-khoi gt-khoi-toi" id="phan-quyen" aria-labelledby="gt-pq">
+    <div class="gt-trong">
+        <header class="gt-dau lo-dien"><h2 id="gt-pq">Bảng phân quyền theo vai trò</h2><p>Chọn một vai trò để xem vai trò đó được sửa, được xem hay không thấy từng nhóm dữ liệu. Máy chủ kiểm tra quyền trước mỗi thao tác.</p></header>
+        <div class="gt-vai-tro" role="radiogroup" aria-label="Chọn vai trò">
+            @for (var i = 0; i < VaiTro.Length; i++)
+            {
+                var so = i;
+                <button type="button" role="radio" aria-checked="@(chonVaiTro == so ? "true" : "false")" class="@(chonVaiTro == so ? "dang" : "")" @onclick="() => chonVaiTro = so"><RadzenIcon Icon="@VaiTro[so].BieuTuong" />@VaiTro[so].Ten</button>
+            }
+        </div>
+        <div class="gt-ma-tran lo-dien">
+            <p class="gt-mt-mo-ta" @key="chonVaiTro"><strong>@VaiTro[chonVaiTro].Ten:</strong> @VaiTro[chonVaiTro].MoTa</p>
+            <div class="gt-mt-cuon" tabindex="0" aria-label="Bảng quyền theo nhóm dữ liệu">
+                <table>
+                    <thead><tr><th scope="col">Nhóm dữ liệu</th>@for (var i = 0; i < VaiTro.Length; i++) { <th scope="col" class="@(chonVaiTro == i ? "dang" : "")">@VaiTro[i].Ngan</th> }</tr></thead>
+                    @* @key: chọn vai trò khác thì dựng lại phần thân bảng để các ô của cột vừa chọn hiện lần lượt từ trên xuống. *@
+                    <tbody @key="chonVaiTro">
+                        @foreach (var dong in MaTran)
+                        {
+                            <tr style="--r:@Array.IndexOf(MaTran, dong)">
+                                <th scope="row">@dong.Nhom</th>
+                                @for (var i = 0; i < dong.Quyen.Length; i++)
+                                {
+                                    var (muc, chu) = dong.Quyen[i];
+                                    <td class="@(chonVaiTro == i ? "dang" : "")"><span class="q q-@muc" title="@chu">@BieuTuongQuyen(muc)<em>@chu</em></span></td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <p class="gt-mt-chu-giai"><span class="q q-sua">@BieuTuongQuyen("sua")<em>Sửa</em></span><span class="q q-xem">@BieuTuongQuyen("xem")<em>Xem</em></span><span class="q q-tong">@BieuTuongQuyen("tong")<em>Chỉ số tổng hợp</em></span><span class="q q-rieng">@BieuTuongQuyen("rieng")<em>Phần của mình hoặc lớp mình</em></span><span class="q q-khong">@BieuTuongQuyen("khong")<em>Không thấy</em></span></p>
+        </div>
+    </div>
+</section>
+
+<section class="gt-khoi" id="quy-trinh" aria-labelledby="gt-qt">
+    <div class="gt-trong">
+        <header class="gt-dau lo-dien"><h2 id="gt-qt">Năm bước của một học kỳ</h2><p>Từ xếp lịch tới báo cáo, mỗi bước do đúng người phụ trách và phần mềm kiểm tra trước khi cho làm tiếp.</p></header>
+        <ol class="gt-buoc">
+            @for (var i = 0; i < QuyTrinh.Length; i++)
+            {
+                var (bt, ten, ai, mt) = QuyTrinh[i];
+                <li class="lo-dien" style="--i:@i"><span class="gt-buoc-so">@(i + 1)</span><RadzenIcon Icon="@bt" /><strong>@ten</strong><small>@ai</small><p>@mt</p></li>
+            }
+        </ol>
+    </div>
+</section>
+
+<section class="gt-khoi gt-khoi-nhat" id="bao-mat" aria-labelledby="gt-bm">
+    <div class="gt-trong gt-bao-mat">
+        <header class="gt-dau lo-dien"><h2 id="gt-bm">Bảy quy tắc bảo vệ dữ liệu</h2><p>Dữ liệu cá nhân mặc định được che. Bấm "Hiện đủ" sẽ ghi vào nhật ký: ai xem, xem hồ sơ của ai, lúc nào. Nhật ký chỉ được thêm, không sửa, không xoá.</p></header>
+        <ol class="gt-quy-tac">
+            @for (var i = 0; i < HangRao.Length; i++)
+            {
+                <li class="lo-dien" style="--i:@i"><b>@(i + 1)</b><span>@HangRao[i]</span></li>
+            }
+        </ol>
+    </div>
+</section>
+
+<section class="gt-ket" aria-labelledby="gt-ket">
+    <div class="gt-trong lo-dien">
+        <h2 id="gt-ket">Đăng nhập bằng tài khoản được cấp</h2>
+        <p>Chưa có tài khoản thì đăng ký; quản trị viên duyệt và gán vai trò phù hợp. Cấp tài khoản chỉ đi từ trên xuống.</p>
+        <div class="gt-hero-nut"><a class="gt-nut gt-nut-chinh" href="/dang-nhap">Đăng nhập hệ thống</a><a class="gt-nut gt-nut-vien" href="/dang-ky">Đăng ký tài khoản</a></div>
+    </div>
+</section>
+
+@code {
+    private ThongKeQuanLy? thongKe;
+    private int chonMang, chonVaiTro;
+    protected override void OnInitialized()
+    {
+        try { thongKe = DuLieu.LayThongKe(); } catch (Exception) { thongKe = null; }
+    }
+
+    // Bàn phím cho thanh chọn mảng: mũi tên đổi mảng (mẫu tab của WAI-ARIA).
+    private void PhimTab(KeyboardEventArgs e, int dangO)
+    {
+        if (e.Key is "ArrowDown" or "ArrowRight") chonMang = (dangO + 1) % BaMang.Length;
+        else if (e.Key is "ArrowUp" or "ArrowLeft") chonMang = (dangO + BaMang.Length - 1) % BaMang.Length;
+    }
+
+    private static string SoHoacGach(int? so) => so?.ToString("N0") ?? "—";
+    /// <summary>Câu có con số cụ thể cho màn hình đầu, lấy từ dữ liệu mẫu đang lưu.</summary>
+    private string MoTaQuyMo => thongKe is { } tk
+        ? $"{tk.SoKhoa:N0} khoa, {tk.SoLop:N0} lớp và {tk.SoHocVien:N0} học viên (dữ liệu mẫu) trên một hệ thống."
+        : "Khoa, lớp và học viên trên một hệ thống.";
+
+    private static readonly (string Ten, string Nhan)[] TaiKhoanMau =
+        [("admin", "Quản trị viên"), ("quanlykhoa", "Quản lý khoa"), ("quanlydaotao", "Quản lý đào tạo"), ("quanlyhocvien", "Quản lý học viên"), ("giangvien", "Giảng viên"), ("hocvien", "Học viên")];
+
+    private sealed record Mang(string Ten, string Ngan, string BieuTuong, string MoTa, string[] Y);
+    private static readonly Mang[] BaMang =
+    [
+        new("Quản lý khoa", "Khoa, tổ chuyên môn, cán bộ", "account_balance", "Cơ cấu Khoa → Tổ chuyên môn → Giáo viên, kèm bổ nhiệm có thời hạn và chuyên môn giảng dạy của từng người.",
+            ["Sơ đồ tổ chức theo cây, tìm cán bộ theo nhánh", "Hồ sơ che CCCD, điện thoại; xem đủ phải ghi nhật ký", "Điểm danh đi làm và trực ban khoa theo ca"]),
+        new("Quản lý đào tạo", "Chương trình, lịch, phòng học", "edit_calendar", "Chuyên ngành, khoá, chương trình, chuyên đề; xếp lịch tuần với phòng học và giảng viên đủ điều kiện.",
+            ["Chặn trùng giờ giảng viên, trùng phòng, quá sức chứa", "Lịch theo lớp, tuần, ngày, tháng; xuất Excel", "Xét tư cách dự thi và lập lịch thi"]),
+        new("Quản lý học viên", "Lớp, học viên, điểm danh, điểm", "groups", "Lớp theo hệ và khoá với mã lớp tự sinh; học viên, điểm danh từng buổi và bảng điểm tự tính.",
+            ["Mã lớp B{số}{khoá} tự sinh, niên khoá tự tính", "Học viên tự điểm danh trong 30 phút trước giờ học", "Tổng kết 30/70, xếp loại, ghi rõ còn thiếu điểm nào"])
+    ];
+
+    private sealed record VaiTroGt(string Ten, string Ngan, string BieuTuong, string MoTa);
+    private static readonly VaiTroGt[] VaiTro =
+    [
+        new("Quản trị viên", "Admin", "admin_panel_settings", "quản lý cả ba mảng, cấp tài khoản và là người duy nhất xem nhật ký thao tác."),
+        new("Quản lý khoa", "QL khoa", "account_balance", "sửa dữ liệu cán bộ; xem đào tạo và học viên ở mức số liệu tổng hợp."),
+        new("Quản lý đào tạo", "QL đào tạo", "edit_calendar", "sửa chương trình, lịch, phòng; xem cán bộ ở mức tên và chuyên môn."),
+        new("Quản lý học viên", "QL học viên", "groups", "sửa lớp, học viên, điểm danh, điểm; xem giảng viên dạy lớp mình."),
+        new("Giảng viên", "Giảng viên", "co_present", "điểm danh và nhập điểm cho đúng lớp mình dạy; xem hồ sơ của chính mình."),
+        new("Học viên", "Học viên", "person", "xem lịch, điểm, hồ sơ của chính mình; tự điểm danh trong khung giờ.")
+    ];
+
+    // Ma trận quyền theo mục 6.2 của tài liệu thiết kế: (mức, chữ) cho Admin, QL khoa, QL đào tạo, QL học viên, Giảng viên, Học viên.
+    private sealed record DongQuyen(string Nhom, (string, string)[] Quyen);
+    private static (string, string) Q(string muc, string? chu = null) => (muc, chu ?? muc switch { "sua" => "Sửa", "xem" => "Xem", "tong" => "Tổng hợp", "khong" => "Không thấy", _ => "Của mình" });
+    private static readonly DongQuyen[] MaTran =
+    [
+        new("Cán bộ: định danh, chuyên môn", [Q("sua"), Q("sua"), Q("xem"), Q("rieng", "GV dạy lớp mình"), Q("xem"), Q("rieng", "GV dạy lớp mình")]),
+        new("Cán bộ: công tác", [Q("sua"), Q("sua"), Q("khong"), Q("khong"), Q("rieng"), Q("khong")]),
+        new("Cán bộ: cá nhân, liên hệ", [Q("sua"), Q("sua"), Q("khong"), Q("khong"), Q("rieng"), Q("khong")]),
+        new("Chuyên đề, chuyên ngành, khoá", [Q("sua"), Q("xem"), Q("sua"), Q("xem"), Q("xem"), Q("xem")]),
+        new("Lịch, phòng học", [Q("sua"), Q("xem"), Q("sua"), Q("xem"), Q("rieng", "Lớp mình"), Q("rieng", "Lớp mình")]),
+        new("Lớp, học viên: danh tính", [Q("sua"), Q("tong"), Q("tong"), Q("sua"), Q("rieng", "Lớp mình"), Q("rieng", "Họ tên, lớp")]),
+        new("Học viên: điểm danh, điểm", [Q("sua"), Q("tong"), Q("tong"), Q("sua"), Q("rieng", "Nhập cho lớp mình"), Q("rieng")]),
+        new("Học viên: cá nhân, liên hệ", [Q("sua"), Q("khong"), Q("khong"), Q("sua"), Q("khong"), Q("rieng")]),
+        new("Nhật ký thao tác", [Q("xem"), Q("khong"), Q("khong"), Q("khong"), Q("khong"), Q("khong")])
+    ];
+    private static RenderFragment BieuTuongQuyen(string muc) => @<RadzenIcon Icon="@(muc switch { "sua" => "edit", "xem" => "visibility", "tong" => "monitoring", "rieng" => "person", _ => "remove" })" />;
+
+    private static readonly (string, string, string, string)[] QuyTrinh =
+    [
+        ("edit_calendar", "Xếp lịch", "Quản lý đào tạo", "Chọn giảng viên đủ điều kiện, đặt phòng; trùng giờ thì không lưu được."),
+        ("how_to_reg", "Điểm danh", "Giảng viên, học viên", "Điểm danh theo buổi; học viên tự điểm danh trong 30 phút trước giờ học."),
+        ("grading", "Nhập điểm", "Giảng viên", "Tổng kết tự tính theo 30/70, ghi rõ còn thiếu điểm nào."),
+        ("fact_check", "Xét tư cách thi", "Quản lý đào tạo", "Đủ chuyên cần mới được dự thi; điều chỉnh nào cũng có lịch sử."),
+        ("download", "Báo cáo", "Mọi vai trò", "Xuất Excel theo khoảng ngày, đúng phạm vi người đó được xem.")
+    ];
+    private static readonly string[] HangRao =
+    [
+        "Mỗi dữ liệu có một chủ; vai trò khác chỉ đọc qua mặt cắt định sẵn.",
+        "Quản lý đào tạo và quản lý khoa không xem từng học viên.",
+        "Quản lý học viên không xem thông tin cá nhân của cán bộ.",
+        "Giảng viên chỉ thấy lớp mình dạy, không thấy CCCD, điện thoại học viên.",
+        "Học viên chỉ thấy phần của mình.",
+        "Cấp tài khoản chỉ đi xuống, không ai cấp quyền ngang hoặc cao hơn mình.",
+        "Nhật ký chỉ thêm, không ai sửa hay xoá được, kể cả Admin."
+    ];
+}

@@ -49,6 +49,7 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
     public DbSet<LichSuXetTuCach> LichSuXetTuCach => Set<LichSuXetTuCach>();
     public DbSet<DieuChinhTuCach> DieuChinhTuCach => Set<DieuChinhTuCach>();
     public DbSet<CaTrucBan> CaTrucBan => Set<CaTrucBan>();
+    public DbSet<HuongDanDaXem> HuongDanDaXem => Set<HuongDanDaXem>();
 
     // ---- Thông tin người thực hiện, do dịch vụ gán trước khi lưu ----
     public string NguoiThucHien { get; set; } = "Hệ thống";
@@ -176,6 +177,15 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
             e.Property(x => x.DangLuc).HasConversion(new DateTimeOffsetToBinaryConverter());
             e.Property(x => x.SuaLuc).HasConversion(new DateTimeOffsetToBinaryConverter());
             e.Property(x => x.HieuLucDen).HasConversion(new DateTimeOffsetToBinaryConverter());
+        });
+
+        mb.Entity<HuongDanDaXem>(e =>
+        {
+            e.ToTable("HuongDanDaXem");
+            e.HasKey(x => new { x.TenDangNhap, x.Khoa });
+            e.Property(x => x.TenDangNhap).HasMaxLength(100);
+            e.Property(x => x.Khoa).HasMaxLength(90);
+            e.Property(x => x.Luc).HasConversion(new DateTimeOffsetToBinaryConverter());
         });
 
         mb.Entity<ThongBaoDaDoc>(e =>
@@ -335,7 +345,7 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
         var ketQua = new List<NhapNhatKy>();
         foreach (var muc in ChangeTracker.Entries().ToList())
         {
-            if (muc.Entity is Models.NhatKy or Models.ThongBaoDaDoc || muc.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
+            if (muc.Entity is Models.NhatKy or Models.ThongBaoDaDoc or Models.HuongDanDaXem || muc.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
             JsonObject? cu = null, moi = null;
             if (muc.State != EntityState.Added)
                 cu = GiaTriCuNgoai.TryGetValue(muc.Entity, out var jsonCu) ? LocTruong(muc, JsonNode.Parse(jsonCu)!.AsObject()) : ThanhJson(muc, muc.OriginalValues);

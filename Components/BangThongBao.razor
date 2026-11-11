@@ -32,7 +32,7 @@
             <p>@(loi != "" ? loi : thanhCong)</p>
         </div>
     }
-    @if (banNhap is not null && laAdmin && banNhap.Ma == Guid.Empty) { @BieuMau }
+    @if (banNhap is not null && laAdmin) { <BieuMauThongBao @key="banNhap" DuLieuBanDau="banNhap" KhiXong="XongSoanMoi" /> }
 
     @if (KetQua.Count == 0)
     {
@@ -86,7 +86,7 @@
                     <div><dt>Người đăng</dt><dd>@bai.TacGia@(bai.SuaLuc is { } sua ? $" · sửa {NgayGio(sua)}" : "")</dd></div>
                     <div class="toan-hang"><dt>Nơi nhận</dt><dd><span class="tags-tin">@if (bai.Tags.Count == 0) { <span class="tag-tin">Toàn hệ thống</span> }@foreach (var tag in bai.Tags) { <span class="tag-tin">@TenTag(tag)</span> }</span></dd></div>
                 </dl>
-                @if (bai.Anh is not null) { <img class="anh-thong-bao" src="@bai.Anh" alt="Ảnh đính kèm: @bai.TieuDe" /> }
+                @if (bai.Anh is not null) { <img class="anh-thong-bao" src="@bai.Anh" alt="Ảnh đính kèm: @bai.TieuDe" data-phong-to tabindex="0" title="Bấm để xem ảnh lớn" /> }
                 <div class="van-ban-tin">@bai.NoiDung</div>
                 @if (laAdmin)
                 {
@@ -109,36 +109,21 @@
     private List<ThongBao> danhSach = [];
     private List<TagThongBao> danhMucTags = [];
     private HashSet<Guid> daDoc = [];
+    /// <summary>Bản nháp văn bản mới đang soạn ngay trên trang (sửa văn bản cũ thì mở hộp thoại riêng).</summary>
     private ThongBao? banNhap;
-    private IEnumerable<string> tagsChon = [];
-    private string phamViLoc = "lop:*", phamViThem = "lop:*";
+    private string phamViLoc = "lop:*";
     private List<LopDaoTao> cacLop = [];
-    private IEnumerable<string> tagsKhoa {
-        get => tagsChon.Where(x => x.StartsWith("khoa:"));
-        set => tagsChon = tagsChon.Where(x => !x.StartsWith("khoa:")).Concat(value ?? []).Distinct().ToList();
-    }
-    private void ThemPhamVi() => tagsChon = tagsChon.Append(phamViThem).Distinct().ToList();
-    private void BoPhamVi(string tag) => tagsChon = tagsChon.Where(x => x != tag).ToList();
     private Guid? maDangXem;
     private string tuKhoa = "", tagLoc = "", loaiLoc = "", loi = "", thanhCong = "";
     private bool chiChuaDoc;
-    private byte[]? anhMoi;
-    private string? anhXemTruoc;
-    private bool laAdmin, dangBan, dangTaiAnh, xoaAnh, daHuy;
+    private bool laAdmin, dangBan, dangSua, daHuy;
     private DateTimeOffset hienTai = DateTimeOffset.UtcNow;
-    private DateTime? hieuLucNhap;
     private System.Threading.Timer? dongHo;
     private ElementReference khungPhanHoi;
     private bool canFocusPhanHoi;
     private List<ThongBaoDaDoc>? nguoiDoc;
     private Guid? maNguoiDoc;
     private int SoChuaDoc => danhSach.Count(x => !daDoc.Contains(x.Ma));
-    private void BaoLoiBieuMau(EditContext context)
-    {
-        thanhCong = "";
-        loi = "Vui lòng kiểm tra các ô được đánh dấu đỏ bên trên và sửa theo hướng dẫn.";
-        canFocusPhanHoi = true;
-    }
     private string TenTag(string ma) => danhMucTags.FirstOrDefault(x => x.Ma == ma)?.Ten ?? ma;
     private static string NgayGio(DateTimeOffset moc) => moc.ToOffset(TimeSpan.FromHours(7)).ToString("HH:mm · dd/MM/yyyy");
     private static string LopMucDo(string mucDo) => mucDo == "Khẩn" ? "khan" : "quan-trong";
@@ -157,7 +142,6 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender) dongHo = new System.Threading.Timer(_ => KhiThayDoi(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
-        if (banNhap is not null && banNhap.Ma != Guid.Empty) HopThoai.Refresh();
         // Mở chi tiết = đã đọc (chỉ ghi một lần cho mỗi người, mỗi văn bản).
         if (BaiDangXem is { } bai && !daDoc.Contains(bai.Ma))
         {
@@ -168,7 +152,7 @@
         if (canFocusPhanHoi)
         {
             canFocusPhanHoi = false;
-            if (banNhap is null || banNhap.Ma == Guid.Empty) await khungPhanHoi.FocusAsync();
+            if (banNhap is null) try { await khungPhanHoi.FocusAsync(); } catch (InvalidOperationException) { }
         }
     }
     private async Task TaiLai()
@@ -187,117 +171,41 @@
     private void Them()
     {
         banNhap = new() { SoKyHieu = DichVu.GoiYSoKyHieu("Thông báo") };
-        tagsChon = []; phamViThem = "lop:*"; anhMoi = null; anhXemTruoc = null; xoaAnh = false; loi = thanhCong = ""; hieuLucNhap = null;
+        loi = thanhCong = "";
+    }
+    private async Task XongSoanMoi(Guid? ma)
+    {
+        banNhap = null;
+        if (ma is not null) await DaLuu(ma.Value, "Đã đăng văn bản. Văn bản vừa đăng đang được hiển thị bên dưới.");
     }
     private async Task Sua(ThongBao bai)
     {
-        banNhap = bai.TaoBanSao(); phamViThem = "lop:*"; tagsChon = [.. bai.Tags];
-        hieuLucNhap = bai.HieuLucDen?.ToOffset(TimeSpan.FromHours(7)).Date;
-        anhMoi = null; anhXemTruoc = bai.Anh; xoaAnh = false; loi = thanhCong = "";
-        await HopThoai.OpenAsync("Sửa văn bản", _ => BieuMau, new DialogOptions
-        {
-            Width = "960px", Height = "85vh", ShowClose = false,
-            CloseDialogOnOverlayClick = false, CloseDialogOnEsc = false
-        });
-    }
-    private void DoiLoai(object _)
-    {
-        // Gợi ý lại số/ký hiệu theo loại khi đang soạn mới và người dùng chưa tự nhập số khác.
-        if (banNhap is { Ma: var ma } && ma == Guid.Empty) banNhap.SoKyHieu = DichVu.GoiYSoKyHieu(banNhap.LoaiVanBan);
-    }
-    private void Huy()
-    {
-        var dangSua = banNhap is not null && banNhap.Ma != Guid.Empty;
-        banNhap = null; anhMoi = null; anhXemTruoc = null;
-        if (dangSua) HopThoai.Close();
-    }
-    private void BoAnh() { anhMoi = null; anhXemTruoc = null; xoaAnh = true; }
-    private async Task ChonAnh(InputFileChangeEventArgs e)
-    {
-        dangTaiAnh = true; loi = thanhCong = "";
+        if (dangSua) return;
+        dangSua = true; loi = thanhCong = "";
         try
         {
-            using var boNho = new MemoryStream();
-            await using var tep = e.File.OpenReadStream(DichVuThongBao.GioiHanAnh);
-            await tep.CopyToAsync(boNho);
-            var duLieu = boNho.ToArray();
-            var xemTruoc = DichVuThongBao.TaoAnh(duLieu);
-            anhMoi = duLieu; anhXemTruoc = xemTruoc; xoaAnh = false;
+            var kq = await HopThoai.OpenAsync<BieuMauThongBao>("Sửa văn bản",
+                new() { [nameof(BieuMauThongBao.DuLieuBanDau)] = bai, [nameof(BieuMauThongBao.TrongHopThoai)] = true },
+                new DialogOptions { Width = "960px", Height = "85vh", ShowClose = true, CloseDialogOnOverlayClick = false, CloseDialogOnEsc = true, CssClass = "hop-sua-van-ban" });
+            if (kq is Guid ma) await DaLuu(ma, "Đã lưu thay đổi của văn bản.");
         }
-        catch (Exception ex) when (ex is IOException or ArgumentException or InvalidOperationException) { loi = "Không đọc được ảnh. Chọn ảnh PNG, JPEG hoặc WebP không quá 3 MB."; }
-        finally { dangTaiAnh = false; canFocusPhanHoi = loi != ""; }
+        finally { dangSua = false; }
     }
-    private async Task Luu()
+    private async Task DaLuu(Guid ma, string thongDiep)
     {
-        if (banNhap is null || dangBan || dangTaiAnh) return;
-        dangBan = true; loi = thanhCong = "";
-        try
-        {
-            var dangMoi = banNhap.Ma == Guid.Empty;
-            banNhap.Tags = tagsChon?.ToList() ?? [];
-            banNhap.HieuLucDen = hieuLucNhap is { } d ? new DateTimeOffset(d.Date.AddDays(1).AddSeconds(-1), TimeSpan.FromHours(7)) : null;
-            maDangXem = await DichVu.LuuAsync(banNhap, anhMoi, xoaAnh);
-            tuKhoa = tagLoc = loaiLoc = ""; Huy(); await TaiLai(); thanhCong = dangMoi ? "Đã đăng văn bản. Văn bản vừa đăng đang được hiển thị bên dưới." : "Đã cập nhật văn bản.";
-        }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException) { loi = ex.Message; }
-        catch { loi = "Không lưu được văn bản. Vui lòng thử lại."; }
-        finally { dangBan = false; canFocusPhanHoi = true; }
+        maDangXem = ma; tuKhoa = tagLoc = loaiLoc = "";
+        await TaiLai();
+        thanhCong = thongDiep; canFocusPhanHoi = true;
+        StateHasChanged();
     }
     private async Task Xoa(ThongBao bai)
     {
         if (await HopThoai.Confirm($"Bạn sắp xóa văn bản “{bai.TieuDe}”. Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }) != true) return;
         dangBan = true; loi = thanhCong = "";
-        try { await DichVu.XoaAsync(bai.Ma); if (banNhap?.Ma == bai.Ma) Huy(); await TaiLai(); thanhCong = "Đã xóa văn bản."; }
+        try { await DichVu.XoaAsync(bai.Ma); await TaiLai(); thanhCong = "Đã xóa văn bản."; }
         catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException) { loi = ex.Message; }
         catch { loi = "Không xóa được văn bản. Vui lòng thử lại."; }
         finally { dangBan = false; canFocusPhanHoi = true; }
     }
     public void Dispose() { daHuy = true; Kho.DaThayDoi -= KhiThayDoi; dongHo?.Dispose(); }
-    private RenderFragment BieuMau => @<div class="noi-dung-hop-soan @(banNhap?.Ma != Guid.Empty ? "dang-sua" : "")">
-        <EditForm Model="banNhap" OnValidSubmit="Luu" OnInvalidSubmit="BaoLoiBieuMau" class="soan-thong-bao">
-            <DataAnnotationsValidator />
-            <div class="dau-hop-soan">
-                <h2 id="tieu-de-hop-sua">@(banNhap!.Ma == Guid.Empty ? "Đăng văn bản mới" : "Sửa văn bản")</h2>
-                @if (banNhap.Ma != Guid.Empty)
-                {
-                    <button type="button" class="dong-hop-soan" data-dong-hop-sua aria-label="Đóng hộp sửa văn bản" @onclick="Huy" disabled="@(dangBan || dangTaiAnh)">×</button>
-                }
-            </div>
-            <div class="tb-luoi-the-thuc">
-                <div><label for="loai-vb">Loại văn bản</label><RadzenDropDown TValue="string" Name="loai-vb" Data="@DichVuThongBao.CacLoaiVanBan" @bind-Value="banNhap.LoaiVanBan" Change="DoiLoai" Style="width:100%" /></div>
-                <div><label for="so-ky-hieu">Số / ký hiệu</label><InputText id="so-ky-hieu" class="form-control" @bind-Value="banNhap.SoKyHieu" maxlength="40" placeholder="Ví dụ 126/KH-HV" /></div>
-                <div><label for="muc-do">Mức độ</label><RadzenDropDown TValue="string" Name="muc-do" Data="@DichVuThongBao.CacMucDo" @bind-Value="banNhap.MucDo" Style="width:100%" /></div>
-                <div><label for="hieu-luc">Hiển thị đến ngày (để trống: không hạn)</label><RadzenDatePicker TValue="DateTime?" @bind-Value="hieuLucNhap" DateFormat="dd/MM/yyyy" AllowClear="true" Style="width:100%" /></div>
-                <div><label for="nguoi-ky">Người ký</label><InputText id="nguoi-ky" class="form-control" @bind-Value="banNhap.NguoiKy" maxlength="100" /></div>
-                <div><label for="co-quan">Cơ quan ban hành</label><InputText id="co-quan" class="form-control" @bind-Value="banNhap.CoQuanBanHanh" maxlength="150" /></div>
-            </div>
-            <label class="chon-khoa"><InputCheckbox @bind-Value="banNhap.Ghim" /> Ghim lên đầu danh sách và trang chủ</label>
-            <label for="tieu-de-tin">Tiêu đề</label><InputText id="tieu-de-tin" class="form-control" @bind-Value="banNhap.TieuDe" maxlength="200" aria-describedby="loi-tieu-de-tin" />
-            <div id="loi-tieu-de-tin"><ValidationMessage For="@(() => banNhap.TieuDe)" /></div>
-            <label for="trich-yeu">Trích yếu (một dòng, hiện ở danh sách)</label><InputText id="trich-yeu" class="form-control" @bind-Value="banNhap.TrichYeu" maxlength="300" />
-            <label for="noi-dung-tin">Nội dung</label><InputTextArea id="noi-dung-tin" class="form-control" rows="7" @bind-Value="banNhap.NoiDung" maxlength="20000" aria-describedby="loi-noi-dung-tin" />
-            <div id="loi-noi-dung-tin"><ValidationMessage For="@(() => banNhap.NoiDung)" /></div>
-            <label for="tag-bai">Nơi nhận: khoa</label>
-            <RadzenDropDown Name="tag-bai" InputAttributes="@(new Dictionary<string, object> { ["id"] = "tag-bai" })" TValue="IEnumerable<string>" @bind-Value="tagsKhoa" Data="@(danhMucTags.Where(x => x.Ma.StartsWith("khoa:")))" TextProperty="Ten" ValueProperty="Ma" Multiple="true" AllowFiltering="true" AllowClear="true" Placeholder="Không chọn: gửi toàn hệ thống" Style="width:100%" />
-            <label>Nơi nhận: lớp đào tạo (chọn nhanh Hệ → Khoá → Lớp)</label>
-            <ChonPhamViLop Id="them-lop-tin" @bind-Value="phamViThem" />
-            <RadzenButton Text="Thêm nhóm lớp đã chọn" Icon="add" ButtonStyle="ButtonStyle.Light" Click="ThemPhamVi" />
-            <div class="tags-tin">@foreach (var tag in tagsChon.Where(x => !x.StartsWith("khoa:"))) { <button type="button" class="tag-tin" @onclick="() => BoPhamVi(tag)" aria-label="@("Bỏ " + TenTag(tag))">@TenTag(tag) ×</button> }</div>
-            <small>Không chọn khoa hay nhóm lớp: gửi toàn hệ thống. Học viên chỉ nhận văn bản gửi tới lớp/khoá/hệ của mình; giảng viên nhận văn bản của khoa mình và lớp mình dạy.</small>
-            <label for="anh-tin">Ảnh đính kèm (PNG, JPEG, WebP; tối đa 3 MB)</label><InputFile id="anh-tin" OnChange="ChonAnh" accept="image/png,image/jpeg,image/webp" disabled="@dangBan" @key="banNhap" />
-            @if (anhXemTruoc is not null)
-            {
-                <img class="anh-xem-truoc" src="@anhXemTruoc" alt="Ảnh đang chọn cho văn bản" />
-                <RadzenButton Text="Bỏ ảnh" Icon="close" Click="BoAnh" ButtonStyle="ButtonStyle.Light" Disabled="dangBan" />
-            }
-            @if (!string.IsNullOrEmpty(loi))
-            {
-                <div class="phan-hoi-tin phan-hoi-loi" role="alert" tabindex="-1" @ref="khungPhanHoi">
-                    <strong>Chưa lưu được văn bản</strong><p>@loi</p>
-                    <ValidationSummary />
-                </div>
-            }
-            <div class="hanh-dong-tin"><RadzenButton Text="@(dangBan ? "Đang lưu…" : "Lưu văn bản")" Icon="save" ButtonType="ButtonType.Submit" Disabled="@(dangBan || dangTaiAnh)" /><RadzenButton Text="Hủy" Click="Huy" ButtonStyle="ButtonStyle.Light" Disabled="dangBan" /></div>
-        </EditForm>
-    </div>;
 }
