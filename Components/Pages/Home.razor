@@ -13,7 +13,7 @@
 
 @* Đầu bảng điều khiển (gọn, dữ liệu trước): ngày, lời chào theo giờ, một câu tóm tắt việc hôm nay theo vai trò và nút việc chính.
    Sau đó là các chỉ số "Hôm nay" bấm được để xử lý ngay; quy mô Học viện và biểu đồ đặt sau vì ít thay đổi. *@
-<header class="bang-dau" aria-labelledby="tieu-de-tong-quan">
+<header class="bang-dau co-the" aria-labelledby="tieu-de-tong-quan">
     <div class="bang-dau-chu">
         <p class="bang-dau-ngay"><RadzenIcon Icon="calendar_today" />@ThuTrongTuan, @GioVietNam.ToString("dd/MM/yyyy")@if (nd.DaDangNhap) { <span>@nd.TenVaiTro · @PhamViHienThi</span> }</p>
         <h1 id="tieu-de-tong-quan">
@@ -21,15 +21,35 @@
             else { <text>Tổng quan</text> }
         </h1>
         <p class="bang-dau-tom-tat">@TomTat</p>
+        <div class="bang-dau-nut">
+            @{ var chinh = LoiVaoNhanh.FirstOrDefault(); }
+            @if (chinh.Ten is not null)
+            {
+                <a class="nut-chinh" href="@chinh.DuongDan"><RadzenIcon Icon="@chinh.BieuTuong" /><span>@chinh.Ten</span></a>
+            }
+            <a class="nut-phu" href="/thong-bao"><RadzenIcon Icon="campaign" /><span>Văn bản</span>@if (soChuaDoc > 0) { <b aria-label="@($"{soChuaDoc} chưa đọc")">@soChuaDoc</b> }</a>
+        </div>
     </div>
-    <div class="bang-dau-nut">
-        @{ var chinh = LoiVaoNhanh.FirstOrDefault(); }
-        @if (chinh.Ten is not null)
-        {
-            <a class="nut-chinh" href="@chinh.DuongDan"><RadzenIcon Icon="@chinh.BieuTuong" /><span>@chinh.Ten</span></a>
-        }
-        <a class="nut-phu" href="/thong-bao"><RadzenIcon Icon="campaign" /><span>Văn bản</span>@if (soChuaDoc > 0) { <b aria-label="@($"{soChuaDoc} chưa đọc")">@soChuaDoc</b> }</a>
-    </div>
+    @* Thẻ tài khoản: kiểu thẻ ngành có chip, quân hiệu, chữ cái đầu, vai trò, phạm vi và giờ bắt đầu phiên.
+       Vào trang thì thẻ lật vào, vệt ánh kim lướt qua rồi lơ lửng nhẹ (CSS, tắt khi giảm chuyển động).
+       Chỉ hiển thị thông tin đã có trong phiên đăng nhập; số thẻ là số trang trí, không phải số thật. *@
+    @if (nd.DaDangNhap)
+    {
+        <aside class="the-tk" aria-label="Thẻ tài khoản: @nd.Ten, @nd.TenVaiTro, @PhamViHienThi">
+            <div class="the-tk-mat" aria-hidden="true">
+                <div class="the-tk-dau">
+                    <img src="images/logo-hoc-vien-an-ninh.png" alt="" />
+                    <span>HỌC VIỆN AN NINH NHÂN DÂN<small>Thẻ tài khoản hệ thống</small></span>
+                </div>
+                <div class="the-tk-than">
+                    <span class="the-tk-anh">@ChuCaiDau</span>
+                    <span class="the-tk-ten"><strong>@nd.Ten</strong><small>@nd.TenVaiTro</small><small>@PhamViHienThi</small></span>
+                    <span class="the-tk-chip"></span>
+                </div>
+                <div class="the-tk-chan"><span><b></b>Phiên làm việc · @GioVietNam.ToString("HH:mm dd/MM")</span><span class="the-tk-so">@SoThe</span></div>
+            </div>
+        </aside>
+    }
 </header>
 
 @* Bắt đầu nhanh theo vai trò (mục 11.4 của thiết kế): hàng lối tắt gọn. Chỉ là lối tắt, quyền thật vẫn kiểm ở trang đích. *@
@@ -306,6 +326,9 @@
         }
     }
     private static string ThuTrongTuan { get { var t = GioVietNam.ToString("dddd", new CultureInfo("vi-VN")); return char.ToUpper(t[0]) + t[1..]; } }
+    private string ChuCaiDau => string.IsNullOrWhiteSpace(nd.Ten) ? "?" : new string(nd.Ten.Where(char.IsLetterOrDigit).Take(2).ToArray()).ToUpperInvariant();
+    // Số thẻ ổn định theo tên tài khoản (chỉ để trang trí, không phải số thật).
+    private string SoThe => $"Số {GioVietNam.Year}-{nd.Ten.Aggregate(17, (h, c) => (h * 31 + c) % 10000):D4}";
     private string PhamViHienThi => nd.VaiTro switch
     {
         "Admin" => "Phạm vi: toàn hệ thống",

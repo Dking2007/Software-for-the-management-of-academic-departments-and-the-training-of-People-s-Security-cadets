@@ -483,3 +483,7 @@ html:has(.gt) { scroll-padding-top: 4.5rem; }
 /* ---- Giảm chuyển động: tắt mọi hiệu ứng, giữ nguyên bố cục (khung ứng dụng đứng ở trạng thái đầu) ---- */
 @media (prefers-reduced-motion: reduce) { .gt *, .gt *::before, .gt *::after { animation: none !important; transition: none !important; } }
 :root[data-giam-chuyen-dong] .gt *, :root[data-giam-chuyen-dong] .gt *::before, :root[data-giam-chuyen-dong] .gt *::after { animation: none !important; transition: none !important; }
+
+/* Vai trò trong hệ thống: chỉ là nhãn giới thiệu, không bấm được (không dẫn tới đăng nhập bằng tài khoản mẫu). */
+.gt-thu i { padding: .1875rem .625rem; border: 1px solid var(--vien-the); border-radius: 6px; background: var(--nen-dai); color: var(--chu-phu); font-style: normal; cursor: default; }
+.gt-thu small { flex-basis: 100%; margin-top: .25rem; color: var(--chu-phu); font-size: .8125rem; }

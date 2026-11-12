@@ -2,6 +2,12 @@
 
 Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân. Dữ liệu và tài khoản đều giả lập, phục vụ học tập. Mới nhất ở trên.
 
+## 12/11/2026: Thẻ tài khoản trên trang chủ, sửa trang giới thiệu
+
+- Trang chủ: thẻ tài khoản kiểu thẻ ngành (chip, quân hiệu, chữ cái đầu, vai trò, phạm vi, giờ bắt đầu phiên); vào trang thì thẻ lật vào, ánh kim lướt qua rồi lơ lửng nhẹ. Tắt khi giảm chuyển động.
+- Trang giới thiệu: nút "Xem bảng phân quyền" cuộn xuống đúng khối thay vì tải lại trang (liên kết `#...` bị thẻ `<base href="/">` hiểu thành trang chủ).
+- Trang giới thiệu chỉ giới thiệu các vai trò, không còn liên kết điền sẵn tài khoản mẫu vào trang đăng nhập.
+
 ## 11–13/11/2026: Giao diện "Sổ bộ", trang giới thiệu, sửa lỗi theo góp ý
 
 **Sửa lỗi**
