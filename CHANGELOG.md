@@ -2,6 +2,12 @@
 
 Hệ thống quản lý Khoa/Lớp đào tạo, Học viện An ninh nhân dân. Dữ liệu và tài khoản đều giả lập, phục vụ học tập. Mới nhất ở trên.
 
+## 12/11/2026 (chiều): Nút lá cờ hướng dẫn theo từng trang
+
+- Nút lá cờ luôn hướng dẫn **đúng trang đang mở**, không còn chuyển sang giới thiệu chung. Thêm hướng dẫn riêng cho Trang chủ, Văn bản thông báo, Hệ đào tạo, Chi tiết lớp; trang khác tự dựng hướng dẫn từ bố cục của chính trang (đầu trang và mô tả, thao tác chính, tab, tìm và lọc, vùng dữ liệu).
+- Giới thiệu chung chỉ dành cho người mới (thẻ mời lần đầu) hoặc khi chủ động bấm "Xem giới thiệu chung" ở trang Trợ giúp; bỏ nút "Xem giới thiệu chung" ở cuối hướng dẫn trang.
+- Chấm gợi ý trên nút lá cờ chỉ hiện ở trang có hướng dẫn riêng mà tài khoản chưa xem, tắt sau khi xem.
+
 ## 12/11/2026: Thẻ tài khoản trên trang chủ, sửa trang giới thiệu
 
 - Trang chủ: thẻ tài khoản kiểu thẻ ngành (chip, quân hiệu, chữ cái đầu, vai trò, phạm vi, giờ bắt đầu phiên); vào trang thì thẻ lật vào, ánh kim lướt qua rồi lơ lửng nhẹ. Tắt khi giảm chuyển động.

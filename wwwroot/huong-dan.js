@@ -48,6 +48,33 @@ window.huongDan = (() => {
     ];
 
     const THEO_TRANG = [
+        { khop: /^$/, khoa: "trang-chu", buoc: [
+            { chon: ".bang-dau-chu", tieuDe: ["Việc của bạn hôm nay", "Your day at a glance"], noiDung: ["Lời chào kèm một câu tóm tắt: số buổi học, buổi chưa điểm danh, mục cần chú ý, văn bản chưa đọc. Nút bên dưới mở việc chính của vai trò bạn.", "A one-line summary of today, with a button for your main task."] },
+            { chon: ".the-tk", tieuDe: ["Thẻ tài khoản", "Your account card"], noiDung: ["Tên, vai trò và phạm vi bạn được làm việc trong phiên này.", "Your name, role and scope for this session."] },
+            { chon: ".tc-loi-tat", tieuDe: ["Lối tắt theo vai trò", "Shortcuts"], noiDung: ["Những trang bạn dùng nhiều nhất, xếp theo vai trò.", "The pages you use most, by role."] },
+            { chon: ".tc-chi-so", tieuDe: ["Chỉ số hôm nay", "Today's numbers"], noiDung: ["Bấm một ô để đi thẳng tới nơi xử lý. Vạch màu bên trái cho biết ổn (xanh) hay cần làm (vàng).", "Select a box to go straight to where it is handled."] },
+            { chon: ".the-can-chu-y", tieuDe: ["Cần chú ý", "Needs attention"], noiDung: ["Các việc tồn đọng trong phạm vi của bạn, việc có số lớn hơn 0 xếp lên đầu.", "Open items in your scope, outstanding ones first."] },
+            { chon: ".quy-mo", tieuDe: ["Quy mô Học viện", "Academy at a glance"], noiDung: ["Số khoa, tổ, cán bộ, lớp, học viên. Bấm để mở danh sách tương ứng.", "Counts of faculties, groups, staff, classes and students."] }
+        ] },
+        { khop: /^thong-bao$/, buoc: [
+            { chon: ".dau-bang-tin", tieuDe: ["Văn bản gửi tới bạn", "Notices for you"], noiDung: ["Số văn bản và số chưa đọc. Quản trị viên có nút Đăng văn bản ở đây.", "Totals and unread count. Administrators post new notices here."] },
+            { chon: ".tb-chuyen-muc", tieuDe: ["Chuyên mục", "Categories"], noiDung: ["Lọc theo loại: thông báo, kế hoạch, công văn…", "Filter by notice type."] },
+            { chon: ".bo-loc-tin", tieuDe: ["Tìm và lọc", "Search and filter"], noiDung: ["Gõ số ký hiệu, tiêu đề hay nội dung; lọc theo nơi nhận hoặc chỉ văn bản chưa đọc.", "Search by number, title or text; filter by recipient or unread."] },
+            { chon: ".cot-tieu-de", tieuDe: ["Danh sách văn bản", "Notice list"], noiDung: ["Ghim lên trước, mới nhất sau. Chấm đỏ là văn bản bạn chưa đọc.", "Pinned first, newest next. A red dot marks unread notices."] },
+            { chon: ".tb-chi-tiet", tieuDe: ["Nội dung văn bản", "Notice details"], noiDung: ["Số ký hiệu, ngày ban hành, người ký, nơi nhận và nội dung. Bấm ảnh đính kèm để xem lớn; có nút In bản sạch.", "Number, date, signer, recipients and content. Select an image to enlarge it."] }
+        ] },
+        { khop: /^quan-ly-hoc-vien\/he\/.+$/, khoa: "quan-ly-hoc-vien/he", buoc: [
+            { chon: ".hv-tab-he", tieuDe: ["Chọn hệ đào tạo", "Training systems"], noiDung: ["Tổng quan, hệ chính quy hoặc văn bằng 2, kèm số lớp mỗi hệ.", "Overview, regular or second-degree programmes."] },
+            { chon: ".hv-ds-khoa", tieuDe: ["Khoá · niên khoá", "Intakes"], noiDung: ["Chọn khoá để xem lớp của khoá đó. Nút ⌃ ⌄ bên phải thu gọn cột này để nhường chỗ cho thẻ lớp.", "Pick an intake. The arrow button collapses this column."] },
+            { chon: ".hv-nganh", tieuDe: ["Lọc chuyên ngành", "Filter by major"], noiDung: ["Chỉ hiện lớp của một chuyên ngành; số bên cạnh là số lớp.", "Show only one major's classes."] },
+            { chon: ".thanh-lich", tieuDe: ["Tìm và cách xem", "Search and view"], noiDung: ["Gõ mã lớp, chuyên ngành hay chủ nhiệm; chuyển giữa Thẻ lớp và Bảng; mở hoặc thu gọn từng khoá.", "Search, switch between cards and table, expand or collapse intakes."] },
+            { chon: ".luoi-the-lop", tieuDe: ["Thẻ lớp", "Class cards"], noiDung: ["Bấm mã lớp để vào trang lớp (học viên, lịch, điểm danh, điểm). Bút để sửa, thùng rác để xoá nếu bạn có quyền.", "Select a class code to open it."] }
+        ] },
+        { khop: /^quan-ly-hoc-vien\/lop\/.+$/, khoa: "quan-ly-hoc-vien/lop", buoc: [
+            { chon: ".thong-tin-don-vi", tieuDe: ["Thông tin lớp", "Class details"], noiDung: ["Mã lớp, hệ, khoá, niên khoá, chuyên ngành, chủ nhiệm và sĩ số.", "Code, system, intake, major, homeroom teacher and size."] },
+            { chon: ".rz-tabview-nav", tieuDe: ["Các tab của lớp", "Class tabs"], noiDung: ["Học viên, lịch học, điểm danh, chuyên cần, sổ đầu bài và điểm của riêng lớp này. Bạn chỉ thấy tab mà vai trò được dùng.", "Students, schedule, attendance, logbook and grades for this class."] },
+            { chon: ".rz-tabview-panels", tieuDe: ["Nội dung tab", "Tab content"], noiDung: ["Tab Điểm danh ghi theo từng buổi; tab Điểm tự tính tổng kết 30% chuyên cần + 70% kiểm tra.", "Attendance is recorded per session; grades are totalled automatically."] }
+        ] },
         { khop: /^dao-tao\/lich$/, buoc: [
             { chon: ".lich-chi-so", tieuDe: ["Số liệu nhanh", "At a glance"], noiDung: ["Tổng số buổi trong kỳ và số buổi hôm nay. Bấm ô \"Đã qua, chưa điểm danh\" để lọc ngay các buổi đó.", "Totals for the period and today. Select \"Past, not recorded\" to filter those sessions."] },
             { chon: "[data-hd=lich-che-do]", tieuDe: ["Bốn cách xem lịch", "Four views"], noiDung: ["Theo lớp: mỗi lớp một hàng, xem cả tuần trên một màn hình. Lưới tuần, Theo ngày và Tháng cho các nhu cầu còn lại.", "By class shows each class on one row. Week grid, By day and Month cover the rest."] },
@@ -162,21 +189,51 @@ window.huongDan = (() => {
     const duongDan = () => location.pathname.replace(/^\/+|\/+$/g, "");
     const thongTin = () => document.querySelector("[data-huong-dan-nguoi]");
     const hienRo = el => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; };
-    const coDich = b => !b.chon || hienRo(document.querySelector(b.chon));
+    const phanTu = b => b.el || (b.chon ? document.querySelector(b.chon) : null);
+    const coDich = b => !(b.chon || b.el) || hienRo(phanTu(b));
 
     function buocTrang() {
         const p = duongDan();
         const m = THEO_TRANG.find(x => x.khop.test(p));
         if (m) return m.buoc;
-        return document.querySelector(".panel-toolbar .search-box") ? DANH_SACH : [];
+        return buocTuDong();
+    }
+
+    // Trang chưa có kịch bản riêng: dựng hướng dẫn từ chính bố cục trang đang mở
+    // (đầu trang + mô tả, thao tác chính, tab/nhóm, tìm và lọc, vùng dữ liệu). Nhờ vậy nút lá cờ luôn nói về đúng trang này.
+    function buocTuDong() {
+        const vung = document.querySelector(".content") || document.body;
+        const tim = (...ds) => { for (const c of ds) { const el = [...vung.querySelectorAll(c)].find(hienRo); if (el) return el; } return null; };
+        const chuNgan = (el, n) => (el?.textContent || "").replace(/\s+/g, " ").trim().slice(0, n);
+        const buoc = [];
+        const dau = tim(".page-heading-row", ".bang-dau");
+        if (dau) {
+            const ten = chuNgan(dau.querySelector("h1"), 80);
+            const moTa = chuNgan(dau.querySelector(".page-heading p, p"), 220);
+            buoc.push({ el: dau, tieuDe: [ten || "Trang này", ten || "This page"], noiDung: [moTa || "Tên trang và phần việc chính ở đây.", moTa || "The page title and what it is for."] });
+        }
+        const thaoTac = tim(".thao-tac-dau-trang");
+        if (thaoTac) {
+            const nut = [...thaoTac.querySelectorAll("button, a")].filter(hienRo).map(b => chuNgan(b, 30)).filter(Boolean).slice(0, 4);
+            buoc.push({ el: thaoTac, tieuDe: ["Thao tác chính", "Main actions"], noiDung: [nut.length ? `Ở đây có: ${nut.join(", ")}. Bạn chỉ thấy nút mà vai trò của mình được dùng.` : "Các nút thêm mới, nhập và xuất Excel của trang.", "Add, import and export buttons. You only see what your role allows."] });
+        }
+        const tab = tim(".rz-tabview-nav", "[role=tablist]", ".tb-chuyen-muc", ".hv-tab-he", ".chon-che-do");
+        if (tab) buoc.push({ el: tab, tieuDe: ["Chọn nhóm hoặc chế độ xem", "Tabs and views"], noiDung: ["Bấm để chuyển nhóm dữ liệu hoặc cách xem; nội dung bên dưới đổi theo lựa chọn.", "Switch groups or views; the content below follows your choice."] });
+        const loc = tim(".panel-toolbar", ".thanh-lich", ".bo-loc-tin", ".search-box");
+        if (loc) buoc.push({ el: loc, tieuDe: ["Tìm và lọc", "Search and filter"], noiDung: ["Gõ tự do, không cần dấu; kết quả khớp nhất xếp lên đầu. Dùng các ô lọc để thu hẹp danh sách.", "Type freely; the best matches come first. Use filters to narrow the list."] });
+        const duLieu = tim(".directory-grid", ".bang-cuon", ".luoi-the-lop", "table", ".the-bieu-do", ".rz-card");
+        if (duLieu && duLieu !== dau) buoc.push({ el: duLieu, tieuDe: ["Dữ liệu của trang", "The data"], noiDung: ["Bấm tiêu đề cột để sắp xếp, rê chuột vào tên để xem thẻ thông tin nhanh, bấm mã để mở chi tiết.", "Sort by column, hover a name for a quick card, select a code for details."] });
+        return buoc;
     }
 
     function batDau(che) {
         if (dangChay) return;
         const vaiTro = thongTin()?.dataset.huongDanVaiTro || "Guest";
         const trang = buocTrang();
-        cheDo = che === "chung" || trang.length === 0 ? "chung" : che;
+        cheDo = che;
         cacBuoc = (cheDo === "chung" ? CHUNG(vaiTro) : cheDo === "day-du" ? [...CHUNG(vaiTro), ...trang] : trang).filter(coDich);
+        // Trang không có vùng nào để chỉ (hiếm): một bước giữa màn hình nói tên trang, không chuyển sang giới thiệu chung.
+        if (cacBuoc.length === 0 && cheDo === "trang") cacBuoc = [{ tieuDe: [document.title.split("|")[0].trim(), document.title.split("|")[0].trim()], noiDung: ["Trang này chưa có vùng nào cần hướng dẫn thêm.", "Nothing on this page needs a walkthrough."] }];
         if (cacBuoc.length === 0) return;
         dongThe();
         if (cheDo !== "trang") danhDau(KHOA_CHUNG);
@@ -245,14 +302,13 @@ window.huongDan = (() => {
         const tien = document.createElement("div"); tien.className = "hd-tien-do";
         const vach = document.createElement("span"); vach.style.transform = `scaleX(${(chiSo + 1) / cacBuoc.length})`; tien.append(vach);
         const nut = document.createElement("div"); nut.className = "hd-nut";
-        if (cuoi && cheDo === "trang") nut.append(taoNut("hd-phu", nhan("chung"), () => { dong(); batDau("chung"); }));
-        else if (!cuoi) nut.append(taoNut("hd-phu", nhan("boQua"), dong));
+        if (!cuoi) nut.append(taoNut("hd-phu", nhan("boQua"), dong));
         const phai = document.createElement("span"); phai.className = "hd-nut-phai";
         if (chiSo > 0) phai.append(taoNut("hd-lui", nhan("lui"), lui));
         const nutTiep = taoNut("hd-tiep", cuoi ? nhan("xong") : nhan("tiep"), tiep);
         phai.append(nutTiep); nut.append(phai);
         pop.append(dau, h, p, tien, nut);
-        const el = b.chon ? document.querySelector(b.chon) : null;
+        const el = phanTu(b);
         if (el) {
             const r = el.getBoundingClientRect();
             if (r.top < 0 || r.bottom > innerHeight) el.scrollIntoView({ block: r.height > innerHeight * .7 ? "start" : "center", behavior: "auto" });
@@ -267,7 +323,7 @@ window.huongDan = (() => {
     function datViTri() {
         if (!dangChay || !pop) return;
         const b = cacBuoc[chiSo];
-        const el = b.chon ? document.querySelector(b.chon) : null;
+        const el = phanTu(b);
         const W = innerWidth, H = innerHeight, L = 12;
         const pw = pop.offsetWidth, ph = pop.offsetHeight;
         const chan = goc.querySelector(".hd-chan");
@@ -308,8 +364,10 @@ window.huongDan = (() => {
     // Khoá hướng dẫn của trang đang mở: trang có kịch bản riêng, hoặc kịch bản chung cho mọi trang danh sách.
     function khoaTrang() {
         const p = duongDan().toLowerCase();
-        if (THEO_TRANG.some(x => x.khop.test(p))) return "trang:" + p;
-        return document.querySelector(".panel-toolbar .search-box") ? "trang:danh-sach" : null;
+        const m = THEO_TRANG.find(x => x.khop.test(p));
+        if (!m) return null;
+        // Trang có mã trong đường dẫn (lớp B10D58, hệ chinh-quy…) dùng chung một khoá của mẫu, không mỗi lớp một khoá.
+        return "trang:" + (m.khoa || p);
     }
     const tenNguoi = () => thongTin()?.dataset.huongDanNguoi || "";
 
@@ -384,7 +442,9 @@ window.huongDan = (() => {
     }).observe(document.documentElement, { childList: true, subtree: true });
 
     document.addEventListener("click", e => {
-        if (e.target.closest?.("[data-mo-huong-dan]")) batDau("trang");
+        // Nút lá cờ: hướng dẫn trang đang mở. Giới thiệu chung chỉ mở từ thẻ mời người mới hoặc nút ở trang Trợ giúp.
+        if (e.target.closest?.("[data-mo-huong-dan-chung]")) batDau("chung");
+        else if (e.target.closest?.("[data-mo-huong-dan]")) batDau("trang");
     });
 
     return { batDau, dong, ketNoi };
