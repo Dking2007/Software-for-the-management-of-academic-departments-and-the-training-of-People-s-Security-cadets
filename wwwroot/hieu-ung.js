@@ -1,3 +1,4 @@
+/* Vai trò tệp: Hiệu ứng giao diện, tải tệp, nút về đầu trang và phím tắt tìm kiếm. */
 // Hiệu ứng và phím tắt phía trình duyệt. Không chứa dữ liệu hay quyền; tắt hết khi người dùng chọn giảm chuyển động.
 (() => {
     const giamChuyenDong = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -14,13 +15,12 @@
     // Sơ đồ dạng cột: cuộn tới cột mới nhất sau khi chọn một mục.
     window.cuonCotCuoi = el => el?.scrollTo?.({ left: el.scrollWidth, behavior: giamChuyenDong() ? "auto" : "smooth" });
 
-    // Nút quay về đầu trang: chỉ hiện khi trang đủ dài và đã cuộn tới gần cuối.
-    const NGUONG_CUOI_TRANG = 220, CHIEU_CAO_TOI_THIEU = 320;
+    // Nút quay về đầu trang: hiện sau khi cuộn xuống 320 px.
+    const CHIEU_CAO_TOI_THIEU = 320;
     function capNhatNutLenDau() {
         const nut = document.getElementById("nut-len-dau");
         if (!nut) return;
-        const conLai = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
-        nut.classList.toggle("hien", window.scrollY >= CHIEU_CAO_TOI_THIEU && conLai <= NGUONG_CUOI_TRANG);
+        nut.classList.toggle("hien", window.scrollY >= CHIEU_CAO_TOI_THIEU);
     }
     let choKhungHinh = false;
     const henCapNhat = () => { if (choKhungHinh) return; choKhungHinh = true; requestAnimationFrame(() => { choKhungHinh = false; capNhatNutLenDau(); }); };

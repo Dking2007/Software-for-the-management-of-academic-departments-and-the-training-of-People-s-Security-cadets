@@ -1,3 +1,4 @@
+// Vai trò tệp: Chữ giao diện của chức năng trực ban (trang /khoa/truc-ban, lối vào ở Giảng dạy của tôi, thông báo thao tác).
 namespace Nhom2_BTL.Services;
 
 /// <summary>Chữ giao diện của chức năng trực ban (trang /khoa/truc-ban, lối vào ở Giảng dạy của tôi, thông báo thao tác).</summary>

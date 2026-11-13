@@ -1,3 +1,4 @@
+// Vai trò tệp: Kho phiên minh họa trong bộ nhớ; khởi động lại ứng dụng sẽ hủy mọi phiên.
 using System.Collections.Concurrent;
 using System.Security.Claims;
 namespace Nhom2_BTL.Services;

@@ -1,3 +1,4 @@
+// Vai trò tệp: CSDL SQLite lưu dữ liệu nghiệp vụ (khoa, tổ, cán bộ, lớp, học viên, đào tạo, học vụ, nhật ký) để dữ liệu còn nguyên sau khi tắt ứng dụng.
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -59,6 +60,7 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
     /// <summary>Giá trị cũ dạng JSON cho bản ghi được gắn lại (Update/Remove) mà context không có giá trị gốc.</summary>
     public Dictionary<object, string> GiaTriCuNgoai { get; } = new(ReferenceEqualityComparer.Instance);
 
+    // Ánh xạ mô hình sang bảng, khóa và quan hệ dữ liệu.
     protected override void OnModelCreating(ModelBuilder mb)
     {
         mb.Entity<Khoa>(e =>
@@ -325,6 +327,7 @@ public sealed class CoSoDuLieuNghiepVu(DbContextOptions<CoSoDuLieuNghiepVu> tuyC
         return ketQua;
     }
 
+    // Lưu thay đổi vào cơ sở dữ liệu theo luồng bất đồng bộ.
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken huy = default)
     {
         if (BoQuaNhatKy) return await base.SaveChangesAsync(acceptAllChangesOnSuccess, huy);

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Nội dung thẻ nổi của một buổi học (ẩn sẵn trong ô lịch; wwwroot/the-noi.js chép ra thẻ nổi khi rê chuột hoặc focus). *@
 @* Nội dung thẻ nổi của một buổi học (ẩn sẵn trong ô lịch; wwwroot/the-noi.js chép ra thẻ nổi khi rê chuột hoặc focus).
    Chỉ dùng thẻ inline (span) để đặt được bên trong nút. *@
 @{
@@ -32,6 +33,7 @@
     @if (GoiY is not null) { <span class="tn-goi-y">@GoiY</span> }
 </span>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public BuoiHocHienThi Buoi { get; set; } = default!;
     [Parameter] public DichVuDaoTao.ThongTinBuoiThem? Them { get; set; }

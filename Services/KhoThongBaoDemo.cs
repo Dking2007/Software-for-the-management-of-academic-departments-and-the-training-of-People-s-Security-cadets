@@ -1,3 +1,4 @@
+// Vai trò tệp: Kho thông báo dùng chung giữa các phiên.
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;
 

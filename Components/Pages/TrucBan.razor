@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch trực ban, quân số và báo cáo ca trực. *@
 @page "/khoa/truc-ban"
 @attribute [Authorize(Roles = "Admin,Manager,GiangVien")]
 @implements IDisposable
@@ -240,6 +241,7 @@ else
     }
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private List<Nhom2_BTL.Models.Khoa>? cacKhoa;
     private string maKhoa = "", tab = "can-bo", tinhHinh = "", banGiao = "";
@@ -256,6 +258,7 @@ else
         ? [("can-bo", "Quân số cán bộ", "badge"), ("hoc-vien", "Quân số học viên", "groups"), ("so-truc", "Sổ trực ban", "edit_note"), ("lich", "Lịch trực", "calendar_month"), ("bao-cao", "Báo cáo đã chốt", "history_edu")]
         : [("lich", "Lịch trực", "calendar_month"), ("bao-cao", "Báo cáo đã chốt", "history_edu")];
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         var nd = await PhanQuyen.LayNguoiDungAsync();
@@ -318,5 +321,6 @@ else
     private Task XepTuDong() => ThucHien(() => TrucBanDv.XepTuDongAsync(maKhoa, thang, thang.AddMonths(1).AddDays(-1)));
 
     private void KhiDoi() => _ = InvokeAsync(async () => { if (dangGhi) return; await Tai(); await TaiTab(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
 }

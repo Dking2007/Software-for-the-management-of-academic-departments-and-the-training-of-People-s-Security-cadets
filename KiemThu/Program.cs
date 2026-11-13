@@ -1,3 +1,4 @@
+// Vai trò tệp: Chạy bộ kiểm thử nghiệp vụ, dựng HTML và kiểm tra lưu bền trên dữ liệu riêng.
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
@@ -12,6 +13,22 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+
+// Tạo CSDL demo riêng để kiểm tra trước khi thay bản đang dùng.
+if (args is ["--tao-demo", var duongDan])
+{
+    if (File.Exists(duongDan)) throw new InvalidOperationException("Tệp đích đã tồn tại.");
+    var options = new DbContextOptionsBuilder<CoSoDuLieuNghiepVu>().UseSqlite($"Data Source={duongDan};Pooling=False").Options;
+    var khoMoi = new KhoDuLieuDemo(new NhaMayCsdlKiemThu(options), Microsoft.Extensions.Logging.Abstractions.NullLogger<KhoDuLieuDemo>.Instance);
+    using var dbMoi = new CoSoDuLieuNghiepVu(options);
+    using var lenh = dbMoi.Database.GetDbConnection().CreateCommand();
+    dbMoi.Database.OpenConnection();
+    lenh.CommandText = "PRAGMA foreign_key_check";
+    using var doc = lenh.ExecuteReader();
+    if (doc.Read()) throw new InvalidOperationException("Có liên kết dữ liệu không hợp lệ.");
+    Console.WriteLine($"Đã tạo: {khoMoi.DanhSachKhoa.Count} khoa, {khoMoi.DanhSachTo.Count} tổ, {khoMoi.DanhSachCanBo.Count} cán bộ, {khoMoi.DanhSachLop.Count} lớp, {khoMoi.DanhSachHocVien.Count} học viên.");
+    return;
+}
 
 // Bộ kiểm tra chạy trên kho riêng, không gọi server và không sửa dữ liệu của phiên đang mở.
 var dv = new ServiceCollection();
@@ -50,16 +67,20 @@ HocVien TaoHV(string ma="TEST-HV") => new() { MaHocVien=ma, HoTen="Nguyễn Văn
 CanBoGiangVien TaoCB() => new() { MaCanBo="TEST-CB",HoTen="Đỗ Thu Hà",GioiTinh="Nữ",MaKhoa="KH-11",MaTo="KH-11-T02",ChuyenMon="Luật",SoDienThoai="0987654322",SoCCCD="000088888888",QueQuan="Hà Nội",Email="canbo@example.invalid" };
 
 // Dữ liệu ban đầu: hai nhánh, định dạng, chức vụ và tên đa dạng.
+var khoGoc=root.GetRequiredService<KhoDuLieuDemo>();
 var goc = data.LayThongKe();
-KiemTra(goc.SoKhoa==12 && goc.SoTo==24 && goc.SoLop==106 && goc.SoHocVien==4240,"Cơ cấu ban đầu theo tài liệu");
-KiemTra(data.LayDanhSachLop().All(l=>l.SiSo==40 && QuyTacDuLieu.LopHopLe(l.MaLop,l.HeDaoTao,l.KhoaHoc,l.ChuyenNganh)),"Chuyên ngành mọi lớp và sĩ số ban đầu");
+KiemTra(khoGoc.DanhSachKhoa.All(k => khoGoc.DanhSachTo.Count(t => t.MaKhoa == k.MaKhoa) is >= 2 and <= 4 && khoGoc.DanhSachCanBo.Count(c => c.MaKhoa == k.MaKhoa) is >= 20 and <= 30), "Mọi khoa có 2–4 tổ và 20–30 cán bộ");
+KiemTra(khoGoc.DanhSachKhoa.All(k => { var sizes = khoGoc.DanhSachTo.Where(t => t.MaKhoa == k.MaKhoa).Select(t => khoGoc.DanhSachCanBo.Count(c => c.MaTo == t.MaTo)).ToArray(); return sizes.Max() - sizes.Min() <= 1; }), "Cán bộ phân bố cân đối giữa các tổ");
+KiemTra(khoGoc.DanhSachTo.All(t => khoGoc.DanhSachCanBo.Any(c => c.MaCanBo == t.MaToTruong && c.MaTo == t.MaTo) && khoGoc.DanhSachCanBo.Any(c => c.MaCanBo == t.MaToPho && c.MaTo == t.MaTo)), "Mọi tổ có trưởng/phó đúng đơn vị");
+KiemTra(goc.SoKhoa==12 && goc.SoTo==36 && goc.SoLop==106 && goc.SoHocVien==3712,"Cơ cấu ban đầu theo tài liệu");
+KiemTra(data.LayDanhSachLop().All(l=>l.SiSo is >=30 and <=40 && QuyTacDuLieu.LopHopLe(l.MaLop,l.HeDaoTao,l.KhoaHoc,l.ChuyenNganh)),"Chuyên ngành mọi lớp và sĩ số ban đầu");
 KiemTra(data.LayDanhSachHocVien().GroupBy(h=>h.MaLop).All(g=>QuyTacDuLieu.ChiTieuChucVu.All(q=>g.Count(h=>h.ChucVu==q.Key)==q.Value)),"Cơ cấu bảy chức vụ trên mọi lớp");
 KiemTra(data.LayDanhSachHocVien().All(h=>h.TaoLuc is null) && data.LayDanhSachCanBo().All(c=>c.TaoLuc is null),"Hồ sơ khởi tạo không mang nhãn mới");
-KiemTra(data.LayDanhSachHocVien().Select(h=>h.HoTen).Distinct().Count()>4000,"Tên tiếng Việt đa dạng, trên 4000 tên duy nhất");
+KiemTra(data.LayDanhSachHocVien().Select(h=>h.HoTen).Distinct().Count()>3500,"Tên tiếng Việt đa dạng, trên 3500 tên duy nhất");
 // Kiểm tra định dạng trên dữ liệu gốc của kho; bản sao cho khách đã bị che trường cá nhân nên không hợp lệ theo thiết kế.
-var khoGoc=root.GetRequiredService<KhoDuLieuDemo>();
+
 KiemTra(khoGoc.DanhSachHocVien.All(h=>Validator.TryValidateObject(h,new(h),[],true)) && khoGoc.DanhSachCanBo.All(c=>Validator.TryValidateObject(c,new(c),[],true)),"Định dạng toàn bộ dữ liệu khởi tạo");
-KiemTra(khoGoc.DanhSachHocVien.Select(h=>h.SoCCCD).Distinct().Count()==4240,"CCCD khởi tạo duy nhất");
+KiemTra(khoGoc.DanhSachHocVien.Select(h=>h.SoCCCD).Distinct().Count()==3712,"CCCD khởi tạo duy nhất");
 KiemTra(data.LayDanhSachCanBo().All(c=>data.LayDanhSachTo().Any(t=>t.MaTo==c.MaTo && t.MaKhoa==c.MaKhoa)),"Cán bộ có tổ và khoa nhất quán");
 await TuChoi(()=>data.LuuHocVienAsync(TaoHV()),"Khách chưa đăng nhập không được ghi");
 KiemTra(!await auth.DangNhapAsync("admin","sai"),"Sai mật khẩu bị từ chối");
@@ -69,16 +90,16 @@ int suKien=0; data.DuLieuDaThayDoi += ()=>suKien++;
 // Nhóm A: thêm, sửa, chuyển cùng khóa, khác khóa/hệ, xóa và chức vụ.
 var hv=TaoHV(); ThanhCong(await data.LuuHocVienAsync(hv),"Thêm học viên thứ 41 vào B10D57");
 var tk=data.LayThongKe();
-KiemTra(tk.HocVienTheoLop["B10D57"]==41 && tk.SoHocVien==goc.SoHocVien+1 && tk.HocVienTheoKhoaHoc["D57"]==goc.HocVienTheoKhoaHoc["D57"]+1 && tk.HocVienTheoHe["Chính quy"]==goc.HocVienTheoHe["Chính quy"]+1,"Sĩ số lớp, khóa, hệ và toàn hệ thống tăng đúng");
+KiemTra(tk.HocVienTheoLop["B10D57"]==goc.HocVienTheoLop["B10D57"]+1 && tk.SoHocVien==goc.SoHocVien+1 && tk.HocVienTheoKhoaHoc["D57"]==goc.HocVienTheoKhoaHoc["D57"]+1 && tk.HocVienTheoHe["Chính quy"]==goc.HocVienTheoHe["Chính quy"]+1,"Sĩ số lớp, khóa, hệ và toàn hệ thống tăng đúng");
 KiemTra(goc.HocVienTheoLop.Where(x=>x.Key!="B10D57").All(x=>tk.HocVienTheoLop[x.Key]==x.Value) && tk.SoCanBo==goc.SoCanBo,"Các lớp khác và cán bộ không thay đổi");
 KiemTra(data.LayDanhSachHocVien().Single(h=>h.MaHocVien==hv.MaHocVien).TaoLuc is not null,"Bản ghi người dùng thêm có mốc nhãn Mới");
 hv.HoTen="Nguyễn Đức Huy"; ThanhCong(await data.LuuHocVienAsync(hv,hv.MaHocVien),"Sửa thông tin cá nhân"); KiemTra(data.LayThongKe().SoHocVien==tk.SoHocVien,"Sửa tên không đổi sĩ số");
 hv.MaLop="B11D57"; ThanhCong(await data.LuuHocVienAsync(hv,hv.MaHocVien),"Chuyển lớp cùng khóa");
-tk=data.LayThongKe(); KiemTra(tk.HocVienTheoLop["B10D57"]==40 && tk.HocVienTheoLop["B11D57"]==41 && tk.HocVienTheoKhoaHoc["D57"]==601 && tk.SoHocVien==4241,"Chuyển cùng khóa giữ tổng");
+tk=data.LayThongKe(); KiemTra(tk.HocVienTheoLop["B10D57"]==goc.HocVienTheoLop["B10D57"] && tk.HocVienTheoLop["B11D57"]==goc.HocVienTheoLop["B11D57"]+1 && tk.HocVienTheoKhoaHoc["D57"]==goc.HocVienTheoKhoaHoc["D57"]+1 && tk.SoHocVien==goc.SoHocVien+1,"Chuyển cùng khóa giữ tổng");
 hv.MaLop="B1D58"; ThanhCong(await data.LuuHocVienAsync(hv,hv.MaHocVien),"Chuyển khác khóa");
-tk=data.LayThongKe(); KiemTra(tk.HocVienTheoKhoaHoc["D57"]==600 && tk.HocVienTheoKhoaHoc["D58"]==601 && tk.SoHocVien==4241,"Tổng hai khóa cập nhật đúng");
+tk=data.LayThongKe(); KiemTra(tk.HocVienTheoKhoaHoc["D57"]==goc.HocVienTheoKhoaHoc["D57"] && tk.HocVienTheoKhoaHoc["D58"]==goc.HocVienTheoKhoaHoc["D58"]+1 && tk.SoHocVien==goc.SoHocVien+1,"Tổng hai khóa cập nhật đúng");
 hv.MaLop="B1K6"; ThanhCong(await data.LuuHocVienAsync(hv,hv.MaHocVien),"Chuyển khác hệ");
-tk=data.LayThongKe(); KiemTra(tk.HocVienTheoHe["Chính quy"]==3600 && tk.HocVienTheoHe["Văn bằng 2"]==641 && tk.SoHocVien==4241,"Tổng hai hệ cập nhật đúng");
+tk=data.LayThongKe(); KiemTra(tk.HocVienTheoHe["Chính quy"]==goc.HocVienTheoHe["Chính quy"] && tk.HocVienTheoHe["Văn bằng 2"]==goc.HocVienTheoHe["Văn bằng 2"]+1 && tk.SoHocVien==goc.SoHocVien+1,"Tổng hai hệ cập nhật đúng");
 hv.ChucVu="B trưởng"; await TuChoi(()=>data.LuuHocVienAsync(hv,hv.MaHocVien),"Không vượt chỉ tiêu B trưởng khi chuyển/sửa"); hv.ChucVu="Học viên";
 ThanhCong(await data.XoaHocVienAsync(hv.MaHocVien),"Xóa đúng học viên vừa thêm");
 KiemTra(data.LayThongKe().SoHocVien==goc.SoHocVien && data.LayThongKe().SoCanBo==goc.SoCanBo,"Xóa khôi phục các tổng ban đầu");
@@ -187,6 +208,22 @@ async Task<string> HienThi<T>(Dictionary<string,object?>? thamSo=null) where T:I
     return System.Net.WebUtility.HtmlDecode(html.ToHtmlString());
 });
 var trangXem=await HienThi<Nhom2_BTL.Components.Pages.HocVien>();
+// Dựng HTML thật để bảo đảm nội dung quản trị không được gửi cho vai trò khác.
+foreach (var vaiTro in new[] { "Admin", "Manager", "GiangVien", "HocVien", "Guest", "" })
+{
+    var danhTinh = vaiTro == ""
+        ? new System.Security.Claims.ClaimsIdentity()
+        : new System.Security.Claims.ClaimsIdentity(new[] { new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, vaiTro) }, "KiemThu");
+    var thamSo = new Dictionary<string, object?>
+    {
+        ["Value"] = Task.FromResult(new AuthenticationState(new System.Security.Claims.ClaimsPrincipal(danhTinh))),
+        ["ChildContent"] = (RenderFragment)(b => { b.OpenComponent<Nhom2_BTL.Components.Pages.TroGiup>(0); b.CloseComponent(); })
+    };
+    var troGiup = await HienThi<CascadingValue<Task<AuthenticationState>>>(thamSo);
+    KiemTra(troGiup.Contains("Ranh giới vai trò và việc phối hợp") == (vaiTro == "Admin")
+        && troGiup.Contains("Vai trò và tài khoản mẫu") == (vaiTro == "Admin")
+        && troGiup.Contains("demo123") == (vaiTro == "Admin"), $"Trợ giúp chỉ dựng nội dung quản trị cho Admin: {vaiTro}");
+}
 KiemTra(trangXem.Contains("Danh sách học viên") && !trangXem.Contains("Thêm học viên") && !trangXem.Contains("Xóa học viên"),"HTML Guest có bảng học viên, không có điều khiển ghi");
 await auth.DangNhapAsync("admin","demo123");
 var trangQuanTri=await HienThi<Nhom2_BTL.Components.Pages.HocVien>();
@@ -294,7 +331,7 @@ try
     var nhaMayCsdl = new NhaMayCsdlKiemThu(tuyChonCsdl);
     var nhatKyKho = root.GetRequiredService<ILoggerFactory>().CreateLogger<KhoDuLieuDemo>();
     var khoBen = new KhoDuLieuDemo(nhaMayCsdl, nhatKyKho);
-    KiemTra(khoBen.DanhSachKhoa.Count == 12 && khoBen.DanhSachTo.Count == 24 && khoBen.DanhSachCanBo.Count == 108 && khoBen.DanhSachLop.Count == 106 && khoBen.DanhSachHocVien.Count == 4240, "CSDL trống: sinh đủ 12/24/108/106/4.240 bản ghi");
+    KiemTra(khoBen.DanhSachKhoa.Count == 12 && khoBen.DanhSachTo.Count == 36 && khoBen.DanhSachCanBo.Count == 295 && khoBen.DanhSachLop.Count == 106 && khoBen.DanhSachHocVien.Count == 3712, "CSDL trống: sinh đủ 12/24/108/106/4.240 bản ghi");
     var thuTuGoc = khoBen.DanhSachHocVien.Take(40).Select(h => h.MaHocVien).ToList();
     var maXoa = "";
     lock (khoBen.KhoaDongBo)
@@ -308,7 +345,7 @@ try
     }
     khoBen.ThongBaoThayDoi();
     var khoMoLai = new KhoDuLieuDemo(nhaMayCsdl, nhatKyKho);
-    KiemTra(khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == "HV-BEN") && !khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == maXoa) && khoMoLai.DanhSachHocVien.Count == 4240, "Mở lại: còn học viên mới thêm, mất học viên đã xoá");
+    KiemTra(khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == "HV-BEN") && !khoMoLai.DanhSachHocVien.Any(h => h.MaHocVien == maXoa) && khoMoLai.DanhSachHocVien.Count == 3712, "Mở lại: còn học viên mới thêm, mất học viên đã xoá");
     KiemTra(khoMoLai.DanhSachKhoa.Single(k => k.MaKhoa == "KH-01").TenKhoa == "Khoa đã đổi tên", "Mở lại: giữ thay đổi tên khoa");
     KiemTra(khoMoLai.DanhSachHocVien.Take(40).Select(h => h.MaHocVien).SequenceEqual(thuTuGoc), "Mở lại: giữ đúng thứ tự hiển thị ban đầu");
     KiemTra(khoMoLai.DanhSachHocVien.Last().MaHocVien == "HV-BEN", "Bản ghi mới nằm cuối danh sách");

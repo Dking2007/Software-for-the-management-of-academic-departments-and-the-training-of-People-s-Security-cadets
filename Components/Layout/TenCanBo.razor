@@ -1,3 +1,4 @@
+@* Vai trò tệp: Tên cán bộ kèm thao tác mở hồ sơ. *@
 @inject DichVuQuanLyDuLieuDemo DuLieu
 
 @* Tên cán bộ (lãnh đạo khoa/tổ): rê chuột hoặc focus để xem hồ sơ trong thẻ nổi (TheXemNhanh). *@
@@ -10,6 +11,7 @@ else
     <TheXemNhanh Loai="CanBo" Ma="@MaCanBo" Class="ten-can-bo">@DuLieu.LayTenCanBo(MaCanBo)</TheXemNhanh>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string? MaCanBo { get; set; }
 }

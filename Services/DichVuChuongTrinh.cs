@@ -1,3 +1,4 @@
+// Vai trò tệp: Quản lý chương trình, phân công giảng dạy, chấm công và quy trình xét thi.
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;

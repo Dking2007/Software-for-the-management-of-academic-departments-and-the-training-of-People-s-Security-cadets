@@ -1,3 +1,4 @@
+@* Vai trò tệp: Tra cứu và quản lý hồ sơ học viên theo phạm vi được phép. *@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @page "/hoc-vien"
@@ -47,10 +48,12 @@
     </RadzenDataGrid>
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string? MaLopPhamVi { get; set; }
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet() => TaiDuLieu();
 
     // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
@@ -77,6 +80,7 @@
 
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
 
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 
     private List<HocVienModel> danhSachHocVien = [];
@@ -104,6 +108,7 @@
         (string.IsNullOrWhiteSpace(maLopLoc) || hv.MaLop == maLopLoc)), tuKhoa, hv => [hv.HoTen, hv.MaHocVien, hv.MaLop, hv.ChucVu]);
 
     private bool chiXemTongHop;
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     { moRong = await TruongTuyChinh.LayBangAsync("HocVien");
         var nd = await PhanQuyen.LayNguoiDungAsync();
@@ -112,6 +117,7 @@
         TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
     }
 
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu()
 
     {
@@ -161,6 +167,7 @@
 
     }
 
+    // Thông báo kết quả thao tác và cập nhật dữ liệu hiển thị.
     private async Task ThongBaoKetQua(KetQuaThaoTac kq)
 
     { moRong = await TruongTuyChinh.LayBangAsync("HocVien");

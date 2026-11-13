@@ -1,8 +1,10 @@
+@* Vai trò tệp: Ảnh minh họa bài tin và nội dung thay thế. *@
 @* Ảnh bài viết: ảnh đã tải lên; nếu chưa có thì dùng ảnh minh hoạ SVG vẽ sẵn theo nội dung bài (wwwroot/images/ban-tin, không dùng ảnh bên ngoài). *@
 <span class="bt-khung-anh">
     <img class="bt-anh @(Lon ? "lon" : "")" src="@(Bai.Anh ?? DichVuBanTin.AnhMinhHoa(Bai))" alt="@(Bai.Anh is null ? $"Ảnh minh hoạ: {Bai.TieuDe}" : Bai.TieuDe)" loading="lazy" data-phong-to="@(PhongTo ? "" : null)" tabindex="@(PhongTo ? "0" : null)" title="@(PhongTo ? "Bấm để xem ảnh lớn" : null)" />
 </span>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public TinTuc Bai { get; set; } = default!;
     [Parameter] public bool Lon { get; set; }

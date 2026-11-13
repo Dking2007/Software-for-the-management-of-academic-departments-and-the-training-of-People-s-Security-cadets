@@ -1,8 +1,10 @@
+@* Vai trò tệp: Nút mở lựa chọn khoảng ngày xuất báo cáo. *@
 @inject DialogService HoiThoai
 
 @* Nút "Xuất Excel" mở hộp chọn khoảng ngày (HopXuatTheoNgay). *@
 <RadzenButton Text="@Nhan" Icon="download" ButtonStyle="ButtonStyle.Light" Size="@KichThuoc" Click="Mo" title="Chọn khoảng ngày rồi tải tệp Excel (.xlsx) đúng phạm vi dữ liệu bạn được xem" />
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public Func<DateTime, DateTime, IReadOnlySet<string>, Task<byte[]?>> TaoTep { get; set; } = default!;
     [Parameter, EditorRequired] public string TenTep { get; set; } = "du-lieu";

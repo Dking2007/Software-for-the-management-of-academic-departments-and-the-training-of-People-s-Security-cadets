@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin sổ đầu bài. *@
 @inject DichVuHocVu HocVu
 @inject DialogService HoiThoai
 
@@ -17,12 +18,14 @@
     <RadzenButton Text="Lưu" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" />
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public DichVuHocVu.DongSoDauBai Dong { get; set; } = default!;
     private string noiDung = "", nhanXet = "", xepLoai = "A";
     private string? loi;
     private bool dangLuu;
 
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() { noiDung = Dong.Ghi?.NoiDung ?? ""; nhanXet = Dong.Ghi?.NhanXet ?? ""; xepLoai = Dong.Ghi?.XepLoaiTiet ?? "A"; }
 
     private async Task Luu()

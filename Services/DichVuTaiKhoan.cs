@@ -1,3 +1,4 @@
+// Vai trò tệp: Quản lý tài khoản Identity, đăng nhập, mật khẩu, vai trò và hiệu lực phiên.
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

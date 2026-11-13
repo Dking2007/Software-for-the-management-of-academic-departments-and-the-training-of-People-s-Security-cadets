@@ -1,3 +1,4 @@
+@* Vai trò tệp: Nhập Excel theo loại dữ liệu: đọc, xem trước lỗi và xác nhận. *@
 @inject DichVuNhapExcel Nhap
 @inject DialogService HoiThoai
 @inject IJSRuntime JS
@@ -52,6 +53,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public LoaiNhap Loai { get; set; }
     [Parameter] public string? MaLop { get; set; }
@@ -62,6 +64,7 @@
     private (int ThanhCong, List<string> Loi)? ketQua;
     private string KetQuaNgan => ketQua is { } k ? $"Đã nhập {k.ThanhCong} dòng {DichVuNhapExcel.TenLoai(Loai)} từ Excel{(k.Loi.Count > 0 ? $", {k.Loi.Count} dòng bị từ chối" : "")}." : "";
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync() => loi = await Nhap.KiemQuyenAsync(Loai, MaLop, MaChuyenDe);
 
     private async Task TaiMau()

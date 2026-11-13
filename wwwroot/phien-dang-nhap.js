@@ -1,3 +1,19 @@
+/* Vai trò tệp: Hiện/ẩn mật khẩu và lấy mã chống giả mạo trước khi gửi biểu mẫu. */
+// Đổi cách hiển thị ngay tại trình duyệt, giữ nguyên nội dung ô mật khẩu.
+document.addEventListener("click", event => {
+    const nut = event.target.closest?.("[data-hien-mat-khau]");
+    if (!nut) return;
+    const oNhap = document.getElementById(nut.dataset.hienMatKhau);
+    if (!(oNhap instanceof HTMLInputElement)) return;
+    const hien = oNhap.type === "password";
+    oNhap.type = hien ? "text" : "password";
+    nut.setAttribute("aria-pressed", String(hien));
+    const nhan = hien ? "Ẩn mật khẩu" : "Hiện mật khẩu";
+    nut.setAttribute("aria-label", nhan);
+    nut.title = nhan;
+    nut.querySelector(".rzi").textContent = hien ? "visibility_off" : "visibility";
+});
+
 // Lấy token mới bằng HTTP trước khi gửi form để không phụ thuộc token trong circuit.
 document.addEventListener("submit", async event => {
     const form = event.target;

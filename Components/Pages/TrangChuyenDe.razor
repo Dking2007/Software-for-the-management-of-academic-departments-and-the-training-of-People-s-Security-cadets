@@ -1,3 +1,4 @@
+@* Vai trò tệp: Quản lý chuyên đề và giảng viên đủ điều kiện giảng dạy. *@
 @page "/dao-tao/chuyen-de"
 @attribute [Authorize]
 @implements IDisposable
@@ -51,6 +52,7 @@
     }
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     private List<DichVuDaoTao.DongChuyenDe>? danhSach;
@@ -63,6 +65,7 @@
         (maKhoaLoc is null || d.ChuyenDe.MaKhoa == maKhoaLoc) &&
         TimKiemMo.Khop(tuKhoa, d.ChuyenDe.TenChuyenDe, d.ChuyenDe.MaChuyenDe, d.TenKhoa));
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     { moRong = await TruongTuyChinh.LayBangAsync("ChuyenDe");
         var nd = await PhanQuyen.LayNguoiDungAsync();
@@ -74,6 +77,7 @@
     }
     private async Task TaiLai() { moRong = await TruongTuyChinh.LayBangAsync("ChuyenDe"); danhSach = await DaoTao.LayChuyenDeAsync(); }
     private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
 
 private async Task NhapExcel()

@@ -1,3 +1,4 @@
+// Vai trò tệp: Đánh dấu một tài khoản đã xem (hoặc đã chủ động bỏ qua) một phần hướng dẫn nhập môn.
 namespace Nhom2_BTL.Models;
 
 /// <summary>

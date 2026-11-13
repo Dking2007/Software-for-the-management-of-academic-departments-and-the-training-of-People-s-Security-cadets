@@ -1,3 +1,4 @@
+@* Vai trò tệp: Điểm danh đi làm của cán bộ theo ngày và đơn vị. *@
 @page "/khoa/cham-cong"
 @attribute [Authorize(Roles = "Admin,Manager")]
 @inject DichVuChuongTrinh ChuongTrinh
@@ -75,6 +76,7 @@ else
     }
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DateTime dauTuan = QuyTacHocVu.DauTuan(DateTime.Today);
     private string? maKhoa, loi;
@@ -82,6 +84,7 @@ else
     private List<DichVuChuongTrinh.DongCongTuan> dong = [];
     public static string LopTt(string tt) => tt switch { "Có mặt" => "co-mat", "Đi muộn" => "di-muon", "Công tác" => "cong-tac", "Nghỉ phép" => "vang-cp", _ => "vang-kp" };
     public static string KyHieu(string tt) => tt switch { "Có mặt" => "✓", "Đi muộn" => "M", "Công tác" => "CT", "Nghỉ phép" => "P", _ => "V" };
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync() { cacKhoa = DuLieu.LayDanhSachKhoa(); await Tai(); }
     private async Task Tai() => (dong, loi) = await ChuongTrinh.LayBangCongTuanAsync(dauTuan, maKhoa);
     private async Task DoiTuan(int soNgay) { dauTuan = dauTuan.AddDays(soNgay); await Tai(); }

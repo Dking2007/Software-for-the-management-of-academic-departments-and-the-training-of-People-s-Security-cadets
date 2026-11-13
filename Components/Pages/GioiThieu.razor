@@ -1,3 +1,4 @@
+@* Vai trò tệp: Trang giới thiệu công khai về chức năng, quy trình và phân quyền minh họa. *@
 @page "/gioi-thieu"
 @layout Layout.BoCucCongKhai
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
@@ -14,15 +15,15 @@
 <section class="gt-hero" aria-labelledby="gt-tieu-de">
     <div class="gt-trong gt-hero-luoi">
         <div class="gt-hero-chu">
-            <p class="gt-nhan-tren">Học viện An ninh nhân dân · Bản học tập, dữ liệu mẫu</p>
-            <h1 id="gt-tieu-de"><span>Phần mềm quản lý khoa và lớp đào tạo</span> <span class="gt-nhan-ten">cho Học viện An&nbsp;ninh&nbsp;nhân&nbsp;dân</span></h1>
-            <p class="gt-dan">@MoTaQuyMo Lịch học, điểm danh, điểm số và văn bản hành chính ở một nơi; mỗi vai trò chỉ thấy phần việc của mình.</p>
+           
+            <h1 id="gt-tieu-de"><span>Phần mềm quản lý khoa và lớp đào tạo</span> <span class="gt-nhan-ten"> Học viện An&nbsp;ninh&nbsp;nhân&nbsp;dân</span></h1>
+          
             <div class="gt-hero-nut">
                 <a class="gt-nut gt-nut-chinh" href="/dang-nhap">Đăng nhập hệ thống</a>
                 <a class="gt-nut gt-nut-vien" href="/gioi-thieu#phan-quyen">Xem bảng phân quyền</a>
             </div>
             @* Chỉ giới thiệu các vai trò, không phải liên kết: không lộ tên đăng nhập, không điền sẵn vào trang đăng nhập. *@
-            <p class="gt-thu"><span>Vai trò trong hệ thống:</span>@foreach (var (_, nhan) in TaiKhoanMau) { <i>@nhan</i> }<small>Tài khoản do Học viện cấp theo vai trò; liên hệ quản trị viên để được cấp.</small></p>
+            <p class="gt-thu"><span>Vai trò trong hệ thống:</span>@foreach (var (_, nhan) in TaiKhoanMau) { <i>@nhan</i> }</p>
         </div>
 
         @* Khung ứng dụng: bản chạy thử tự động (18 giây, lặp lại) dựng bằng HTML + CSS, không phải ảnh hay video.
@@ -213,17 +214,12 @@
     </div>
 </section>
 
-<section class="gt-ket" aria-labelledby="gt-ket">
-    <div class="gt-trong lo-dien">
-        <h2 id="gt-ket">Đăng nhập bằng tài khoản được cấp</h2>
-        <p>Chưa có tài khoản thì đăng ký; quản trị viên duyệt và gán vai trò phù hợp. Cấp tài khoản chỉ đi từ trên xuống.</p>
-        <div class="gt-hero-nut"><a class="gt-nut gt-nut-chinh" href="/dang-nhap">Đăng nhập hệ thống</a><a class="gt-nut gt-nut-vien" href="/dang-ky">Đăng ký tài khoản</a></div>
-    </div>
-</section>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private ThongKeQuanLy? thongKe;
     private int chonMang, chonVaiTro;
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized()
     {
         try { thongKe = DuLieu.LayThongKe(); } catch (Exception) { thongKe = null; }

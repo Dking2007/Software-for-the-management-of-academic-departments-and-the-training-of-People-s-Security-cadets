@@ -1,3 +1,4 @@
+// Vai trò tệp: Trạng thái giao diện, ngôn ngữ và thông báo thay đổi tùy chọn của phiên.
 namespace Nhom2_BTL.Services;
 
 // Chỉ là tùy chọn hiển thị của từng phiên, hoàn toàn không tham gia phân quyền.

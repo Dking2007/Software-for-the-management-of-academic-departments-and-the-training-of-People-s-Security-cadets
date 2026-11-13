@@ -1,3 +1,4 @@
+@* Vai trò tệp: Trang chủ: lời chào, số liệu tổng quan và các lối vào nghiệp vụ. *@
 @page "/"
 @implements IDisposable
 @using System.Globalization
@@ -22,12 +23,8 @@
         </h1>
         <p class="bang-dau-tom-tat">@TomTat</p>
         <div class="bang-dau-nut">
-            @{ var chinh = LoiVaoNhanh.FirstOrDefault(); }
-            @if (chinh.Ten is not null)
-            {
-                <a class="nut-chinh" href="@chinh.DuongDan"><RadzenIcon Icon="@chinh.BieuTuong" /><span>@chinh.Ten</span></a>
-            }
-            <a class="nut-phu" href="/thong-bao"><RadzenIcon Icon="campaign" /><span>Văn bản</span>@if (soChuaDoc > 0) { <b aria-label="@($"{soChuaDoc} chưa đọc")">@soChuaDoc</b> }</a>
+            <a class="nut-phu" href="/thong-bao"><RadzenIcon Icon="campaign" /><span>Văn bản, thông báo</span>@if (soChuaDoc > 0) { <b aria-label="@($"{soChuaDoc} chưa đọc")">@soChuaDoc</b> }</a>
+            <a class="nut-chinh" href="/ban-tin"><RadzenIcon Icon="newspaper" /><span>Bản tin Học viện</span></a>
         </div>
     </div>
     @* Thẻ tài khoản: kiểu thẻ ngành có chip, quân hiệu, chữ cái đầu, vai trò, phạm vi và giờ bắt đầu phiên.
@@ -51,17 +48,6 @@
         </aside>
     }
 </header>
-
-@* Bắt đầu nhanh theo vai trò (mục 11.4 của thiết kế): hàng lối tắt gọn. Chỉ là lối tắt, quyền thật vẫn kiểm ở trang đích. *@
-@if (LoiVaoNhanh.Count() > 1)
-{
-    <nav class="tc-loi-tat" aria-label="Bắt đầu nhanh">
-        @foreach (var (ten, bieuTuong, duongDan, moTa) in LoiVaoNhanh.Skip(1))
-        {
-            <a href="@duongDan" title="@moTa"><RadzenIcon Icon="@bieuTuong" /><span>@ten</span></a>
-        }
-    </nav>
-}
 
 @* Hôm nay: chỉ số cần hành động, mỗi ô mở đúng nơi xử lý. Trạng thái luôn có chữ đi kèm, không chỉ dựa vào màu. *@
 <section class="tc-chi-so" aria-label="Hôm nay">
@@ -206,6 +192,7 @@
 
 
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private sealed record MucSoLieu(string Ten, string BieuTuong, string DuongDan, int? GiaTri, string MoTa);
     private sealed record PhanHe(string Ten, int SoLuong, double TiLe, string LopMau);
@@ -226,25 +213,7 @@
     private List<DichVuTongQuan.HoatDong> hoatDong = [];
     private int soChuaDoc, soVanBan;
     private NguoiDungHienTai nd = NguoiDungHienTai.Khach;
-    private IEnumerable<(string Ten, string BieuTuong, string DuongDan, string MoTa)> LoiVaoNhanh
-    {
-        get
-        {
-            if (nd.LaGiangVien) yield return ("Giảng dạy của tôi", "co_present", "/giang-day", "Buổi dạy hôm nay, điểm danh, nhập điểm");
-            if (nd.LaHocVien) yield return ("Học tập của tôi", "person", "/cua-toi", "Lịch học, điểm danh, kết quả");
-            if (nd.CoQuyenVung("DaoTao") && !nd.LaAdmin) yield return ("Xếp lịch đào tạo", "edit_calendar", "/dao-tao/lich", "Lịch tuần theo lớp, phòng học");
-            if (nd.CoQuyenVung("Lop") && !nd.LaAdmin) yield return ("Danh sách lớp", "groups", "/quan-ly-hoc-vien/lop", "Lớp và học viên thuộc phạm vi của bạn");
-            if (nd.CoQuyenVung("Khoa") && !nd.LaAdmin) yield return ("Chuyên môn giảng dạy", "menu_book", "/dao-tao/chuyen-de", "Chuyên đề và giáo viên đủ điều kiện");
-            if (nd.LaAdmin)
-            {
-                yield return ("Quản lý khoa", "account_balance", "/khoa", "Khoa, tổ chuyên môn, cán bộ");
-                yield return ("Quản lý đào tạo", "school", "/dao-tao", "Chuyên ngành, khóa, chương trình");
-                yield return ("Tài khoản và phân quyền", "manage_accounts", "/quan-tri/tai-khoan", "Cấp, khóa tài khoản, đổi vai trò");
-                yield return ("Nhật ký thao tác", "history", "/quan-tri/nhat-ky", "Ai đã sửa gì, lúc nào");
-            }
-        }
-    }
-
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         TaiSoLieu();
@@ -366,5 +335,6 @@
 
     // Số liệu cập nhật khi tab khác thêm hoặc xóa bản ghi; hủy đăng ký khi rời trang.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiSoLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 }

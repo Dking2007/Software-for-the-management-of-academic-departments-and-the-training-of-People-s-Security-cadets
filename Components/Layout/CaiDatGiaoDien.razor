@@ -1,3 +1,4 @@
+@* Vai trò tệp: Bảng tùy chọn màu, chữ, bố cục và ngôn ngữ. *@
 @inject TuyChonGiaoDien TuyChon
 @inject IJSRuntime JavaScript
 
@@ -80,6 +81,7 @@
         </section>
     }
 </div>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private bool dangMo;
     private TuyChonDaLuu t = new();
@@ -94,6 +96,7 @@
     }
     private void Dong() => dangMo = false;
     private void KhiNhanPhim(KeyboardEventArgs e) { if (e.Key == "Escape") Dong(); }
+    // Thực hiện các công việc cần chờ giao diện được dựng xong.
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;

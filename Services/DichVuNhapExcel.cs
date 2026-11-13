@@ -1,3 +1,4 @@
+// Vai trò tệp: Đọc Excel, xem trước lỗi và xác nhận nhập dữ liệu qua dịch vụ nghiệp vụ.
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using ClosedXML.Excel;

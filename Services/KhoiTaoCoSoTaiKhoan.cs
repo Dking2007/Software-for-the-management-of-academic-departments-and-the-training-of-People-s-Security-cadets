@@ -1,3 +1,4 @@
+// Vai trò tệp: Nâng schema SQLite cũ mà không xóa dữ liệu tài khoản.
 using Microsoft.EntityFrameworkCore;
 namespace Nhom2_BTL.Services;
 

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin buổi học. *@
 @inject DialogService HoiThoai
 @inject DichVuDaoTao DaoTao
 @inject DichVuQuanLyDuLieuDemo DuLieu
@@ -31,6 +32,7 @@
     <RadzenButton Text="@(b.Id == 0 ? "Xếp buổi học" : "Lưu thay đổi")" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="Luu" IsBusy="dangLuu" Disabled="@(loi.Count > 0 || dangKiemTra)" />
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public BuoiHoc DuLieuBanDau { get; set; } = new();
     public sealed record LuaChon(string Ma, string Ten);
@@ -44,6 +46,7 @@
     private readonly LuaChonTiet[] cacTiet = Enumerable.Range(1, 12).Select(t => new LuaChonTiet(t, $"Tiết {t} ({QuyTacHocVu.Buoi(t)}, {QuyTacHocVu.GioBatDauTiet(t):hh\\:mm})")).ToArray();
     private IEnumerable<LuaChon> CacGiangVienHienThi => hienTatCaGv ? tatCaGv : tatCaGv.Where(g => gvDuDieuKien.Contains(g.Ma) || g.Ma == b.MaCanBo);
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         b = DuLieuBanDau.TaoBanSao();

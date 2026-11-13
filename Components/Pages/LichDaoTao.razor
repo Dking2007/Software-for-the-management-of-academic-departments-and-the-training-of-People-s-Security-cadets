@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lọc, xem và xếp lịch các buổi học. *@
 @page "/dao-tao/lich"
 @attribute [Authorize]
 @implements IDisposable
@@ -156,6 +157,7 @@
     }
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [SupplyParameterFromQuery(Name = "lop")] public string? LopTuDuongDan { get; set; }
     private NguoiDungHienTai nd = NguoiDungHienTai.Khach;
@@ -210,6 +212,7 @@
     private List<LuaChon> CacChuyenDe => (tatCa ?? []).GroupBy(b => b.Buoi.MaChuyenDe).Select(g => new LuaChon(g.Key, g.First().TenChuyenDe)).OrderBy(x => x.Ten, QuyTacDuLieu.SoSanhTiengViet).ToList();
     private List<(string Ten, int So)> CacKhoaHoc => (tatCa ?? []).GroupBy(b => LichMaTranLop.KhoaCuaLop(b.Buoi.MaLop)).OrderBy(g => g.Key.StartsWith('D') ? 0 : 1).ThenByDescending(g => g.Key).Select(g => (g.Key, g.Count())).ToList();
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         nd = await PhanQuyen.LayNguoiDungAsync();
@@ -276,6 +279,7 @@
     private async Task MoNgay(DateTime ngay) { moc = ngay; ngayChon = ngay; cheDo = "ngay"; await DatNgayTim(ngay); await TaiLai(); }
     private void DoiNgayChon(DateTime? ngay) => ngayChon = ngay;
     private async Task DoiBoLoc() { if (maLop is not null && cheDo == "lop") cheDo = "tuan"; await TaiLai(); }
+    // Nhận từ khóa và cập nhật kết quả tìm kiếm.
     private void NhapTuKhoa(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; ApDungLoc(); }
     private void ChonKhoaHoc(string? ten) { khoaHocLoc = ten; ApDungLoc(); }
     private void LocQuaHan() { trangThaiLoc = trangThaiLoc == "Chưa điểm danh" ? null : "Chưa điểm danh"; ApDungLoc(); }
@@ -283,6 +287,7 @@
     private Task XepMoi() => MoBieuMau(new BuoiHoc { Ngay = NgayMacDinh(), MaLop = maLop ?? "", SoTiet = 4 });
     private DateTime NgayMacDinh() => DateTime.Today >= DauTuanHienTai && DateTime.Today < DauTuanHienTai.AddDays(6) ? DateTime.Today : DauTuanHienTai;
     private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
 
     private async Task XemBuoi(BuoiHocHienThi b)

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch học của lớp đang xem. *@
 @inject DichVuDaoTao DaoTao
 @inject DichVuPhanQuyenDemo PhanQuyen
 @inject DichVuBaoCaoExcel BaoCao
@@ -58,6 +59,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private sealed record LuaChon(string Ma, string Ten);
     private static readonly (string Ma, string Ten, string BieuTuong)[] CacCheDo =
@@ -85,6 +87,7 @@
     private bool ChoPhepDiemDanh(BuoiHoc b) => DichVuHocVu.DuocGhiDiemDanh(nd, b);
     private List<LuaChon> CacChuyenDe => (tatCa ?? []).GroupBy(b => b.Buoi.MaChuyenDe).Select(g => new LuaChon(g.Key, g.First().TenChuyenDe)).OrderBy(x => x.Ten, QuyTacDuLieu.SoSanhTiengViet).ToList();
 
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync()
     {
         if (lopDaTai == MaLop) return;
@@ -116,5 +119,6 @@
     private async Task DoiCheDo(string ma) { if (cheDo == ma) return; cheDo = ma; DatNgayChonTheoKy(); await TaiLai(); }
     private async Task MoNgay(DateTime ngay) { moc = ngay; ngayChon = ngay; cheDo = "ngay"; await TaiLai(); }
     private void DoiNgayChon(DateTime? ngay) => ngayChon = ngay;
+    // Nhận từ khóa và cập nhật kết quả tìm kiếm.
     private void NhapTuKhoa(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; ApDungLoc(); }
 }

@@ -1,3 +1,4 @@
+// Vai trò tệp: Bài viết trên Bản tin Học viện (nội dung giả lập phục vụ học tập).
 using System.ComponentModel.DataAnnotations;
 
 namespace Nhom2_BTL.Models;
@@ -21,5 +22,6 @@ public sealed class TinTuc
     public string? Anh { get; set; }
 
     public static readonly string[] CacChuyenMuc = ["Hoạt động Học viện", "Đào tạo", "Nghiên cứu khoa học", "Học viên", "Pháp luật", "Thể thao – Văn hoá"];
+    // Tạo bản sao phục vụ chỉnh sửa độc lập với dữ liệu gốc.
     public TinTuc TaoBanSao() => (TinTuc)MemberwiseClone();
 }

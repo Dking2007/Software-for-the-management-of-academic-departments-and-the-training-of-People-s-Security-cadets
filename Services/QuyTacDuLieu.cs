@@ -1,3 +1,4 @@
+// Vai trò tệp: Quy tắc dùng chung cho dữ liệu khởi tạo, kiểm tra nghiệp vụ và giao diện.
 using System.Globalization;
 using System.Text.RegularExpressions;
 

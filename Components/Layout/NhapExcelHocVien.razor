@@ -1,3 +1,4 @@
+@* Vai trò tệp: Nhập học viên từ Excel qua bước xem trước và xác nhận. *@
 @inject DichVuExcel Excel
 @inject DialogService HoiThoai
 @inject IJSRuntime JS
@@ -54,6 +55,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private List<DichVuExcel.DongNhap>? dong;
     private string? loi;

@@ -1,3 +1,4 @@
+// Vai trò tệp: Kiểm thử tích hợp mốc 1 trên CSDL SQLite tạm (không đụng App_Data): mặt cắt theo vai trò, quyền ghi, chặn trùng lịch, điểm danh, điểm, nhật ký, cấp tài khoản, tìm kiếm, lưu bền.
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -71,7 +72,7 @@ static class KiemThuTichHop
 
             // ---- A. Mặt cắt dữ liệu theo vai trò (test sinh từ ma trận 6.2) ----
             var dlAdmin = Lay<DichVuQuanLyDuLieuDemo>(admin);
-            kiemTra(dlAdmin.LayDanhSachHocVien().Count == 4240 && LoCccd(dlAdmin.LayDanhSachHocVien()) && LoCccd(dlAdmin.LayDanhSachCanBo()), "Admin thấy đủ học viên và cán bộ kể cả CCCD");
+            kiemTra(dlAdmin.LayDanhSachHocVien().Count == 3712 && LoCccd(dlAdmin.LayDanhSachHocVien()) && LoCccd(dlAdmin.LayDanhSachCanBo()), "Admin thấy đủ học viên và cán bộ kể cả CCCD");
             foreach (var (ten, sc) in new[] { ("Quản lý khoa", qlKhoa), ("Quản lý đào tạo", qlDaoTao) })
                 kiemTra(Lay<DichVuQuanLyDuLieuDemo>(sc).LayDanhSachHocVien().Count == 0, $"Hàng rào 2: {ten} không nhận danh sách từng học viên");
             kiemTra(LoCccd(Lay<DichVuQuanLyDuLieuDemo>(qlKhoa).LayDanhSachCanBo()), "Quản lý khoa thấy dữ liệu cá nhân cán bộ");
@@ -131,7 +132,7 @@ static class KiemThuTichHop
             var buoiQuaCuaGv = csdl.CreateDbContext().BuoiHoc.AsNoTracking().First(b => b.MaCanBo == "CB006" && b.Ngay < homNay);
             var buoiQuaNguoiKhac = csdl.CreateDbContext().BuoiHoc.AsNoTracking().First(b => b.MaCanBo != "CB006" && b.Ngay < homNay);
             var dd = await hocVuGv.LayDiemDanhAsync(buoiQuaCuaGv.Id);
-            kiemTra(dd.DuocGhi && dd.Dong.Count == 40 && dd.Dong.All(d => d.TrangThai is not null), "Giảng viên xem điểm danh buổi mình dạy (đủ 40 học viên)");
+            kiemTra(dd.DuocGhi && dd.Dong.Count == 30 && dd.Dong.All(d => d.TrangThai is not null), "Giảng viên xem điểm danh buổi mình dạy (đủ 30 học viên)");
             kiemTra(!(await hocVuGv.LayDiemDanhAsync(buoiQuaNguoiKhac.Id)).DuocGhi && !(await hocVuGv.LuuDiemDanhAsync(buoiQuaNguoiKhac.Id, new Dictionary<string, string>())).ThanhCong, "Giảng viên không điểm danh buổi của người khác");
             var maHvDd = dd.Dong[0].MaHocVien;
             var ttMoi = dd.Dong[0].TrangThai == TrangThaiDiemDanh.VangKhongPhep ? TrangThaiDiemDanh.CoMat : TrangThaiDiemDanh.VangKhongPhep;
@@ -164,7 +165,7 @@ static class KiemThuTichHop
             kiemTra(QuyTacHocVu.TinhChuyenCan([TrangThaiDiemDanh.CoMat, TrangThaiDiemDanh.DiMuon, TrangThaiDiemDanh.VangCoPhep, TrangThaiDiemDanh.VangKhongPhep]) == 5.6, "Chuyên cần tính từ điểm danh (1 + 0,75 + 0,5 + 0)/4 × 10 = 5,6");
             var cdGvDay = buoiQuaCuaGv.MaChuyenDe;
             var bangGv = await hocVuGv.LayBangDiemAsync(buoiQuaCuaGv.MaLop, cdGvDay);
-            kiemTra(bangGv.DuocSua && bangGv.Dong.Count == 40 && bangGv.Dong.Any(d => d.LyDoThieu is not null || d.TongKet is not null), "Giảng viên xem và sửa bảng điểm chuyên đề mình dạy");
+            kiemTra(bangGv.DuocSua && bangGv.Dong.Count == 30 && bangGv.Dong.Any(d => d.LyDoThieu is not null || d.TongKet is not null), "Giảng viên xem và sửa bảng điểm chuyên đề mình dạy");
             var maHvDiem = bangGv.Dong[1].MaHocVien;
             kiemTra((await hocVuGv.LuuDiemKiemTraAsync(buoiQuaCuaGv.MaLop, cdGvDay, new Dictionary<string, double?> { [maHvDiem] = 8.25 })).ThanhCong, "Giảng viên nhập điểm kiểm tra");
             kiemTra((await hocVuGv.LayBangDiemAsync(buoiQuaCuaGv.MaLop, cdGvDay)).Dong.First(d => d.MaHocVien == maHvDiem).DiemKiemTra == 8.3, "Điểm kiểm tra làm tròn 1 chữ số khi lưu");
@@ -223,7 +224,7 @@ static class KiemThuTichHop
             // ---- K. Sơ đồ tổ chức (dựng từ mặt cắt theo quyền) ----
             var cayToChuc = await Lay<DichVuSoDoToChuc>(admin).LayCayToChucAsync();
             kiemTra(cayToChuc.Con.All(k => k.LanhDao.Count(l => l.ChucVu == "Trưởng khoa") <= 1) && cayToChuc.Con.First(k => k.Ma == "KH-01").LanhDao.Count == 3 && cayToChuc.Con[0].Con[0].GioiThieu!.Contains("trực thuộc"), "Sơ đồ: khoa có trưởng/phó khoa, tổ có giới thiệu");
-            kiemTra(cayToChuc.Con.Count == 12 && cayToChuc.Con.Sum(k => k.Con.Count) == 24 && cayToChuc.SoCanBo == kho.DanhSachCanBo.Count, "Sơ đồ tổ chức: 12 khoa, 24 tổ, đủ cán bộ");
+            kiemTra(cayToChuc.Con.Count == 12 && cayToChuc.Con.Sum(k => k.Con.Count) == 36 && cayToChuc.SoCanBo == kho.DanhSachCanBo.Count, "Sơ đồ tổ chức: 12 khoa, 36 tổ, đủ cán bộ");
             var cayDaoTao = Lay<DichVuSoDoToChuc>(admin).LayCayDaoTao();
             kiemTra(cayDaoTao.Con.Count == 2 && cayDaoTao.SoLop == kho.DanhSachLop.Count && cayDaoTao.TatCa().Count(n => n.Loai == "Lớp") == kho.DanhSachLop.Count, "Sơ đồ đào tạo: hệ → khoá → lớp đủ số lớp");
             var dangMo = new HashSet<string> { "goc", cayDaoTao.Con[0].Khoa, cayDaoTao.Con[0].Con[0].Khoa };
@@ -276,7 +277,7 @@ static class KiemThuTichHop
             }
             var tepAdmin = await Lay<DichVuExcel>(admin).XuatCanBoAsync("KH-01");
             var tepQldt = await Lay<DichVuExcel>(qlDaoTao).XuatCanBoAsync("KH-01");
-            kiemTra(DocCot(tepAdmin, 13).All(x => x.Length == 12) && DocCot(tepQldt, 13).All(x => x == "") && DocCot(tepQldt, 2).Count == 9, "Xuất Excel dùng đúng mặt cắt: Quản lý đào tạo không nhận CCCD cán bộ");
+            kiemTra(DocCot(tepAdmin, 13).All(x => x.Length == 12) && DocCot(tepQldt, 13).All(x => x == "") && DocCot(tepQldt, 2).Count == 20, "Xuất Excel dùng đúng mặt cắt: Quản lý đào tạo không nhận CCCD cán bộ");
             kiemTra(DocCot(await Lay<DichVuExcel>(qlKhoa).XuatHocVienAsync(), 1).Count == 0, "Quản lý khoa xuất học viên: tệp rỗng (chỉ số liệu tổng hợp)");
             kiemTra(DocCot(await Lay<DichVuExcel>(admin).XuatHocVienAsync("B1D58"), 9).All(x => x.Length == 12 && x.StartsWith("0")), "CCCD giữ nguyên số 0 đầu khi xuất");
             kiemTra(await Lay<DichVuExcel>(qlKhoa).XuatBangDiemAsync("B1D58", cdLopHv, "x") is null, "Không xuất được bảng điểm khi không có quyền xem");
@@ -337,7 +338,7 @@ static class KiemThuTichHop
             var (homNayCo, homNayNghi) = await ctAdmin.LayHomNayAsync();
             kiemTra(homNayCo.Select(b => b.Buoi.MaLop).Distinct().Count() + homNayNghi.Count == kho.DanhSachLop.Count, "Hôm nay: lớp đi học + lớp nghỉ = tổng số lớp");
             var (chuyenCan, loiCc) = await ctAdmin.LayChuyenCanLopAsync("B1D58");
-            kiemTra(loiCc is null && chuyenCan.Count == 40 && chuyenCan.All(c => c.SoBuoi == c.CoMat + c.DiMuon + c.VangCoPhep + c.VangKhongPhep), "Chuyên cần từng học viên: buổi học, buổi nghỉ khớp tổng");
+            kiemTra(loiCc is null && chuyenCan.Count == 30 && chuyenCan.All(c => c.SoBuoi == c.CoMat + c.DiMuon + c.VangCoPhep + c.VangKhongPhep), "Chuyên cần từng học viên: buổi học, buổi nghỉ khớp tổng");
             kiemTra((await Lay<DichVuChuongTrinh>(qlKhoa).LayChuyenCanLopAsync("B1D58")).Loi is not null, "Quản lý khoa không xem chuyên cần từng học viên");
             kiemTra(DichVuChuongTrinh.XetTuCach(10, 2).Du && !DichVuChuongTrinh.XetTuCach(10, 3).Du && !DichVuChuongTrinh.XetTuCach(0, 0).Du, "Quy tắc tư cách thi: vắng ≤ 20% số buổi đã điểm danh");
 

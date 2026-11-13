@@ -1,3 +1,4 @@
+// Vai trò tệp: Phân biệt hồ sơ nhập lặp, hồ sơ mâu thuẫn và trùng trường định danh.
 using System.Text;
 using Nhom2_BTL.Models;
 

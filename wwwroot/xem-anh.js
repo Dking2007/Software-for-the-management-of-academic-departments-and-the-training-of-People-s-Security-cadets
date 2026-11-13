@@ -1,3 +1,4 @@
+/* Vai trò tệp: Xem ảnh phóng to: bấm vào ảnh có thuộc tính data-phong-to (ảnh văn bản, ảnh bài bản tin, ảnh xem trước khi tải lên). */
 // Xem ảnh phóng to: bấm vào ảnh có thuộc tính data-phong-to (ảnh văn bản, ảnh bài bản tin, ảnh xem trước khi tải lên).
 // Mở lớp phủ toàn màn hình; bấm vào ảnh để chuyển "vừa màn hình" ↔ "kích thước thật"; Esc, nút × hoặc bấm nền để đóng.
 // Chỉ thao tác giao diện ở trình duyệt, không gọi máy chủ. Dùng uỷ quyền sự kiện nên ảnh do Blazor vẽ lại vẫn bấm được.

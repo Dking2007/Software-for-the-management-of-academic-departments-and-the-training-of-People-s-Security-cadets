@@ -1,3 +1,4 @@
+// Vai trò tệp: Dựng cây tổ chức và đào tạo từ dữ liệu trong phạm vi được phép xem.
 using Nhom2_BTL.Models;
 
 namespace Nhom2_BTL.Services;

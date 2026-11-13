@@ -1,3 +1,4 @@
+@* Vai trò tệp: Chọn khoảng ngày và nội dung báo cáo cần xuất. *@
 @inject DialogService HoiThoai
 @inject IJSRuntime JS
 @inject NotificationService ThongBao
@@ -40,6 +41,7 @@
     <RadzenButton Text="Tải tệp Excel" Icon="download" ButtonStyle="ButtonStyle.Primary" Click="Tai" IsBusy="dangTao" BusyText="Đang tạo tệp…" Disabled="@(Loi is not null)" />
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private sealed record MocNhanh(string Ten, DateTime Tu, DateTime Den);
 
@@ -60,6 +62,7 @@
 
     private string? Loi => DichVuBaoCaoExcel.KiemTraKhoang(tu, den) ?? (CacPhan is { Count: > 0 } && phanChon.Count == 0 ? "Hãy chọn ít nhất một nội dung để xuất." : null);
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         tu = TuMacDinh.Date; den = DenMacDinh.Date;

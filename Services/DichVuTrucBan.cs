@@ -1,3 +1,4 @@
+// Vai trò tệp: Trực ban theo khoa (thiết kế mục 6.6).
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;
 

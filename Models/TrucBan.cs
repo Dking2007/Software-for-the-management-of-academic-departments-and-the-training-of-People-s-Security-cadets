@@ -1,3 +1,4 @@
+// Vai trò tệp: Mô hình ca trực ban, nội dung sổ trực và số liệu quân số.
 namespace Nhom2_BTL.Models;
 
 /// <summary>
