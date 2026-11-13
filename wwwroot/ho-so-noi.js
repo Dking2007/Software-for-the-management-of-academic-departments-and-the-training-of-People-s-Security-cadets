@@ -1,3 +1,4 @@
+/* Vai trò tệp: Mở, đóng và căn vị trí thẻ hồ sơ nổi ngoài vùng cuộn của bảng. */
 const cacThe = new WeakMap();
 
 export function dong(the) {

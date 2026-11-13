@@ -1,3 +1,4 @@
+/* Vai trò tệp: Quản lý đào tạo theo cấp, chương trình & phân công, xét tư cách thi, lịch thi, chuyên cần, chấm công. */
 /* Quản lý đào tạo theo cấp, chương trình & phân công, xét tư cách thi, lịch thi, chuyên cần, chấm công. */
 .khu-dao-tao { margin-bottom: 1.5rem; }
 .luoi-he { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; }

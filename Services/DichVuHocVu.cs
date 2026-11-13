@@ -1,3 +1,4 @@
+// Vai trò tệp: Mảng học vụ: điểm danh theo buổi, tự điểm danh trong khung giờ, điểm kiểm tra, bảng điểm 30/70.
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;
 

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Nhãn đánh dấu bản ghi mới hoặc vừa cập nhật. *@
 @implements IDisposable
 @* Nhãn tự hết hạn sau 15 phút; bộ hẹn giờ chỉ cập nhật giao diện, không xóa hồ sơ. *@
 @if (TaoLuc is { } tao && DateTimeOffset.UtcNow - tao < TimeSpan.FromMinutes(15))
@@ -8,6 +9,7 @@ else if (CapNhatLuc is { } sua && DateTimeOffset.UtcNow - sua < TimeSpan.FromMin
 {
     <RadzenBadge Text="Vừa cập nhật" BadgeStyle="BadgeStyle.Info" class="record-badge" />
 }
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public DateTimeOffset? TaoLuc { get; set; }
     [Parameter] public DateTimeOffset? CapNhatLuc { get; set; }
@@ -20,6 +22,7 @@ else if (CapNhatLuc is { } sua && DateTimeOffset.UtcNow - sua < TimeSpan.FromMin
         if (TaoLuc > DateTimeOffset.UtcNow.AddMinutes(-15) || CapNhatLuc > DateTimeOffset.UtcNow.AddMinutes(-2))
             boHenGio = new(_ => { InvokeAsync(StateHasChanged); }, null, 30000, 30000);
     }
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => boHenGio?.Dispose();
 }
 

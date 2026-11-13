@@ -1,3 +1,4 @@
+@* Vai trò tệp: Hiển thị giá trị các trường dữ liệu mở rộng. *@
 @inject DichVuTruongTuyChinh TruongTuyChinh
 
 @* Hiển thị (chỉ đọc) các trường mở rộng có giá trị của một đối tượng, dùng trong hồ sơ, trang chi tiết, thẻ xem nhanh. *@
@@ -14,10 +15,12 @@
     </section>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public string Loai { get; set; } = "";
     [Parameter] public string? Ma { get; set; }
     [Parameter] public string? Class { get; set; }
     private DichVuTruongTuyChinh.BangMoRong bang = DichVuTruongTuyChinh.BangMoRong.Rong;
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync() => bang = await TruongTuyChinh.LayBangAsync(Loai);
 }

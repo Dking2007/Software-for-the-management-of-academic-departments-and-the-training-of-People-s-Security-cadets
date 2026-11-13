@@ -1,3 +1,4 @@
+@* Vai trò tệp: Phiếu hồ sơ chỉ đọc dùng chung cho cán bộ và học viên. *@
 @inject DichVuNhatKy NhatKy
 @* Phiếu hồ sơ chỉ đọc dùng chung cho cán bộ và học viên.
    Đầu phiếu: avatar, họ tên, chức vụ và các nhãn nổi bật (mã, cấp bậc hàm, học vị); bên dưới chia trường thành nhóm.
@@ -63,6 +64,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     // Chấp nhận cả Dictionary<string, string> do trang truyền qua hộp thoại lẫn từ điển có giá trị rỗng.
     [Parameter] public IReadOnlyDictionary<string, string?> CacTruong { get; set; } = new Dictionary<string, string?>();

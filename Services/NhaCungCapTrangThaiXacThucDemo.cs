@@ -1,3 +1,4 @@
+// Vai trò tệp: Cầu nối trạng thái Blazor với tài khoản Identity và cookie phía máy chủ.
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Nhom2_BTL.Models;
@@ -22,6 +23,7 @@ public sealed class NhaCungCapTrangThaiXacThucDemo(KhoVeDangNhapDemo khoVe, KhoP
         trangThaiHttp = authenticationStateTask;
         if (!daDangKy && khoPhien is not null) { khoPhien.PhienThayDoi += KhiPhienDoi; daDangKy = true; }
     }
+    // Cung cấp trạng thái xác thực hiện tại cho Blazor.
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         if (trangThaiHttp is not null) nguoiDungHienTai = (await trangThaiHttp).User;
@@ -29,6 +31,7 @@ public sealed class NhaCungCapTrangThaiXacThucDemo(KhoVeDangNhapDemo khoVe, KhoP
         return new AuthenticationState(nguoiDungHienTai);
     }
     private void KhiPhienDoi() => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() { if (khoPhien is not null) khoPhien.PhienThayDoi -= KhiPhienDoi; }
 
 

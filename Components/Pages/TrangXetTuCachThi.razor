@@ -1,3 +1,4 @@
+@* Vai trò tệp: Quy trình xét tư cách dự thi và quản lý lịch thi. *@
 @page "/dao-tao/thi"
 @attribute [Authorize(Roles = "Admin,Manager,GiangVien")]
 @implements IDisposable
@@ -178,6 +179,7 @@
     </aside>
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     public sealed record LuaChon(string Ma, string Ten);
     private List<(string MaLop, string MaChuyenDe, string TenChuyenDe, string TenKhoa, string TrangThai, bool CoLichThi)> ds = [];
@@ -209,6 +211,7 @@
         return buoc <= dat ? "xong" : buoc == dat + 1 ? "dang" : "";
     }
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         if (TrangThaiXacThuc is not null) nd = NguoiDungHienTai.Tu((await TrangThaiXacThuc).User);
@@ -223,6 +226,7 @@
         if (hoSo is { } h) await Chon(h.Ho.MaLop, h.Ho.MaChuyenDe);
     }
     private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
 
     private async Task Chon(string maLop, string maCd)

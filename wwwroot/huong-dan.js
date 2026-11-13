@@ -1,3 +1,4 @@
+/* Vai trò tệp: Hướng dẫn nhập môn kiểu game: làm mờ màn hình, khoét sáng từng vùng, kèm bong bóng giải thích theo vai trò và theo trang. */
 // Hướng dẫn nhập môn kiểu game: làm mờ màn hình, khoét sáng từng vùng, kèm bong bóng giải thích theo vai trò và theo trang.
 // Khi nào hiện (nhớ theo TÀI KHOẢN ở máy chủ, qua MainLayout → DichVuHuongDan, không theo trình duyệt):
 //  - Tài khoản chưa từng xem: hiện một thẻ mời nhỏ ở góc (không che màn hình) với ba lựa chọn: Xem / Để sau / Không cần.

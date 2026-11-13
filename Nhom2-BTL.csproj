@@ -1,3 +1,4 @@
+<!-- Vai trò tệp: Cấu hình biên dịch và các tham chiếu của dự án Nhom2-BTL. -->
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>

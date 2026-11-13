@@ -1,3 +1,4 @@
+@* Vai trò tệp: Điểm danh học viên theo buổi học của lớp. *@
 @inject DichVuDaoTao DaoTao
 @inject DichVuHocVu HocVu
 @inject DichVuPhanQuyenDemo PhanQuyen
@@ -60,6 +61,7 @@ else if (buoi is not null)
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string MaLop { get; set; } = "";
     [Parameter] public int? BuoiChon { get; set; }
@@ -74,6 +76,7 @@ else if (buoi is not null)
     private int SoThayDoi => dong.Count(DaDoi);
     private bool DaDoi(DichVuHocVu.DongDiemDanh d) => trangThai.GetValueOrDefault(d.MaHocVien) != d.TrangThai;
 
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync()
     {
         laGiangVien = (await PhanQuyen.LayNguoiDungAsync()).LaGiangVien;

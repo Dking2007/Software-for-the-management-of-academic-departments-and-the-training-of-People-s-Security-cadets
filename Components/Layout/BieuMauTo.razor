@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin tổ chuyên môn. *@
 @using Nhom2_BTL.Models
 @inject DialogService HoiThoai
 @inject DichVuQuanLyDuLieuDemo DuLieu
@@ -11,12 +12,14 @@
 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap=".75rem"><RadzenButton Text="Hủy" ButtonStyle="ButtonStyle.Light" Disabled="@dangLuu" Click="Huy" /><RadzenButton Disabled="@dangLuu" IsBusy="@dangLuu" BusyText="Đang lưu" Text="Lưu tổ" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" /></RadzenStack>
 </RadzenStack>@if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
 </RadzenTemplateForm>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private TruongMoRongBieuMau? moRong;
 [Parameter] public ToChuyenMon DuLieuBanDau { get; set; } = new();
 [Parameter] public IReadOnlyList<Khoa> DanhSachKhoa { get; set; } = [];
 [Parameter] public bool DangSua { get; set; }
 private ToChuyenMon banSao = new();
+// Khởi tạo trạng thái khi thành phần được tạo.
 protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
 // Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.
     private bool dangLuu;

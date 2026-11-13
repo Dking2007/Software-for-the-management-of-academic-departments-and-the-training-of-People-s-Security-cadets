@@ -1,3 +1,4 @@
+@* Vai trò tệp: Thông tin lớp và các tab học viên, lịch, điểm, điểm danh. *@
 @page "/quan-ly-hoc-vien/lop/{MaLop}"
 @implements IDisposable
 @attribute [Authorize]
@@ -37,6 +38,7 @@ else
         </Tabs>
     </RadzenTabs>
 }
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string MaLop { get; set; } = "";
     [SupplyParameterFromQuery(Name = "tab")] public string? Tab { get; set; }
@@ -47,7 +49,9 @@ else
     private bool daTai;
     private LopDaoTao? donVi;
     private Dictionary<string, string> ThongTin => donVi is null ? [] : new() { ["Mã lớp"] = donVi.MaLop, ["Hệ đào tạo"] = donVi.HeDaoTao, ["Khóa"] = donVi.KhoaHoc, ["Niên khóa"] = donVi.NienKhoa, ["Chuyên ngành"] = donVi.ChuyenNganh, ["GV chủ nhiệm"] = donVi.GiaoVienChuNhiem, ["Sĩ số"] = donVi.SiSo.ToString() };
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync()
     {
         var nd = await PhanQuyen.LayNguoiDungAsync();
@@ -61,7 +65,10 @@ else
         tabChon = Math.Max(0, cacTab.FindIndex(t => t.Ma == Tab));
         daTai = true;
     }
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu() => donVi = DuLieu.LayDanhSachLop().FirstOrDefault(l => l.MaLop == MaLop);
+    // Làm mới thành phần khi dữ liệu nghiệp vụ thay đổi.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 }

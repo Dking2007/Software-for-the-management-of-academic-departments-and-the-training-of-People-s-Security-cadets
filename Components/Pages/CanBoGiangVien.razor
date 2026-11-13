@@ -1,3 +1,4 @@
+@* Vai trò tệp: Tra cứu và quản lý cán bộ, giảng viên theo đơn vị. *@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @page "/khoa/can-bo"
@@ -38,11 +39,13 @@
     </RadzenDataGrid>
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string? MaKhoaPhamVi { get; set; }
     [Parameter] public string? MaToPhamVi { get; set; }
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet() => TaiDuLieu();
 
     // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
@@ -73,6 +76,7 @@
 
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
 
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 
 private List<CanBoModel> danhSachCanBo = [];
@@ -85,8 +89,10 @@ private string? maKhoaLoc, maToLoc;
 
 private IEnumerable<CanBoModel> DanhSachHienThi => TimKiemMo.LocNguoi(danhSachCanBo.Where(cb => (string.IsNullOrEmpty(maKhoaLoc) || cb.MaKhoa == maKhoaLoc) && (string.IsNullOrEmpty(maToLoc) || cb.MaTo == maToLoc)), tuKhoa, cb => [cb.HoTen, cb.MaCanBo, cb.CapBacHam, cb.ChucVu, cb.TenTo, cb.TenKhoa, cb.ChuyenMon]);
 
+// Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
 protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("CanBo"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
 
+// Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
 private void TaiDuLieu() => danhSachCanBo = DuLieu.LayDanhSachCanBo().Where(c => (MaKhoaPhamVi is null || c.MaKhoa == MaKhoaPhamVi) && (MaToPhamVi is null || c.MaTo == MaToPhamVi)).OrderBy(c => c.KhoaSapXepTen, StringComparer.Ordinal).ToList();
 
 // Giữ hồ sơ mới trong vùng nhìn thấy; người dùng có thể bỏ lọc để xem lại toàn bộ.
@@ -104,6 +110,7 @@ private async Task SuaCanBo(CanBoModel cb) { var kq = await HoiThoai.OpenAsync<B
 
 private async Task XoaCanBo(CanBoModel cb) { var ok = await HoiThoai.Confirm($"Bạn sắp xóa hồ sơ {cb.HoTen} ({cb.MaCanBo}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaCanBoAsync(cb.MaCanBo)); }
 
+// Thông báo kết quả thao tác và cập nhật dữ liệu hiển thị.
 private async Task ThongBaoKetQua(KetQuaThaoTac kq) { moRong = await TruongTuyChinh.LayBangAsync("CanBo"); ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 
 }

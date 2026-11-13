@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch dạng ma trận theo lớp. *@
 @* Ma trận lớp × ngày: mỗi lớp một hàng, nhóm theo khoá, nhóm có thể thu gọn. Một màn hình thấy được cả tuần của nhiều lớp,
    thay cho danh sách hàng chục thẻ. Bấm một buổi để xem chi tiết, sửa hoặc xoá. *@
 @{
@@ -68,6 +69,7 @@
     </table>
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private sealed record NhomLop(string Ten, List<string> CacLop, int SoBuoi);
 

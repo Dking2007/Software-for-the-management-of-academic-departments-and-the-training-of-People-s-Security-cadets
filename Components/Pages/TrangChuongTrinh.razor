@@ -1,3 +1,4 @@
+@* Vai trò tệp: Chương trình của lớp, phân công và tiến độ giảng dạy. *@
 @page "/dao-tao/chuong-trinh"
 @attribute [Authorize]
 @implements IDisposable
@@ -84,6 +85,7 @@
     }
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     public sealed record LuaChon(string Ma, string Ten);
     private sealed record TomTatKhoa(string MaKhoa, string TenKhoa, int SoLopDangHoc, int SoChuyenDe, int SoDong);
@@ -100,6 +102,7 @@
         .Select(g => new TomTatKhoa(g.Key.MaKhoa, g.Key.TenKhoa, g.Where(d => d.TrangThai == "Đang học").Select(d => d.MaLop).Distinct().Count(), g.Select(d => d.MaChuyenDe).Distinct().Count(), g.Count()));
     private static string LopTrangThai(string t) => t switch { "Đang học" => "dang-hoc", "Sắp học" => "sap-hoc", "Đã xong" => "da-xong", _ => "chua-xep" };
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         duocSua = await PhanQuyen.CoQuyenVungAsync("DaoTao");
@@ -115,6 +118,7 @@
         dangTai = false;
     }
     private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
 
     private async Task<List<LuaChon>> GiangVienDuDieuKien(string maCd)

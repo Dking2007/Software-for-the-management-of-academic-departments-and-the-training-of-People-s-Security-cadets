@@ -1,3 +1,4 @@
+/* Vai trò tệp: Sơ đồ tổ chức: dạng cột (Finder) và canvas pan/zoom. */
 /* Sơ đồ tổ chức: dạng cột (Finder) và canvas pan/zoom. Ý tưởng bố cục từ cây tổ chức của repo LTMT. */
 .sd-tab { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: .75rem; }
 .sd-tab button { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border: 1px solid var(--vien-the); border-radius: 12px; background: var(--nen-the); color: var(--chu-chinh); text-align: left; cursor: pointer; transition: border-color var(--thoi-gian-nhanh), box-shadow var(--thoi-gian-nhanh); }

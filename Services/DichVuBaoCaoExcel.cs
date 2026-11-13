@@ -1,3 +1,4 @@
+// Vai trò tệp: Tạo báo cáo Excel theo khoảng ngày và phạm vi dữ liệu được phép xem.
 using ClosedXML.Excel;
 using Nhom2_BTL.Models;
 

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Quản lý phòng học và tình trạng sử dụng. *@
 @page "/dao-tao/phong"
 @attribute [Authorize]
 @implements IDisposable
@@ -51,6 +52,7 @@
     }
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     private List<Phong>? danhSach;
@@ -61,6 +63,7 @@
     private IEnumerable<Phong> HienThi => (danhSach ?? []).Where(p => (loaiLoc is null || p.LoaiPhong == loaiLoc) &&
         TimKiemMo.Khop(tuKhoa, p.TenPhong, p.MaPhong, p.LoaiPhong));
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     { moRong = await TruongTuyChinh.LayBangAsync("Phong");
         duocSua = await PhanQuyen.CoQuyenVungAsync("DaoTao");
@@ -79,6 +82,7 @@ private async Task NhapExcel()
         soBuoiTuan = (await DaoTao.LayLichAsync(dau, dau.AddDays(6))).GroupBy(b => b.Buoi.MaPhong).ToDictionary(g => g.Key, g => g.Count());
     }
     private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
     private Task Them() => MoBieuMau(new Phong(), null);
     private Task Sua(Phong p) => MoBieuMau(p.TaoBanSao(), p.MaPhong);

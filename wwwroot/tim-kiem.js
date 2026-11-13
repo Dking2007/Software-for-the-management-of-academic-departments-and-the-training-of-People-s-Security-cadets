@@ -1,3 +1,4 @@
+/* Vai trò tệp: Tiện ích thao tác ô tìm kiếm từ phía trình duyệt. */
 document.addEventListener("input", event => {
     const input = event.target;
     if (!input.matches("input[data-tim-kiem]")) return;

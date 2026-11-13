@@ -1,3 +1,4 @@
+// Vai trò tệp: Số liệu "Cần chú ý" cho trang chủ: chỉ trả số lượng tổng hợp (không trả danh sách người), mỗi mục kèm đường dẫn tới đúng nơi xử lý.
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;
 

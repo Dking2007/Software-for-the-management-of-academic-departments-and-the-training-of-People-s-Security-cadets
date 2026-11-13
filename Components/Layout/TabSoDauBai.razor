@@ -1,3 +1,4 @@
+@* Vai trò tệp: Sổ đầu bài: nội dung, nhận xét và xếp loại buổi học. *@
 @inject DichVuHocVu HocVu
 @inject DichVuBaoCaoExcel BaoCao
 @inject NotificationService ThongBao
@@ -145,6 +146,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private static readonly (string Ma, string Ten, string BieuTuong)[] CacCheDo =
         [("tuan", "Theo tuần", "view_week"), ("thang", "Tháng", "calendar_month"), ("chuyen-de", "Theo chuyên đề", "menu_book"), ("ds", "Danh sách", "view_list")];
@@ -185,6 +187,7 @@ else
         else { nhomDaDong.Remove(ten); nhomDaMo.Add(ten); }
     }
 
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync()
     {
         if (lopDaTai == MaLop) return;

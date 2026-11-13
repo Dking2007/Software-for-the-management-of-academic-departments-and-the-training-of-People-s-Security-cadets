@@ -1,3 +1,4 @@
+/* Vai trò tệp: Giao diện dùng chung - Hệ thống quản lý đào tạo, Học viện An ninh nhân dân. */
 /* ==========================================================================
    Giao diện dùng chung - Hệ thống quản lý đào tạo, Học viện An ninh nhân dân.
    Thứ tự: 1 Font · 2 Token · 3 Nền tảng · 4 Khung ứng dụng · 5 Thành phần dùng chung
@@ -491,6 +492,11 @@ h1:focus, .content h1:focus { outline: none; }
 .noi-dung-the-dang-nhap .form-control { min-height: 3rem; border-color: var(--vien-o-nhap); border-radius: var(--bo-goc); background: var(--nen-the); font-size: var(--cc-15); }
 .noi-dung-the-dang-nhap .form-control:focus { border-color: var(--mau-chinh-sang); box-shadow: 0 0 0 .2rem rgba(45,107,73,.16); }
 .noi-dung-the-dang-nhap .validation-message { color: var(--mau-nguy-hiem); font-size: var(--cc-12); }
+.o-mat-khau { position: relative; }
+.noi-dung-the-dang-nhap .o-mat-khau .form-control { padding-right: 3.25rem; }
+.nut-hien-mat-khau { position: absolute; top: 50%; right: .25rem; transform: translateY(-50%); display: grid; place-items: center; width: 2.75rem; height: 2.5rem; padding: 0; border: 0; border-radius: var(--bo-goc); background: transparent; color: var(--chu-phu); cursor: pointer; }
+.nut-hien-mat-khau:hover { background: var(--mau-chinh-nhat); color: var(--mau-chinh); }
+.nut-hien-mat-khau:focus-visible { outline: 2px solid var(--mau-chinh-sang); outline-offset: -2px; }
 .nut-dang-nhap { display: flex; align-items: center; justify-content: center; gap: var(--kc-2); width: 100%; min-height: 3rem; margin-top: var(--kc-2); padding: 0 var(--kc-4); border-radius: var(--bo-goc); font-size: var(--cc-15); font-weight: 600; }
 .goi-y-mat-khau { margin: 0 0 var(--kc-3); color: var(--chu-phu); font-size: var(--cc-12); }
 .lien-ket-dang-ky { margin-top: var(--kc-6); padding-top: var(--kc-5); border-top: 1px solid var(--vien-nhat); color: var(--chu-phu); font-size: .875rem; text-align: center; }
@@ -642,6 +648,8 @@ h1:focus, .content h1:focus { outline: none; }
 .so-lieu-dao-tao strong { font-size: 1.75rem; color: var(--mau-chinh); }
 .tieu-de-khu-vuc { font-size: 1.125rem; margin: 1rem 0 0; color: var(--mau-chinh); }
 .directory-grid .rz-grid-table tbody a.rz-link { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.directory-grid .rz-grid-table tbody .ten-khoa-khong-gach-chan,
+.directory-grid .rz-grid-table tbody a.rz-link.ten-khoa-khong-gach-chan { text-decoration: none; }
 
 /* Cài đặt và trợ giúp */
 .menu-tro-giup { margin-top: auto; margin-bottom: .25rem; padding: 0 var(--kc-4); }

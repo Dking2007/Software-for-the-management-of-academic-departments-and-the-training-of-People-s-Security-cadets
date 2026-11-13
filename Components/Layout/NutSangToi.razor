@@ -1,3 +1,4 @@
+@* Vai trò tệp: Nút chuyển giao diện sáng và tối. *@
 @inject TuyChonGiaoDien TuyChon
 @inject IJSRuntime JavaScript
 @implements IDisposable
@@ -8,8 +9,11 @@
     <button type="button" aria-pressed="@(TuyChon.GiaoDien == "toi" ? "true" : "false")" title="@TuyChon.Dich("Tối")" aria-label="@TuyChon.Dich("Tối")" @onclick="@(() => Dat("toi"))"><RadzenIcon Icon="dark_mode" /></button>
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() => TuyChon.DaThayDoi += KhiDoi;
+    // Thực hiện các công việc cần chờ giao diện được dựng xong.
     protected override async Task OnAfterRenderAsync(bool lanDau)
     {
         if (!lanDau) return;
@@ -17,6 +21,7 @@
         catch (JSException) { } catch (InvalidOperationException) { }
     }
     private void KhiDoi() => _ = InvokeAsync(StateHasChanged);
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => TuyChon.DaThayDoi -= KhiDoi;
 
     private async Task Dat(string giaoDien)

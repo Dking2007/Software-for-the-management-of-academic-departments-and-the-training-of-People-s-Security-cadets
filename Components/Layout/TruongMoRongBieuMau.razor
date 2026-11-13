@@ -1,3 +1,4 @@
+@* Vai trò tệp: Các ô nhập động cho trường dữ liệu mở rộng. *@
 @inject DichVuTruongTuyChinh TruongTuyChinh
 
 @* Ô nhập cho các trường dữ liệu mở rộng của một đối tượng, đặt trong biểu mẫu thêm/sửa.
@@ -37,6 +38,7 @@
     </fieldset>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public string Loai { get; set; } = "";
     /// <summary>Mã đối tượng khi sửa; null khi thêm mới.</summary>
@@ -44,6 +46,7 @@
     private DichVuTruongTuyChinh.BangMoRong bang = DichVuTruongTuyChinh.BangMoRong.Rong;
     private readonly Dictionary<int, string?> nhap = [];
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         bang = await TruongTuyChinh.LayBangAsync(Loai);

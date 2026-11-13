@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch sử bổ nhiệm thuộc nhóm "công tác": chỉ hiện khi mặt cắt có đủ dữ liệu (Admin, Quản lý khoa, chính cán bộ). *@
 @implements IDisposable
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject KhoDuLieuDemo Kho
@@ -20,15 +21,19 @@ else
     }
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string MaCanBo { get; set; } = "";
     private Nhom2_BTL.Models.CanBoGiangVien? canBo;
 
     // Cùng mã, cùng nguồn hồ sơ với bảng cán bộ; không dựng hồ sơ lãnh đạo riêng.
     protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet() => TaiHoSo();
     private void TaiHoSo() => canBo = DuLieu.LayDanhSachCanBo().FirstOrDefault(x => x.MaTraCuuNoiBo == MaCanBo);
+    // Làm mới thành phần khi dữ liệu nghiệp vụ thay đổi.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiHoSo(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 
     private Dictionary<string, string?> CacTruong => new()

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Thẻ tóm tắt thông tin đơn vị và liên kết quay lại danh sách. *@
 @inject TuyChonGiaoDien TuyChon
 <RadzenCard class="thong-tin-don-vi">
     <div class="dau-thong-tin-don-vi"><div><span class="eyebrow">@TuyChon.Dich(Nhan)</span><h2>@TieuDe</h2></div><RadzenLink Path="@QuayLai" Text="@TuyChon.Dich("Quay lại danh sách")" Icon="arrow_back" /></div>
@@ -5,6 +6,7 @@
         @foreach (var truong in CacTruong) { <div><dt>@TuyChon.Dich(truong.Key)</dt><dd>@truong.Value</dd></div> }
     </dl>
 </RadzenCard>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string Nhan { get; set; } = "";

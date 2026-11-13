@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin lớp. *@
 @using Nhom2_BTL.Models
 @inject DialogService HoiThoai
 @inject DichVuQuanLyDuLieuDemo DuLieu
@@ -36,6 +37,7 @@
 @if (!string.IsNullOrEmpty(loi)) { <RadzenAlert AlertStyle="AlertStyle.Danger" AllowClose="false">@loi</RadzenAlert> }
 </RadzenTemplateForm>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private TruongMoRongBieuMau? moRong;
     [Parameter] public LopDaoTao DuLieuBanDau { get; set; } = new();
@@ -52,6 +54,7 @@
     private readonly string[] khoaVanBangHai = ["K6", "K5", "K4", "K3"];
     private IEnumerable<string> CacKhoaHoc => banSao.HeDaoTao == "Văn bằng 2" ? khoaVanBangHai : khoaChinhQuy;
 
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized()
     {
         banSao = DuLieuBanDau.TaoBanSao();

@@ -1,3 +1,4 @@
+/* Vai trò tệp: Dịch toàn trang phía trình duyệt theo từ điển nhãn giao diện (Việt → Anh / Lào). */
 // Dịch toàn trang phía trình duyệt theo từ điển nhãn giao diện (Việt → Anh / Lào).
 // Chỉ thay chữ của nút văn bản (nodeValue) và các thuộc tính placeholder/title/aria-label; nguyên văn được nhớ để khôi phục khi về tiếng Việt.
 // Không dịch vùng có translate="no", mã bản ghi, ô nhập liệu. Từ đơn chỉ dịch khi đứng riêng (tránh dịch nhầm tên người như "Khoa").

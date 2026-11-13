@@ -1,3 +1,4 @@
+// Vai trò tệp: Kiểm thử đăng ký, đăng nhập, mật khẩu, phân quyền và thu hồi phiên tài khoản.
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -149,6 +150,7 @@ Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();File.Delete(file);
 
 class TestAuth(ClaimsPrincipal user) : Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider {
  public int Count { get; private set; }
+ // Cung cấp trạng thái xác thực hiện tại cho Blazor.
  public override Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState> GetAuthenticationStateAsync() { Count++; return Task.FromResult(new Microsoft.AspNetCore.Components.Authorization.AuthenticationState(user)); }
 }
 

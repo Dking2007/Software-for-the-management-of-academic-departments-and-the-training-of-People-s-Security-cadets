@@ -1,3 +1,4 @@
+// Vai trò tệp: Quản lý văn bản, nơi nhận, trạng thái đã đọc và quyền thao tác.
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Danh sách và chi tiết văn bản, thông báo theo nơi nhận. *@
 @page "/thong-bao"
 @attribute [Authorize]
 
@@ -6,6 +7,7 @@
 @* Dùng lại toàn bộ bộ lọc, nội dung, đăng/sửa/xóa và kiểm tra quyền của bảng tin. *@
 <BangThongBao MaChon="@Ma" />
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [SupplyParameterFromQuery(Name = "ma")] public Guid? Ma { get; set; }
 }

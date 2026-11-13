@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu đồ thanh dùng chung để so sánh số liệu tổng hợp. *@
 @using System.Globalization
 @* Biểu đồ thanh ngang đơn giản bằng HTML/CSS (không cần thư viện biểu đồ): mỗi dòng gồm nhãn, thanh dài theo
    tỉ lệ với giá trị lớn nhất và số ở đầu thanh. Rê chuột hoặc Tab vào dòng để xem gợi ý chi tiết. *@
@@ -21,6 +22,7 @@ else
     </ul>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     // LopMau: "mau-du-lieu-1" hoặc "mau-du-lieu-2" (màu định nghĩa trong app.css); Nhom: tên nhóm hiện trong gợi ý, ví dụ hệ đào tạo.
     public sealed record Dong(string Ten, int GiaTri, string LopMau, string? Nhom);

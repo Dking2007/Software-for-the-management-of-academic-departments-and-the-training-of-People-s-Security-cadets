@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin học viên. *@
 @using Nhom2_BTL.Models
 @inject DialogService HoiThoai
 @inject DichVuQuanLyDuLieuDemo DuLieu
@@ -28,6 +29,7 @@
 <RadzenRequiredValidator Component="DiaChiThuongTru" Text="Vui lòng nhập hoặc chọn địa chỉ thường trú." />
 <RadzenRequiredValidator Component="MaLop" Text="Vui lòng nhập hoặc chọn lớp đào tạo." />
 </RadzenTemplateForm>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private TruongMoRongBieuMau? moRong;
 [Parameter] public HocVien DuLieuBanDau { get; set; } = new();
@@ -36,6 +38,7 @@
 private HocVien banSao = new();
 private readonly string[] cacChucVu = ["B trưởng", "B phó", "A trưởng", "A phó", "BTĐ", "PBT", "UVĐ", "Học viên"];
 private readonly string[] cacGioiTinh = ["Nam", "Nữ"];
+// Khởi tạo trạng thái khi thành phần được tạo.
 protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
 // Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.
     private bool dangLuu;
