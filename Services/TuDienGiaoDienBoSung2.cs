@@ -1,3 +1,4 @@
+// Vai trò tệp: Phần bổ sung thứ hai: chữ trong biểu mẫu, hộp thoại, cài đặt, trợ giúp, thông báo lỗi (những chỗ chỉ hiện khi mở hộp thoại nên không rà được bằng cách duyệt trang).
 namespace Nhom2_BTL.Services;
 
 /// <summary>

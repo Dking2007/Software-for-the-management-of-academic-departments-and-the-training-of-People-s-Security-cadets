@@ -1,3 +1,4 @@
+// Vai trò tệp: Chuẩn hóa từ khóa, tìm gần đúng và xếp hạng mức độ khớp.
 using System.Text;
 
 namespace Nhom2_BTL.Services;

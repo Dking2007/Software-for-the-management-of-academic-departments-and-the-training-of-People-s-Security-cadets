@@ -1,3 +1,4 @@
+// Vai trò tệp: Thông báo theo thể thức văn bản hành chính (ý tưởng từ repo LTMT): loại văn bản, số/ký hiệu, cơ quan ban hành, người ký, trích yếu, mức độ, hiệu lực hiển thị, ghim, nơi nhận (tags).
 using System.ComponentModel.DataAnnotations;
 
 namespace Nhom2_BTL.Models;
@@ -37,6 +38,7 @@ public sealed class ThongBao
 
     public bool LaMoi(DateTimeOffset hienTai) => hienTai >= DangLuc && hienTai - DangLuc < TimeSpan.FromHours(24);
     public bool HetHieuLuc(DateTimeOffset hienTai) => HieuLucDen is { } han && han < hienTai;
+    // Tạo bản sao phục vụ chỉnh sửa độc lập với dữ liệu gốc.
     public ThongBao TaoBanSao()
     {
         var b = (ThongBao)MemberwiseClone();

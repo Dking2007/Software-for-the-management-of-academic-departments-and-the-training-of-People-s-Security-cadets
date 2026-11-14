@@ -1,15 +1,18 @@
+@* Vai trò tệp: Bộ chọn phạm vi lớp để lọc dữ liệu. *@
 @inject DichVuThongBao DichVu
 <div class="row g-2 my-2">
     <div class="col-md-4"><label for="@(Id + "-he")">Hệ đào tạo</label><select id="@(Id + "-he")" class="form-select" @bind="he" @bind:after="DoiHe"><option value="">Tất cả hệ</option>@foreach (var x in cacLop.Select(x => x.HeDaoTao).Distinct()) { <option value="@x">@x</option> }</select></div>
     <div class="col-md-4"><label for="@(Id + "-khoa")">Khóa</label><select id="@(Id + "-khoa")" class="form-select" @bind="khoa" @bind:after="DoiKhoa" disabled="@(he == "")"><option value="">Tất cả khóa</option>@foreach (var x in cacLop.Where(x => x.HeDaoTao == he).Select(x => x.KhoaHoc).Distinct()) { <option value="@x">@x</option> }</select></div>
     <div class="col-md-4"><label for="@(Id + "-lop")">Lớp</label><select id="@(Id + "-lop")" class="form-select" @bind="lop" @bind:after="Gui" disabled="@(he == "")"><option value="">Tất cả lớp</option>@foreach (var x in cacLop.Where(x => he != "" && x.HeDaoTao == he && (khoa == "" || x.KhoaHoc == khoa))) { <option value="@x.MaLop">@x.MaLop</option> }</select></div>
 </div>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string Id { get; set; } = "pham-vi-lop";
     [Parameter] public string Value { get; set; } = "lop:*";
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
     private List<LopDaoTao> cacLop = [];
     private string he = "", khoa = "", lop = "";
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet()
     {
         cacLop = DichVu.LayLop();

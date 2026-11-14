@@ -1,3 +1,4 @@
+@* Vai trò tệp: Bảng danh sách thông báo và các thao tác trên bản ghi. *@
 @implements IDisposable
 @inject DichVuThongBao DichVu
 @inject KhoThongBaoDemo Kho
@@ -104,6 +105,7 @@
     }
 </section>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public Guid? MaChon { get; set; }
     private List<ThongBao> danhSach = [];
@@ -132,6 +134,7 @@
         (tagLoc == "" || (tagLoc == "chung" ? x.Tags.Count == 0 : tagLoc == "lop:*" ? DichVuThongBao.KhopPhamVi(x.Tags, phamViLoc, cacLop) : x.Tags.Contains(tagLoc))) &&
         TimKiemMo.Khop(tuKhoa, x.TieuDe, x.SoKyHieu, x.TrichYeu, x.NoiDung, x.TacGia, x.NguoiKy, string.Join(" ", x.Tags.Select(TenTag)))).ToList();
     private ThongBao? BaiDangXem => KetQua.FirstOrDefault(x => x.Ma == maDangXem) ?? KetQua.FirstOrDefault();
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         laAdmin = (await XacThuc.GetAuthenticationStateAsync()).User.IsInRole("Admin");
@@ -139,6 +142,7 @@
         await TaiLai();
         Kho.DaThayDoi += KhiThayDoi;
     }
+    // Thực hiện các công việc cần chờ giao diện được dựng xong.
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender) dongHo = new System.Threading.Timer(_ => KhiThayDoi(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
@@ -207,5 +211,6 @@
         catch { loi = "Không xóa được văn bản. Vui lòng thử lại."; }
         finally { dangBan = false; canFocusPhanHoi = true; }
     }
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() { daHuy = true; Kho.DaThayDoi -= KhiThayDoi; dongHo?.Dispose(); }
 }

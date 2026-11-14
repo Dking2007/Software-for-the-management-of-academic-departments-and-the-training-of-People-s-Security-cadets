@@ -1,3 +1,4 @@
+@* Vai trò tệp: Hộp thông tin khoa và cơ cấu trực thuộc. *@
 @inject DialogService HoiThoai
 
 @* Hộp thoại giới thiệu tổng quát một khoa: lãnh đạo, giới thiệu, tổ chuyên môn (bấm để xem thành viên), cán bộ. *@
@@ -63,6 +64,7 @@
     <RadzenButton Text="Đóng" ButtonStyle="ButtonStyle.Light" Click="() => HoiThoai.Close()" />
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public NutSoDo Khoa { get; set; } = default!;
     [Parameter] public List<Nhom2_BTL.Models.CanBoGiangVien> CanBo { get; set; } = [];

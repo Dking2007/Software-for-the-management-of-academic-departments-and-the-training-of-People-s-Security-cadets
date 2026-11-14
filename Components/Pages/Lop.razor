@@ -1,3 +1,4 @@
+@* Vai trò tệp: Danh sách lớp theo hệ đào tạo và khóa học. *@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @page "/lop"
@@ -178,6 +179,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string? MaHe { get; set; }
     [SupplyParameterFromQuery(Name = "khoa")] public string? KhoaTuDuongDan { get; set; }
@@ -245,6 +247,7 @@ else
         }
     </div>;
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         moRong = await TruongTuyChinh.LayBangAsync("Lop");
@@ -255,6 +258,7 @@ else
 
     // Đổi hệ hoặc khoá (qua đường dẫn) thì xoá bộ lọc chuyên ngành, từ khoá của cấp trước.
     private string? capTruoc;
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet()
     {
         var cap = $"{MaHe}|{KhoaTuDuongDan}";
@@ -267,8 +271,11 @@ else
     private void ChonKhoa(string? khoa)
         => DieuHuong.NavigateTo($"/quan-ly-hoc-vien/he/{MaHe}" + (khoa is null ? "" : $"?khoa={Uri.EscapeDataString(khoa)}"));
 
+    // Làm mới thành phần khi dữ liệu nghiệp vụ thay đổi.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu() { danhSachLop = DuLieu.LayDanhSachLop().ToList(); }
 
     private async Task NhapExcel()
@@ -295,5 +302,6 @@ else
         var ok = await HoiThoai.Confirm($"Bạn sắp xóa lớp {lop.MaLop}. Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" });
         if (ok == true) await ThongBaoKetQua(await DuLieu.XoaLopAsync(lop.MaLop));
     }
+    // Thông báo kết quả thao tác và cập nhật dữ liệu hiển thị.
     private async Task ThongBaoKetQua(KetQuaThaoTac kq) { moRong = await TruongTuyChinh.LayBangAsync("Lop"); ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 }

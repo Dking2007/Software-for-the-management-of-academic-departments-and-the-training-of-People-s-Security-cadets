@@ -1,5 +1,8 @@
+@* Vai trò tệp: Chưa đăng nhập mà mở trang chủ: đưa tới trang giới thiệu công khai; trang khác: tới trang đăng nhập. *@
 @inject NavigationManager DieuHuong
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
+    // Xử lý công việc cần thực hiện sau khi giao diện được dựng.
     protected override void OnAfterRender(bool firstRender)
     {
         // Chưa đăng nhập mà mở trang chủ: đưa tới trang giới thiệu công khai; trang khác: tới trang đăng nhập.

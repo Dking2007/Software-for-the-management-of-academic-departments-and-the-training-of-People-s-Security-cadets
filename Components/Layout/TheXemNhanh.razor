@@ -1,3 +1,4 @@
+@* Vai trò tệp: Thẻ xem nhanh khi rê chuột / focus vào tên một đối tượng (cán bộ, học viên, lớp, khoa, tổ). *@
 @implements IAsyncDisposable
 @inject DichVuQuanLyDuLieuDemo DuLieu
 @inject IJSRuntime JavaScript
@@ -71,6 +72,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     /// <summary>"CanBo" (mã cán bộ thật), "HocVien" (mã học viên), "Lop", "Khoa", "To".</summary>
     [Parameter] public string Loai { get; set; } = "CanBo";
@@ -96,6 +98,7 @@ else
         _ => false
     };
 
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu()
     {
         switch (Loai)
@@ -146,6 +149,7 @@ else
     }
     private void HuyCho() { cho?.Cancel(); cho = null; }
 
+    // Thực hiện các công việc cần chờ giao diện được dựng xong.
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!canDatViTri || daHuy) return;
@@ -163,6 +167,7 @@ else
         catch (TaskCanceledException) { }
     }
 
+    // Giải phóng tài nguyên bất đồng bộ khi kết thúc sử dụng.
     public async ValueTask DisposeAsync()
     {
         daHuy = true;

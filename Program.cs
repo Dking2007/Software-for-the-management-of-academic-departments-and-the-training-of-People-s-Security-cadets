@@ -1,3 +1,4 @@
+// Vai trò tệp: Điểm khởi động: đăng ký dịch vụ, xác thực, khởi tạo dữ liệu và ánh xạ địa chỉ HTTP.
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;

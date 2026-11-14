@@ -1,3 +1,4 @@
+// Vai trò tệp: Đọc nhật ký (chỉ Admin) và ghi lượt xem dữ liệu cá nhân ("Hiện đủ").
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;
 

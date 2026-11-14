@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch các buổi học trong tháng. *@
 @* Xem theo tháng (thứ Hai đến thứ Bảy). Ngày ít buổi hiện từng buổi; ngày nhiều buổi hiện số buổi theo sáng/chiều/tối. Bấm một ngày để mở "Theo ngày". *@
 <div class="lt2-luoi" role="grid" aria-label="Lịch tháng @Moc.ToString("MM/yyyy")">
     @for (var i = 0; i < 6; i++) { <div class="lt2-thu" role="columnheader">@QuyTacHocVu.TenThu(DauLuoi.AddDays(i))</div> }
@@ -25,6 +26,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
     [Parameter, EditorRequired] public DateTime Moc { get; set; }

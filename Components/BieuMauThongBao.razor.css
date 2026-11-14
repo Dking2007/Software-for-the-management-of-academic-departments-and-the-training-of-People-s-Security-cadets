@@ -1,3 +1,4 @@
+/* Vai trò tệp: Định dạng riêng cho thành phần BieuMauThongBao; áp dụng trong phạm vi giao diện của thành phần này. */
 /* Biểu mẫu soạn/sửa văn bản. Chỉ dùng biến màu để đẹp ở cả giao diện Sáng và Tối. */
 label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .4rem; }
 .soan-thong-bao { border: 1px solid var(--vien-the); background: var(--nen-dai); border-radius: var(--bo-goc-the); padding: 1.2rem; margin-bottom: 1.5rem; color: var(--chu-chinh); }

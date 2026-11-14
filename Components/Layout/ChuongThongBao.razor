@@ -1,3 +1,4 @@
+@* Vai trò tệp: Chuông thông báo và số văn bản chưa đọc. *@
 @implements IDisposable
 @inject DichVuThongBao DichVu
 @inject KhoThongBaoDemo Kho
@@ -8,9 +9,11 @@
     @if (soChuaDoc > 0) { <span class="huy-hieu-chuong">@(soChuaDoc > 99 ? "99+" : soChuaDoc.ToString())</span> }
 </a>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private int soChuaDoc;
     private bool rung;
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         soChuaDoc = await DichVu.DemChuaDocAsync();
@@ -23,5 +26,6 @@
         soChuaDoc = moi;
         StateHasChanged();
     });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() { Kho.DaThayDoi -= KhiDoi; Kho.DaDocThayDoi -= KhiDoi; }
 }

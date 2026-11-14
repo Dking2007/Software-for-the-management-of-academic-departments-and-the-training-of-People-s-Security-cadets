@@ -1,3 +1,4 @@
+// Vai trò tệp: Kho vé ngắn hạn để mở phân hệ demo ở tab mới mà không cho trình duyệt tự chọn vai trò.
 using System.Security.Claims;
 using System.Security.Cryptography;
 

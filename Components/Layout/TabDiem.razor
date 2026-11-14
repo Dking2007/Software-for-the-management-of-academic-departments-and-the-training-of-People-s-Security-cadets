@@ -1,3 +1,4 @@
+@* Vai trò tệp: Xem và nhập điểm của lớp theo chuyên đề. *@
 @inject DichVuHocVu HocVu
 @inject DichVuExcel Excel
 @inject NotificationService ThongBao
@@ -70,6 +71,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string MaLop { get; set; } = "";
     private List<ChuyenDe>? cacChuyenDe;
@@ -86,6 +88,7 @@ else
         var kq = await HoiThoai.OpenAsync<NhapExcelChung>($"Nhập điểm kiểm tra – lớp {MaLop}", new Dictionary<string, object> { [nameof(NhapExcelChung.Loai)] = LoaiNhap.Diem, [nameof(NhapExcelChung.MaLop)] = MaLop, [nameof(NhapExcelChung.MaChuyenDe)] = maChuyenDe! }, new DialogOptions { Width = "860px", CloseDialogOnOverlayClick = false });
         if (kq is KetQuaThaoTac daLuu) { await Tai(); ThongBao.Notify(NotificationSeverity.Success, "Hoàn tất", daLuu.ThongBao); }
     }
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync()
     {
         cacChuyenDe = await HocVu.LayChuyenDeCuaLopAsync(MaLop);

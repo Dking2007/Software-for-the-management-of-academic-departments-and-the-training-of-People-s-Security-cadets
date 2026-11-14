@@ -1,3 +1,4 @@
+@* Vai trò tệp: Quản lý tài khoản, vai trò và phạm vi truy cập. *@
 @inject TuyChonGiaoDien TuyChon
 @page "/quan-tri/tai-khoan"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Manager")]
@@ -93,6 +94,7 @@ else
         </RadzenDataGrid>
     </div>
 }
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     private sealed record LuaChon(string Ma, string Ten);
@@ -119,6 +121,7 @@ else
     private string? maSua;
     private bool dangLuu, dangSua, khoa;
     private IEnumerable<TaiKhoan> KetQua => (danhSach ?? []).Where(u => TimKiemMo.Khop(tim, u.UserName, u.Id) && (locVaiTro == "" || u.VaiTro == locVaiTro));
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         vaiTroDuoc = DichVuTaiKhoan.VaiTroDuocQuanLy((await XacThuc.GetAuthenticationStateAsync()).User);

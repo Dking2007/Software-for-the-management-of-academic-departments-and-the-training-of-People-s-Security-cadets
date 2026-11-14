@@ -1,3 +1,4 @@
+@* Vai trò tệp: Danh sách khoa, lãnh đạo, sĩ số và thao tác quản lý. *@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @page "/khoa"
@@ -21,7 +22,7 @@
         <Columns>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("STT")" Width="3rem" Sortable="false"><Template Context="dong">@SoThuTu(dong)</Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.MaKhoa)" Title="@TuyChon.Dich("Mã khoa")" Width="5.5rem"><Template Context="khoa"><span class="record-code">@khoa.MaKhoa</span></Template></RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.TenKhoa)" Title="@TuyChon.Dich("Tên khoa")" Width="19rem"><Template Context="khoa"><TheXemNhanh Loai="Khoa" Ma="@khoa.MaKhoa"><RadzenLink Path="@($"/khoa/{Uri.EscapeDataString(khoa.MaKhoa)}/to")" Text="@khoa.TenKhoa" /></TheXemNhanh></Template></RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="KhoaModel" Property="@nameof(KhoaModel.TenKhoa)" Title="@TuyChon.Dich("Tên khoa")" Width="19rem"><Template Context="khoa"><TheXemNhanh Loai="Khoa" Ma="@khoa.MaKhoa" Class="ten-khoa-khong-gach-chan"><RadzenLink class="ten-khoa-khong-gach-chan" Path="@($"/khoa/{Uri.EscapeDataString(khoa.MaKhoa)}/to")" Text="@khoa.TenKhoa" /></TheXemNhanh></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Trưởng khoa")" Width="11rem"><Template Context="khoa"><TenCanBo MaCanBo="@khoa.MaTruongKhoa" /></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Phó khoa")" Width="11rem"><Template Context="khoa"><div class="cac-pho-khoa"><TenCanBo MaCanBo="@khoa.MaPhoKhoa" /><TenCanBo MaCanBo="@khoa.MaPhoKhoaThuHai" /></div></Template></RadzenDataGridColumn>
             <RadzenDataGridColumn TItem="KhoaModel" Title="@TuyChon.Dich("Số tổ")" TextAlign="TextAlign.Center" Width="4rem"><Template Context="khoa">@cacTo.Count(to => to.MaKhoa == khoa.MaKhoa)</Template></RadzenDataGridColumn>
@@ -32,6 +33,7 @@
     </RadzenDataGrid>
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
@@ -47,6 +49,7 @@
 
     // Mỗi tab chỉ giữ bản sao; cập nhật từ kho chung và hủy đăng ký khi component kết thúc.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 
     private List<KhoaModel> danhSachKhoa = [];
@@ -56,7 +59,9 @@
 
     private IEnumerable<KhoaModel> DanhSachHienThi => TimKiemMo.Loc(danhSachKhoa, tuKhoa, khoa => [khoa.TenKhoa, khoa.MaKhoa]);
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("Khoa"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu() { danhSachKhoa = DuLieu.LayDanhSachKhoa().ToList(); cacTo = DuLieu.LayDanhSachTo().ToList(); }
 
     private async Task ThemKhoa()
@@ -74,6 +79,7 @@
         var xacNhan = await HoiThoai.Confirm($"Bạn sắp xóa khoa {khoa.TenKhoa} ({khoa.MaKhoa}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" });
         if (xacNhan == true) await ThongBaoKetQua(await DuLieu.XoaKhoaAsync(khoa.MaKhoa));
     }
+    // Thông báo kết quả thao tác và cập nhật dữ liệu hiển thị.
     private async Task ThongBaoKetQua(KetQuaThaoTac ketQua)
     { moRong = await TruongTuyChinh.LayBangAsync("Khoa");
         ThongBao.Notify(new NotificationMessage { Severity = ketQua.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = ketQua.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = ketQua.ThongBao });

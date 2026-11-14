@@ -1,3 +1,4 @@
+@* Vai trò tệp: Sơ đồ tổ chức và đào tạo: duyệt nhánh, tìm kiếm, xem chi tiết. *@
 @page "/khoa/so-do"
 @attribute [Authorize]
 @implements IAsyncDisposable
@@ -304,6 +305,7 @@
     </aside>
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
     private sealed record Cot(string Ten, List<NutSoDo> Muc);
@@ -334,6 +336,7 @@
     private int lanCanKhung;
     private bool canKhoiTaoCanvas;
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync() => await TaiCay();
 
     private async Task TaiCay()
@@ -495,6 +498,7 @@
     };
     private static string MaLoai(string loai) => loai switch { "Học viện" => "goc", "Khoa" or "Hệ đào tạo" => "cap1", "Tổ chuyên môn" or "Khoá" => "cap2", _ => "cap3" };
 
+    // Thực hiện các công việc cần chờ giao diện được dựng xong.
     protected override async Task OnAfterRenderAsync(bool lanDau)
     {
         if (cheDoCot)
@@ -527,6 +531,7 @@
         canvas = null;
     }
 
+    // Giải phóng tài nguyên bất đồng bộ khi kết thúc sử dụng.
     public async ValueTask DisposeAsync()
     {
         await HuyCanvas();

@@ -1,3 +1,4 @@
+// Vai trò tệp: Phần bổ sung của từ điển giao diện (vòng hoàn thiện 10/11): lấy từ việc rà toàn bộ trang ở chế độ tiếng Lào với mọi vai trò.
 namespace Nhom2_BTL.Services;
 
 /// <summary>

@@ -1,3 +1,4 @@
+// Vai trò tệp: Bản tin Học viện: danh sách, chi tiết (tăng lượt xem), đăng/sửa/xoá (chỉ Admin).
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;

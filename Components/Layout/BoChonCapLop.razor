@@ -1,3 +1,4 @@
+@* Vai trò tệp: Chọn lớp theo cấp, đi từ ngoài vào trong và không trộn lẫn các hệ: Hệ đào tạo → Khoá (kèm niên khoá) → Lớp. *@
 @* Chọn lớp theo cấp, đi từ ngoài vào trong và không trộn lẫn các hệ: Hệ đào tạo → Khoá (kèm niên khoá) → Lớp.
    Mỗi cấp là một hàng nút kèm số lượng; cấp sau chỉ hiện giá trị nằm trong cấp trước đã chọn. *@
 <div class="bo-chon-cap">
@@ -37,6 +38,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     /// <summary>Bộ lọc theo cấp. Nam giữ lại cho tương thích, luôn null (niên khoá đã đi kèm khoá).</summary>
     public sealed record BoLoc(int? Nam, string? He, string? Khoa, string? Lop)

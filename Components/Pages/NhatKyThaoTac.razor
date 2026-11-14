@@ -1,3 +1,4 @@
+@* Vai trò tệp: Tra cứu nhật ký thao tác đã ghi nhận trong hệ thống. *@
 @page "/quan-tri/nhat-ky"
 @attribute [Authorize(Roles = "Admin")]
 @inject DichVuNhatKy NhatKy
@@ -47,10 +48,12 @@
     }
 </RadzenCard>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private List<NhatKy>? danhSach;
     private string tuKhoa = "";
     private DateTime? tuNgay, denNgay;
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override Task OnInitializedAsync() => Tai();
     private async Task Tai() => danhSach = await NhatKy.LayAsync(tuNgay, denNgay, tuKhoa);
     private async Task DoiTuKhoa(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; await Tai(); }

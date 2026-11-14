@@ -1,3 +1,4 @@
+<!-- Vai trò tệp: Cấu hình biên dịch và các tham chiếu của dự án ThongBao. -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
   <ItemGroup><ProjectReference Include="../../Nhom2-BTL.csproj" /></ItemGroup>

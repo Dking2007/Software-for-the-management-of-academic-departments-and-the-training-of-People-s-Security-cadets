@@ -1,3 +1,4 @@
+// Vai trò tệp: Thông tin giả công khai chỉ để kiểm tra cục bộ trong Development.
 using Microsoft.AspNetCore.Identity;
 
 namespace Nhom2_BTL.Services;

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Tổng quan đào tạo và lối vào các chức năng quản lý. *@
 @inject TuyChonGiaoDien TuyChon
 @page "/dao-tao"
 @page "/dao-tao/chuyen-nganh"
@@ -112,6 +113,7 @@
     </section>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     private List<LopDaoTao> cacLop = [];
@@ -130,6 +132,7 @@
     private IEnumerable<int> CacNam => cacLop.Select(NamNhapHoc).Distinct().OrderByDescending(n => n);
     private static int NamNhapHoc(LopDaoTao l) => int.TryParse(l.NienKhoa.Split('–')[0], out var nam) ? nam : 0;
     private static string MaHe(string he) => he switch { "Văn bằng 2" => "vb2", "Liên thông" => "lt", _ => "cq" };
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
@@ -138,11 +141,14 @@
         var dau = QuyTacHocVu.DauTuan(DateTime.Today);
         soBuoiTuan = (await DaoTao.LayLichAsync(dau, dau.AddDays(6))).Count;
     }
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu() => cacLop = DuLieu.LayDanhSachLop().ToList();
+    // Làm mới thành phần khi dữ liệu nghiệp vụ thay đổi.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
     // Ba đường dẫn /dao-tao, /dao-tao/chuyen-nganh, /dao-tao/khoa-hoc dùng chung component không tham số:
     // Blazor không render lại khi chuyển giữa chúng, nên tự render theo sự kiện đổi địa chỉ.
     private void KhiDoiTrang(object? s, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
         => _ = InvokeAsync(() => { moHe = null; moNam = null; phienBanHe++; phienBanNam++; StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() { DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi; DieuHuong.LocationChanged -= KhiDoiTrang; }
 }

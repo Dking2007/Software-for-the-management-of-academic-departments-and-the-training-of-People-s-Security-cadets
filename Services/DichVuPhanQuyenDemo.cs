@@ -1,3 +1,4 @@
+// Vai trò tệp: Xác định người dùng hiện tại và kiểm tra quyền theo vai trò, phạm vi.
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;

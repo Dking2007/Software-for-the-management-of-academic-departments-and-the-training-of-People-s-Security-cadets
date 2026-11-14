@@ -1,3 +1,4 @@
+// Vai trò tệp: Kho dữ liệu nghiệp vụ dùng chung trong tiến trình.
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -342,9 +343,9 @@ public sealed class KhoDuLieuDemo
         return tenKhoa.Select((ten, viTri) => new Khoa { MaKhoa = $"KH-{viTri + 1:00}", TenKhoa = ten, MoTa = "Thông tin khoa mẫu được dựng theo sơ đồ quản lý." }).ToList();
     }
 
-    // Mỗi khoa có hai tổ minh họa; người quản trị có thể bổ sung số tổ theo thực tế.
+    // Phân bố ổn định 2–4 tổ mỗi khoa.
     private static List<ToChuyenMon> TaoTo(IReadOnlyList<Khoa> danhSachKhoa)
-        => danhSachKhoa.SelectMany(khoa => Enumerable.Range(1, 2).Select(so => new ToChuyenMon
+        => danhSachKhoa.SelectMany(khoa => Enumerable.Range(1, 2 + (int.Parse(khoa.MaKhoa[3..]) - 1) % 3).Select(so => new ToChuyenMon
         {
             MaTo = $"{khoa.MaKhoa}-T{so:00}",
             TenTo = $"Tổ {so}",
@@ -358,18 +359,35 @@ public sealed class KhoDuLieuDemo
         var chuyenMon = new[] { "Lý luận chính trị", "Quân sự - võ thuật", "Nghiệp vụ cơ bản", "Điều tra hình sự", "An ninh mạng", "Luật", "Ngoại ngữ" };
         var danhSach = new List<CanBoGiangVien>();
         var maSo = 1;
+        var maBoSung = 109;
 
 
         foreach (var khoa in danhSachKhoa)
         {
             danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, danhSachTo.First(t => t.MaKhoa == khoa.MaKhoa).MaTo, "Trưởng khoa"));
             danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, danhSachTo.First(t => t.MaKhoa == khoa.MaKhoa).MaTo, "Phó khoa"));
-            danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, danhSachTo.Last(t => t.MaKhoa == khoa.MaKhoa).MaTo, "Phó khoa"));
-            foreach (var to in danhSachTo.Where(to => to.MaKhoa == khoa.MaKhoa))
+            danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, danhSachTo.First(t => t.MaKhoa == khoa.MaKhoa && t.MaTo.EndsWith("T02")).MaTo, "Phó khoa"));
+            foreach (var to in danhSachTo.Where(to => to.MaKhoa == khoa.MaKhoa).Take(2))
             {
                 danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, to.MaTo, "Tổ trưởng"));
                 danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, to.MaTo, "Tổ phó"));
                 danhSach.Add(TaoCanBo(maSo++, khoa.MaKhoa, to.MaTo, "Cán bộ giảng viên"));
+            }
+        }
+        // Giữ mã và đơn vị của 108 cán bộ gốc để tài khoản/phân công mẫu ổn định.
+        foreach (var khoa in danhSachKhoa)
+        {
+            var cacTo = danhSachTo.Where(t => t.MaKhoa == khoa.MaKhoa).ToArray();
+            foreach (var to in cacTo.Skip(2))
+            {
+                danhSach.Add(TaoCanBo(maBoSung++, khoa.MaKhoa, to.MaTo, "Tổ trưởng"));
+                danhSach.Add(TaoCanBo(maBoSung++, khoa.MaKhoa, to.MaTo, "Tổ phó"));
+            }
+            var siSo = 20 + ((int.Parse(khoa.MaKhoa[3..]) - 1) * 7) % 11;
+            while (danhSach.Count(c => c.MaKhoa == khoa.MaKhoa) < siSo)
+            {
+                var to = cacTo.OrderBy(t => danhSach.Count(c => c.MaTo == t.MaTo)).First();
+                danhSach.Add(TaoCanBo(maBoSung++, khoa.MaKhoa, to.MaTo, "Cán bộ giảng viên"));
             }
         }
         return danhSach;
@@ -449,7 +467,8 @@ public sealed class KhoDuLieuDemo
 
         foreach (var lop in danhSachLop)
         {
-            var cacTenTrongLop = Enumerable.Range(0, 40).Select(thuTu =>
+            var siSo = 30 + (((so - 1) / 40) * 7) % 11;
+            var cacTenTrongLop = Enumerable.Range(0, siSo).Select(thuTu =>
             {
                 var ma = so + thuTu;
                 return new HocVien

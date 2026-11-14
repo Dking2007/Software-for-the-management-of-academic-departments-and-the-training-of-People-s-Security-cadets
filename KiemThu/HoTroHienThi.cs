@@ -1,3 +1,4 @@
+// Vai trò tệp: Bộ dựng HTML phía máy chủ không dùng trình duyệt, không chạy JavaScript hay mô phỏng thao tác người dùng.
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 

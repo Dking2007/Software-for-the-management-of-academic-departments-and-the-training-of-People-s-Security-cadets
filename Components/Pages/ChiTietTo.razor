@@ -1,3 +1,4 @@
+@* Vai trò tệp: Thông tin tổ và danh sách cán bộ trong tổ. *@
 @page "/khoa/{MaKhoa}/to/{MaTo}"
 @implements IDisposable
 @attribute [Authorize]
@@ -13,14 +14,20 @@ else
     <ThongTinDonVi Nhan="Chi tiết tổ" TieuDe="@donVi.TenTo" QuayLai="@($"/khoa/{Uri.EscapeDataString(MaKhoa)}/to")" CacTruong="@ThongTin" />
     <CanBoGiangVien MaKhoaPhamVi="@MaKhoa" MaToPhamVi="@MaTo" @key="MaTo" />
 }
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string MaKhoa { get; set; } = "";
     [Parameter] public string MaTo { get; set; } = "";
     private Nhom2_BTL.Models.ToChuyenMon? donVi;
     private Dictionary<string, string> ThongTin => donVi is null ? [] : new() { ["Mã tổ"] = donVi.MaTo, ["Khoa"] = DuLieu.LayTenKhoa(MaKhoa), ["Sĩ số cán bộ"] = donVi.SiSo.ToString() };
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet() => TaiDuLieu();
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu() => donVi = DuLieu.LayDanhSachKhoa().Any(k => k.MaKhoa == MaKhoa) ? DuLieu.LayDanhSachTo().FirstOrDefault(t => t.MaTo == MaTo && t.MaKhoa == MaKhoa) : null;
+    // Làm mới thành phần khi dữ liệu nghiệp vụ thay đổi.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 }

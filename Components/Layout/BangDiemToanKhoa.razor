@@ -1,3 +1,4 @@
+@* Vai trò tệp: Bảng tổng hợp kết quả học tập toàn khóa. *@
 @* Bảng điểm toàn khoá của một học viên: tổng quan tích luỹ (tiến độ khoá, TB hệ 10/hệ 4, học lực, số tiết),
    biểu đồ TB theo học kỳ, rồi năm học → học kỳ → từng môn (số tiết, chuyên cần, kiểm tra/thi, tổng kết, điểm chữ, hệ 4). *@
 @if (HocKy.Count == 0)
@@ -107,6 +108,7 @@ else
     <p class="phu-dong bd-chu-thich">Tổng kết = 30% chuyên cần + 70% kiểm tra/thi, từ 5,0 là đạt. TB tích luỹ tính theo trọng số số tiết. Quy đổi: A ≥ 8,5 (4,0) · B+ ≥ 8,0 (3,5) · B ≥ 7,0 (3,0) · C+ ≥ 6,5 (2,5) · C ≥ 5,5 (2,0) · D+ ≥ 5,0 (1,5) · D ≥ 4,0 (1,0) · F.</p>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public List<DichVuHocVu.HocKyCaNhan> HocKy { get; set; } = [];
     private HashSet<string>? namMo;

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch các buổi học trong ngày. *@
 @* Xem theo ngày: thanh chọn ngày kèm số buổi, nội dung là bảng gọn nhóm theo buổi sáng/chiều/tối, mỗi buổi học một dòng. *@
 @if (!AnChonNgay)
 {
@@ -62,6 +63,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
     [Parameter, EditorRequired] public DateTime DauTuan { get; set; }

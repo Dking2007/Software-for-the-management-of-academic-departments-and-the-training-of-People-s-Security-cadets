@@ -1,3 +1,4 @@
+@* Vai trò tệp: Menu theo vai trò, nhóm thông tin, nghiệp vụ và quản trị. *@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @inject NavigationManager DieuHuong
@@ -19,6 +20,9 @@
                     <section class="module-menu-group @(phanHe == "ban-tin" ? "dang-chon" : "")" data-phan-he="ban-tin">
                         <div class="module-menu-heading"><NavLink class="module-menu-main" href="/ban-tin"><RadzenIcon Icon="newspaper" /><span class="ten-phan-he">@TuyChon.Dich("Bản tin Học viện")</span></NavLink></div>
                         <div class="menu-bay"><strong>@TuyChon.Dich("Bản tin Học viện")</strong><RadzenLink Path="/ban-tin" Text="Trang nhất" /><RadzenLink Path="/thong-bao" Text="Văn bản, thông báo" /></div>
+                    </section>
+                    <section class="module-menu-group @(phanHe == "so-do" ? "dang-chon" : "")" data-phan-he="so-do">
+                        <div class="module-menu-heading"><NavLink class="module-menu-main" href="/khoa/so-do" Match="NavLinkMatch.All"><RadzenIcon Icon="account_tree" /><span class="ten-phan-he">@TuyChon.Dich("Sơ đồ tổ chức")</span></NavLink></div>
                     </section>
                 </div>
                 <span class="nhan-nhom-menu">@TuyChon.Dich("Nghiệp vụ")</span>
@@ -71,6 +75,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private sealed record MucMenu(string Ten, string DuongDan, bool KhopTienTo = false);
     private sealed record NhomMenu(string Ma, string Ten, string BieuTuong, string DuongDan, MucMenu[] CacMuc);
@@ -87,13 +92,13 @@
         if (nd.LaGiangVien) nhom.Add(new("ca-nhan", "Giảng dạy của tôi", "co_present", "/giang-day", [new("Lớp và buổi dạy", "/giang-day"), new("Lịch dạy", "/dao-tao/lich")]));
         if (nd.LaHocVien) nhom.Add(new("ca-nhan", "Học tập của tôi", "person", "/cua-toi", [new("Tổng quan cá nhân", "/cua-toi"), new("Lịch học", "/dao-tao/lich")]));
         // Mỗi manager thấy đủ mảng mình sở hữu; mảng khác chỉ hiện mục phối hợp (xem) cần cho công việc.
-        MucMenu[] khoaDu = [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Tổ chuyên môn", "/khoa/to"), new("Cán bộ, giảng viên", "/khoa/can-bo"), new("Điểm danh đi làm", "/khoa/cham-cong"), new("Trực ban", "/khoa/truc-ban")];
+        MucMenu[] khoaDu = [new("Danh sách khoa", "/khoa"), new("Tổ chuyên môn", "/khoa/to"), new("Cán bộ, giảng viên", "/khoa/can-bo"), new("Điểm danh đi làm", "/khoa/cham-cong"), new("Trực ban", "/khoa/truc-ban")];
         MucMenu[] daoTaoDu = [new("Tổng quan đào tạo", "/dao-tao"), new("Chuyên ngành", "/dao-tao/chuyen-nganh"), new("Khóa và niên khóa", "/dao-tao/khoa-hoc"), new("Chuyên đề", "/dao-tao/chuyen-de"), new("Chương trình & phân công", "/dao-tao/chuong-trinh"), new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp", "/dao-tao/lich/tinh-hinh"), new("Phòng học", "/dao-tao/phong"), new("Xét tư cách & lịch thi", "/dao-tao/thi")];
         if (nd.LaAdmin || nd.LaQuanLy("Khoa")) nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu));
-        else if (nd.LaQuanLy("DaoTao")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Danh sách khoa", "/khoa"), new("Sơ đồ tổ chức", "/khoa/so-do"), new("Cán bộ, giảng viên", "/khoa/can-bo")]));
+        else if (nd.LaQuanLy("DaoTao")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Danh sách khoa", "/khoa"), new("Cán bộ, giảng viên", "/khoa/can-bo")]));
         else if (nd.LaQuanLy("Lop")) nhom.Add(new("khoa", "Khoa (phối hợp)", "account_balance", "/khoa", [new("Cán bộ, giảng viên", "/khoa/can-bo")]));
-        else if (nd.LaGiangVien) nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", [.. khoaDu.Take(4), new("Trực ban", "/khoa/truc-ban")]));
-        else if (nd.VaiTro == "Guest") nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu.Take(4).ToArray()));
+        else if (nd.LaGiangVien) nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", [.. khoaDu.Take(3), new("Trực ban", "/khoa/truc-ban")]));
+        else if (nd.VaiTro == "Guest") nhom.Add(new("khoa", "Quản lý khoa", "account_balance", "/khoa", khoaDu.Take(3).ToArray()));
         if (nd.LaAdmin || nd.LaQuanLy("DaoTao") || nd.LaGiangVien) nhom.Add(new("dao-tao", "Quản lý đào tạo", "menu_book", "/dao-tao", daoTaoDu));
         else if (nd.LaQuanLy("Khoa")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Chuyên đề (GV đủ điều kiện)", "/dao-tao/chuyen-de"), new("Lịch đào tạo", "/dao-tao/lich"), new("Xét tư cách thi (khoa xác nhận)", "/dao-tao/thi")]));
         else if (nd.LaQuanLy("Lop")) nhom.Add(new("dao-tao", "Đào tạo (phối hợp)", "menu_book", "/dao-tao", [new("Lịch đào tạo", "/dao-tao/lich"), new("Tình hình lên lớp", "/dao-tao/lich/tinh-hinh"), new("Chương trình (xem)", "/dao-tao/chuong-trinh"), new("Xét tư cách thi (đề xuất)", "/dao-tao/thi")]));
@@ -119,17 +124,21 @@
     private bool menuDangMo;
     private string phanHe = "";
     private readonly HashSet<string> nhomMo = [];
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() { TuyChon.DaThayDoi += KhiDoiTuyChon; CapNhat(); DieuHuong.LocationChanged += KhiDoiTrang; }
     private void CapNhat()
     {
         var duongDan = DieuHuong.ToBaseRelativePath(DieuHuong.Uri).Split('?', '#')[0];
-        phanHe = duongDan.Split('/')[0] switch { "khoa" => "khoa", "dao-tao" => "dao-tao", "lop" or "hoc-vien" or "quan-ly-hoc-vien" => "hoc-vien", "quan-tri" => "quan-tri", "giang-day" or "cua-toi" => "ca-nhan", "ban-tin" => "ban-tin", _ => "" };
+        phanHe = duongDan.TrimEnd('/') == "khoa/so-do" ? "so-do" : duongDan.Split('/')[0] switch { "khoa" => "khoa", "dao-tao" => "dao-tao", "lop" or "hoc-vien" or "quan-ly-hoc-vien" => "hoc-vien", "quan-tri" => "quan-tri", "giang-day" or "cua-toi" => "ca-nhan", "ban-tin" => "ban-tin", _ => "" };
         nhomMo.Clear();
         if (phanHe != "") nhomMo.Add(phanHe);
     }
+    // Cập nhật điều hướng khi địa chỉ trang thay đổi.
     private void KhiDoiTrang(object? sender, LocationChangedEventArgs args) => _ = InvokeAsync(() => { menuDangMo = false; CapNhat(); StateHasChanged(); });
     private void DoiNhom(string ma) { if (!nhomMo.Remove(ma)) nhomMo.Add(ma); }
     private void ToggleMenu() => menuDangMo = !menuDangMo;
+    // Cập nhật hiển thị khi tùy chọn giao diện thay đổi.
     private void KhiDoiTuyChon() => _ = InvokeAsync(StateHasChanged);
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() { DieuHuong.LocationChanged -= KhiDoiTrang; TuyChon.DaThayDoi -= KhiDoiTuyChon; }
 }

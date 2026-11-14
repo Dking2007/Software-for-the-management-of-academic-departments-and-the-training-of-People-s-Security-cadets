@@ -1,3 +1,4 @@
+@* Vai trò tệp: Khung sau đăng nhập: điều hướng, thanh công cụ và nội dung trang. *@
 @implements IDisposable
 @inject TuyChonGiaoDien TuyChon
 @inherits LayoutComponentBase
@@ -71,7 +72,7 @@
     </div>
 </div>
 
-@* Nút về đầu trang: wwwroot/hieu-ung.js bật lớp "hien" khi đã cuộn tới gần cuối trang. *@
+@* Nút về đầu trang: wwwroot/hieu-ung.js bật lớp "hien" khi đã cuộn xuống 320 px. *@
 <button type="button" id="nut-len-dau" class="nut-len-dau" title="@TuyChon.Dich("Về đầu trang")" aria-label="@TuyChon.Dich("Về đầu trang")"><RadzenIcon Icon="keyboard_arrow_up" /></button>
 
 <div id="blazor-error-ui">
@@ -85,9 +86,13 @@
 @* Đăng ký các thành phần Radzen cần dịch vụ tương tác như hộp thoại và thông báo. *@
 <RadzenComponents />
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() => TuyChon.DaThayDoi += KhiDoiTuyChon;
+    // Cập nhật hiển thị khi tùy chọn giao diện thay đổi.
     private void KhiDoiTuyChon() => _ = InvokeAsync(StateHasChanged);
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() { TuyChon.DaThayDoi -= KhiDoiTuyChon; cauNoiHuongDan?.Dispose(); }
 
     // Hướng dẫn nhập môn nhớ theo tài khoản ở máy chủ: gửi danh sách đã xem cho huong-dan.js,
@@ -154,7 +159,7 @@
             "khoa" => new[] { new MucDuongDan("Quản lý khoa", "/khoa") },
             "khoa/to" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Tổ chuyên môn") },
             "khoa/can-bo" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Cán bộ, giảng viên") },
-            "khoa/so-do" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Sơ đồ tổ chức") },
+            "khoa/so-do" => new[] { new MucDuongDan("Sơ đồ tổ chức") },
             "khoa/cham-cong" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Điểm danh đi làm") },
             "khoa/truc-ban" => new[] { new MucDuongDan("Quản lý khoa", "/khoa"), new MucDuongDan("Trực ban") },
             "ho-so" => new[] { new MucDuongDan("Hồ sơ cá nhân") },

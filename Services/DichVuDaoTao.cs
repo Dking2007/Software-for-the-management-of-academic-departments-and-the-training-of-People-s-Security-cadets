@@ -1,3 +1,4 @@
+// Vai trò tệp: Mảng đào tạo: chuyên đề, chuyên môn giảng dạy, phòng và lịch đào tạo.
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;

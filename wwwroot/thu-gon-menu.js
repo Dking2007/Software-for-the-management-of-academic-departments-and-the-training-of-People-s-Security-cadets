@@ -1,3 +1,4 @@
+/* Vai trò tệp: Lưu và khôi phục trạng thái thu gọn menu trên trình duyệt. */
 // Nhớ trạng thái thu gọn của thanh điều hướng trên trình duyệt này (localStorage).
 // Chỉ là tiện ích hiển thị: không lưu tài khoản hay vai trò; trình duyệt chặn lưu thì vẫn dùng bình thường.
 window.thuGonMenu = {

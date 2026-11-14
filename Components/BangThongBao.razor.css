@@ -1,3 +1,4 @@
+/* Vai trò tệp: Định dạng riêng cho thành phần BangThongBao; áp dụng trong phạm vi giao diện của thành phần này. */
 /* Cùng ngôn ngữ với thẻ số liệu: nền trắng đặc, viền mảnh, không bóng kính. */
 .bang-thong-bao { background: var(--nen-the); border: 1px solid var(--vien-the); border-radius: var(--bo-goc-lon); padding: 1.5rem 1.75rem; }
 .dau-bang-tin { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }

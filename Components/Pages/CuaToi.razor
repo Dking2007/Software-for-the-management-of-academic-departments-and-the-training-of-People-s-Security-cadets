@@ -1,3 +1,4 @@
+@* Vai trò tệp: Trang học viên: thông tin cá nhân, lịch học và kết quả học tập. *@
 @page "/cua-toi"
 @attribute [Authorize(Roles = "HocVien")]
 @implements IDisposable
@@ -99,6 +100,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private Nhom2_BTL.Models.HocVien? toi;
     private BuoiHocHienThi? buoiMo, buoiToi;
@@ -112,6 +114,7 @@ else
     private static DateTime NgayDauHocKy => QuyTacHocVu.NamHocHocKy(DateTime.Today) is var (nam, hk) ? (hk == 1 ? new DateTime(int.Parse(nam[..4]), 9, 1) : new DateTime(int.Parse(nam[..4]) + 1, 2, 1)) : DateTime.Today;
     private static DateTime NgayCuoiHocKy => QuyTacHocVu.NamHocHocKy(DateTime.Today) is var (nam, hk) ? (hk == 1 ? new DateTime(int.Parse(nam[..4]) + 1, 1, 31) : new DateTime(int.Parse(nam[..4]) + 1, 8, 31)) : DateTime.Today;
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync() { await Tai(); DuLieu.DuLieuDaThayDoi += KhiDoi; }
     private async Task Tai()
     {
@@ -138,5 +141,6 @@ else
         await Tai();
     }
     private void KhiDoi() => _ = InvokeAsync(async () => { await Tai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDoi;
 }

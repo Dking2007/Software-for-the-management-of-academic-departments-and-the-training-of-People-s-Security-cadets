@@ -1,3 +1,4 @@
+/* Vai trò tệp: Thẻ nổi dùng chung: phần tử có [data-noi] chứa (hoặc đứng ngay trước) một .noi-dung-noi ẩn do máy chủ dựng sẵn. */
 // Thẻ nổi dùng chung: phần tử có [data-noi] chứa (hoặc đứng ngay trước) một .noi-dung-noi ẩn do máy chủ dựng sẵn.
 // Rê chuột hoặc focus vào phần tử thì chép nội dung đó ra một thẻ duy nhất ở lớp trên cùng (popover) để không bị bảng cuộn che.
 // Không chứa dữ liệu hay quyền: chỉ hiển thị lại phần máy chủ đã cho phép dựng trong trang.

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Thông tin khoa và các đơn vị trực thuộc. *@
 @page "/khoa/{MaKhoa}/to"
 @implements IDisposable
 @attribute [Authorize]
@@ -13,13 +14,19 @@ else
     <ThongTinDonVi Nhan="Chi tiết khoa" TieuDe="@donVi.TenKhoa" QuayLai="/khoa" CacTruong="@ThongTin" />
     <RadzenTabs @key="MaKhoa"><Tabs><RadzenTabsItem Text="Tổ chuyên môn"><ToChuyenMon MaKhoaPhamVi="@MaKhoa" /></RadzenTabsItem><RadzenTabsItem Text="Cán bộ trong khoa"><CanBoGiangVien MaKhoaPhamVi="@MaKhoa" /></RadzenTabsItem></Tabs></RadzenTabs>
 }
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public string MaKhoa { get; set; } = "";
     private Nhom2_BTL.Models.Khoa? donVi;
     private Dictionary<string, string> ThongTin => donVi is null ? [] : new() { ["Mã khoa"] = donVi.MaKhoa, ["Số tổ"] = DuLieu.LayDanhSachTo().Count(t => t.MaKhoa == MaKhoa).ToString(), ["Sĩ số cán bộ"] = donVi.SiSo.ToString(), ["Mô tả"] = donVi.MoTa };
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() => DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi;
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet() => TaiDuLieu();
+    // Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
     private void TaiDuLieu() => donVi = DuLieu.LayDanhSachKhoa().FirstOrDefault(k => k.MaKhoa == MaKhoa);
+    // Làm mới thành phần khi dữ liệu nghiệp vụ thay đổi.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 }

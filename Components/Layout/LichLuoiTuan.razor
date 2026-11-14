@@ -1,3 +1,4 @@
+@* Vai trò tệp: Lịch dạng lưới theo tuần. *@
 @* Lưới tuần: cột là thứ Hai đến thứ Bảy, hàng là buổi sáng, chiều, tối. Dùng chung cho trang Lịch đào tạo và tab Lịch học của lớp. *@
 <div class="luoi-lich" role="grid" aria-label="Lịch tuần">
     <div class="o-goc"></div>
@@ -23,6 +24,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public List<BuoiHocHienThi> Buoi { get; set; } = [];
     [Parameter, EditorRequired] public DateTime DauTuan { get; set; }

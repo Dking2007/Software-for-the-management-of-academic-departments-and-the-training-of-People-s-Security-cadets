@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin cán bộ. *@
 @using Nhom2_BTL.Models
 @inject DialogService HoiThoai
 @inject DichVuQuanLyDuLieuDemo DuLieu
@@ -31,6 +32,7 @@
 <RadzenRequiredValidator Component="MaKhoa" Text="Vui lòng nhập hoặc chọn khoa." />
 <RadzenRequiredValidator Component="ChuyenMon" Text="Vui lòng nhập hoặc chọn chuyên môn." />
 </RadzenTemplateForm>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private TruongMoRongBieuMau? moRong;
 [Parameter] public CanBoGiangVien DuLieuBanDau { get; set; } = new();
@@ -43,6 +45,7 @@ private readonly string[] cacCapBac = ["Đại tá", "Thượng tá", "Trung tá
 private readonly string[] cacHocHam = ["", "Giáo sư", "Phó giáo sư"];
 private readonly string[] cacHocVi = ["Tiến sĩ", "Thạc sĩ", "Cử nhân", "Khác"];
 private IEnumerable<ToChuyenMon> CacToCuaKhoa => DanhSachTo.Where(to => to.MaKhoa == banSao.MaKhoa);
+// Khởi tạo trạng thái khi thành phần được tạo.
 protected override void OnInitialized() => banSao = DuLieuBanDau.TaoBanSao();
 private void DoiKhoa(object giaTri) { banSao.MaKhoa = Convert.ToString(giaTri) ?? string.Empty; banSao.MaTo = null; }
 // Chặn bấm lặp; service là nơi xác thực quyền và các quan hệ trước khi ghi.

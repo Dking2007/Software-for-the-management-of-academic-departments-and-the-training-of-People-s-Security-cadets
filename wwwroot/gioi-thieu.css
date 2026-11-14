@@ -1,3 +1,4 @@
+/* Vai trò tệp: Trang giới thiệu công khai (/gioi-thieu) — phong cách "Sổ bộ", cùng hệ với giao diện trong phần mềm (phong-cach.css). */
 /* ==========================================================================
    Trang giới thiệu công khai (/gioi-thieu) — phong cách "Sổ bộ", cùng hệ với giao diện trong phần mềm (phong-cach.css).
    Nguyên tắc (đối chiếu bộ luật taste-skill cho trang phần mềm và ui-ux-pro-max nhóm Government/Public Service):
@@ -319,9 +320,10 @@ html:has(.gt) { scroll-padding-top: 4.5rem; }
 .gt-ket h2 { margin: 0 0 .625rem; font-family: var(--font-tieu-de); font-size: clamp(1.75rem, 1.2rem + 1.5vw, 2.5rem); font-weight: 700; letter-spacing: -.01em; }
 .gt-ket p { max-width: 36rem; margin: 0 auto; color: var(--chu-phu); line-height: 1.65; }
 .gt-ket .gt-hero-nut { justify-content: center; animation: none; }
-.gt-chan { padding: 1.5rem 0; border-top: 1px solid var(--vien-the); background: var(--nen-the); color: var(--chu-phu); }
+.gt-chan { padding: 1.5rem 0; border-top: 1px solid rgba(255, 255, 255, .16); background: #0c1f16; color: #c3d2c8; }
 .gt-chan .gt-trong { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; }
-.gt-chan .gt-hieu strong { color: var(--chu-chinh); }
+.gt-chan .gt-hieu strong { color: #fff; }
+.gt-chan .gt-hieu small { color: #a8bbaf; }
 .gt-chan p { max-width: 34rem; margin: 0; font-size: .8125rem; }
 
 /* ---- Đáp ứng ---- */

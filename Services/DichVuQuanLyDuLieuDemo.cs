@@ -1,3 +1,4 @@
+// Vai trò tệp: Đọc bản sao của dữ liệu và kiểm tra quyền trước mọi thao tác ghi.
 using System.ComponentModel.DataAnnotations;
 using Nhom2_BTL.Models;
 

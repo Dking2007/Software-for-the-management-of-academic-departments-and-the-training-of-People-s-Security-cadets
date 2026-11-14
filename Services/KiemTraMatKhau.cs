@@ -1,3 +1,4 @@
+// Vai trò tệp: Chính sách đơn giản cho ứng dụng minh họa: phải có cả chữ và số.
 using Microsoft.AspNetCore.Identity;
 
 namespace Nhom2_BTL.Services;

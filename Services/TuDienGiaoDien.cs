@@ -1,3 +1,4 @@
+// Vai trò tệp: Từ điển nhãn giao diện Việt – Anh – Lào.
 namespace Nhom2_BTL.Services;
 
 /// <summary>

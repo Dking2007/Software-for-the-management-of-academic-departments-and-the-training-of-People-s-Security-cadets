@@ -1,3 +1,4 @@
+@* Vai trò tệp: Báo cáo quân số và nội dung ca trực ban. *@
 @* Một báo cáo trực ban: ngày, người trực, số liệu chụp lúc chốt, tình hình và bàn giao. Ca đã qua mà không chốt được đánh dấu riêng. *@
 <details class="bao-cao-truc @(Ca.ChotLuc is null ? "chua-chot" : "")" open="@MoSan">
     <summary>
@@ -14,6 +15,7 @@
     </div>
 </details>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public CaTrucBan Ca { get; set; } = default!;
     [Parameter] public string TenNguoiTruc { get; set; } = "";

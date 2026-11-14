@@ -1,3 +1,4 @@
+/* Vai trò tệp: Kéo, thu phóng, căn khung nhìn và điều chỉnh mức chi tiết của sơ đồ. */
 // Nguồn: module khung nhìn canvas của repo LTMT (sh4mr0ck17/LTMT, wwwroot/js/canvas-to-chuc.js), dùng lại cho sơ đồ tổ chức.
 // Tương tác khung nhìn chạy ngay tại trình duyệt, không gửi từng bước kéo lên server.
 // Tỉ lệ nhỏ nhất giữ tên đơn vị đọc được (tên phóng 24px × 0.5 ≈ 12px); sơ đồ lớn hơn thì căn theo nút đang chọn thay vì thu nhỏ.

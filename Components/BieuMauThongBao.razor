@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin văn bản, thông báo. *@
 @inject DichVuThongBao DichVu
 @inject Radzen.DialogService HopThoai
 
@@ -53,6 +54,7 @@
     </EditForm>
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public ThongBao DuLieuBanDau { get; set; } = new();
     [Parameter] public bool TrongHopThoai { get; set; }
@@ -74,6 +76,7 @@
         set => tagsChon = tagsChon.Where(x => !x.StartsWith("khoa:")).Concat(value ?? []).Distinct().ToList();
     }
 
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized()
     {
         banNhap = DuLieuBanDau.TaoBanSao();

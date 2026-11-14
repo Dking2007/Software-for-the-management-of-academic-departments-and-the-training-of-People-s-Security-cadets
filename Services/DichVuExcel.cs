@@ -1,3 +1,4 @@
+// Vai trò tệp: Xuất/nhập Excel (ý tưởng từ repo LTMT, thư viện ClosedXML).
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using ClosedXML.Excel;

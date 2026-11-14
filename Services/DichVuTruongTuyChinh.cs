@@ -1,3 +1,4 @@
+// Vai trò tệp: Trường dữ liệu mở rộng (do người dùng tự định nghĩa) cho các đối tượng có sẵn, ví dụ Khoa thêm "Sáp nhập", "Ngày sáp nhập".
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;

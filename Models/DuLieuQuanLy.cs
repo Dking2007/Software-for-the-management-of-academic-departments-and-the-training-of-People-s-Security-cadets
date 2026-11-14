@@ -1,3 +1,4 @@
+// Vai trò tệp: Mô hình khoa, tổ, cán bộ, lớp, học viên và dữ liệu tổng hợp quản lý.
 using System.ComponentModel.DataAnnotations;
 
 namespace Nhom2_BTL.Models;

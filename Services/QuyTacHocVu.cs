@@ -1,3 +1,4 @@
+// Vai trò tệp: Quy tắc miền của lịch học, điểm danh và điểm số.
 using Nhom2_BTL.Models;
 
 namespace Nhom2_BTL.Services;

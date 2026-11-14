@@ -1,3 +1,4 @@
+/* Vai trò tệp: Tuỳ chọn hiển thị của từng người dùng trên trình duyệt này (localStorage). Không lưu tài khoản hay vai trò. */
 // Tuỳ chọn hiển thị của từng người dùng trên trình duyệt này (localStorage). Không lưu tài khoản hay vai trò.
 // Áp dụng bằng thuộc tính data-* và cỡ chữ gốc trên <html>; CSS đọc các thuộc tính này (wwwroot/tich-hop.css).
 window.tuyChonGiaoDien = (() => {

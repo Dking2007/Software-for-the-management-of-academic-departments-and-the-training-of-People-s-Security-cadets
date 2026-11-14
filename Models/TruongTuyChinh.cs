@@ -1,3 +1,4 @@
+// Vai trò tệp: Định nghĩa trường dữ liệu mở rộng và giá trị của trường trên từng đối tượng.
 namespace Nhom2_BTL.Models;
 
 /// <summary>Định nghĩa một trường dữ liệu mở rộng cho một loại đối tượng (Khoa, Lớp, Học viên...).</summary>

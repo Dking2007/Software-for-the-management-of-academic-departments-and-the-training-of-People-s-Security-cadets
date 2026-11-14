@@ -1,3 +1,4 @@
+// Vai trò tệp: Kiểm thử văn bản, nơi nhận, quyền truy cập và trạng thái đã đọc.
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -97,5 +98,6 @@ finally { Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools(); File.Delete(te
 sealed class TestAuth : AuthenticationStateProvider
 {
     public ClaimsPrincipal User { get; set; } = new(new ClaimsIdentity());
+    // Cung cấp trạng thái xác thực hiện tại cho Blazor.
     public override Task<AuthenticationState> GetAuthenticationStateAsync() => Task.FromResult(new AuthenticationState(User));
 }

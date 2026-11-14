@@ -1,3 +1,4 @@
+@* Vai trò tệp: Danh sách các tổ chuyên môn trực thuộc khoa. *@
 @inject TuyChonGiaoDien TuyChon
 @implements IDisposable
 @page "/khoa/to"
@@ -70,10 +71,12 @@ else
 </RadzenCard>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private DichVuTruongTuyChinh.BangMoRong moRong = DichVuTruongTuyChinh.BangMoRong.Rong;
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter] public string? MaKhoaPhamVi { get; set; }
+    // Cập nhật trạng thái theo tham số đầu vào.
     protected override void OnParametersSet() => TaiDuLieu();
     // Cập nhật sau khi người dùng ngừng gõ 300 ms và trở về trang đầu để nhìn thấy kết quả.
     private async Task NhapTuKhoa(ChangeEventArgs e)
@@ -87,6 +90,7 @@ else
 
     // Mỗi tab chỉ giữ bản sao; cập nhật từ kho chung và hủy đăng ký khi component kết thúc.
     private void KhiDuLieuDoi() => _ = InvokeAsync(() => { TaiDuLieu(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => DuLieu.DuLieuDaThayDoi -= KhiDuLieuDoi;
 
 private List<ToModel> danhSachTo = [];
@@ -107,7 +111,9 @@ private IEnumerable<Nhom2_BTL.Models.Khoa> CacKhoaHienThi => danhSachKhoa.Where(
 private string tuKhoa = string.Empty;
 private bool duocChinhSua;
 private IEnumerable<ToModel> DanhSachHienThi => danhSachTo.Where(to => TimKiemMo.Khop(tuKhoa, to.TenTo, to.MaTo, DuLieu.LayTenKhoa(to.MaKhoa), DuLieu.LayTenCanBo(to.MaToTruong)));
+// Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
 protected override async Task OnInitializedAsync() { moRong = await TruongTuyChinh.LayBangAsync("ToChuyenMon"); duocChinhSua = await PhanQuyen.CoQuyenVungAsync("Khoa"); TaiDuLieu(); DuLieu.DuLieuDaThayDoi += KhiDuLieuDoi; }
+// Nạp dữ liệu cho các danh sách và bộ lọc của thành phần.
 private void TaiDuLieu()
 {
     danhSachTo = DuLieu.LayDanhSachTo().Where(t => MaKhoaPhamVi is null || t.MaKhoa == MaKhoaPhamVi).ToList();
@@ -119,6 +125,7 @@ private void TaiDuLieu()
 private async Task ThemTo() { var kq = await HoiThoai.OpenAsync<BieuMauTo>("Thêm tổ", new Dictionary<string, object> { [nameof(BieuMauTo.DuLieuBanDau)] = new ToModel { MaKhoa = MaKhoaPhamVi ?? "" }, [nameof(BieuMauTo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa() }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
 private async Task SuaTo(ToModel to) { var kq = await HoiThoai.OpenAsync<BieuMauTo>("Sửa tổ", new Dictionary<string, object> { [nameof(BieuMauTo.DuLieuBanDau)] = to.TaoBanSao(), [nameof(BieuMauTo.DanhSachKhoa)] = DuLieu.LayDanhSachKhoa(), [nameof(BieuMauTo.DangSua)] = true }, new DialogOptions { Width = "650px", CloseDialogOnOverlayClick = false }); if (kq is KetQuaThaoTac daLuu) await ThongBaoKetQua(daLuu); }
 private async Task XoaTo(ToModel to) { var ok = await HoiThoai.Confirm($"Bạn sắp xóa tổ {to.TenTo} ({to.MaTo}). Thao tác không thể hoàn tác.", "Xác nhận xóa", new ConfirmOptions { OkButtonText = "Xóa", CancelButtonText = "Hủy", CssClass = "hop-xac-nhan-xoa" }); if (ok == true) await ThongBaoKetQua(await DuLieu.XoaToAsync(to.MaTo)); }
+// Thông báo kết quả thao tác và cập nhật dữ liệu hiển thị.
 private async Task ThongBaoKetQua(KetQuaThaoTac kq) { moRong = await TruongTuyChinh.LayBangAsync("ToChuyenMon"); ThongBao.Notify(new NotificationMessage { Severity = kq.ThanhCong ? NotificationSeverity.Success : NotificationSeverity.Warning, Summary = kq.ThanhCong ? "Hoàn tất" : "Không thể thực hiện", Duration = 5000, Detail = kq.ThongBao }); TaiDuLieu(); await InvokeAsync(StateHasChanged); }
 }
 

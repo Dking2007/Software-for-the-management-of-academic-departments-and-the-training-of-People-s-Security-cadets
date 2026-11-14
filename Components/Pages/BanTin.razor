@@ -1,3 +1,4 @@
+@* Vai trò tệp: Danh sách bài viết, chuyên mục và nội dung Bản tin Học viện. *@
 @page "/ban-tin"
 @page "/ban-tin/{Id:int}"
 @attribute [Authorize]
@@ -183,6 +184,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public int? Id { get; set; }
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNgu { get; set; } = "vi";
@@ -197,6 +199,7 @@
     private static string NgayHomNay { get { var s = DateTime.Now.ToString("dddd, dd/MM/yyyy", new System.Globalization.CultureInfo("vi-VN")); return char.ToUpper(s[0]) + s[1..]; } }
     private static string GioDang(DateTimeOffset t) { var d = t.ToOffset(TimeSpan.FromHours(7)); var cach = DateTimeOffset.Now - t; return cach.TotalMinutes < 60 ? $"{Math.Max(1, (int)cach.TotalMinutes)} phút trước" : cach.TotalHours < 24 ? $"{(int)cach.TotalHours} giờ trước" : d.ToString("HH:mm dd/MM/yyyy"); }
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         laAdmin = (await PhanQuyen.LayNguoiDungAsync()).LaAdmin;
@@ -204,6 +207,7 @@
         vanBan = (await ThongBaoDv.LayDanhSachChoToiAsync()).Take(4).ToList();
         Kho.DuLieuDaThayDoi += KhiDoi;
     }
+    // Nạp lại dữ liệu khi nhận tham số từ trang hoặc thành phần cha.
     protected override async Task OnParametersSetAsync()
     {
         chuyenMuc = null;
@@ -223,6 +227,7 @@
     private void ChonChuyenMuc(string cm) { chuyenMuc = cm; tuKhoa = ""; if (baiMo is not null) { baiMo = null; DieuHuong.NavigateTo("/ban-tin"); chuyenMuc = cm; } }
     private void Tim(ChangeEventArgs e) { tuKhoa = e.Value?.ToString() ?? ""; if (baiMo is not null) { baiMo = null; DieuHuong.NavigateTo("/ban-tin"); } }
     private void KhiDoi() => _ = InvokeAsync(async () => { await TaiLai(); StateHasChanged(); });
+    // Giải phóng tài nguyên và các đăng ký theo dõi khi kết thúc sử dụng.
     public void Dispose() => Kho.DuLieuDaThayDoi -= KhiDoi;
 
     private async Task MoBieuMau(TinTuc bai)

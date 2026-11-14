@@ -1,9 +1,11 @@
+@* Vai trò tệp: Tạo và tải xuống tệp Excel từ dữ liệu được cung cấp. *@
 @inject IJSRuntime JS
 @inject NotificationService ThongBao
 
 @* Nút xuất Excel dùng chung. Tệp tạo ở máy chủ theo đúng mặt cắt quyền của người đang xem rồi tải về trình duyệt. *@
 <RadzenButton Text="@Nhan" Icon="download" ButtonStyle="ButtonStyle.Light" Size="@KichThuoc" Click="Xuat" IsBusy="dangXuat" BusyText="Đang tạo tệp…" title="Tải tệp Excel (.xlsx) đúng phạm vi dữ liệu bạn được xem" />
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter, EditorRequired] public Func<Task<byte[]?>> TaoTep { get; set; } = default!;
     [Parameter, EditorRequired] public string TenTep { get; set; } = "du-lieu";

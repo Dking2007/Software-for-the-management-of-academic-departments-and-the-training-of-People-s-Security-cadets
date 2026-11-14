@@ -1,3 +1,4 @@
+// Vai trò tệp: Tìm kiếm nhanh (Ctrl+K).
 using System.Globalization;
 using System.Text;
 

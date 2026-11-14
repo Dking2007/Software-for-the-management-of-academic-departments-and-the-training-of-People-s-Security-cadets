@@ -1,3 +1,4 @@
+// Vai trò tệp: Mô hình chuyên đề, lịch, phòng, điểm danh, kết quả, phân công và xét thi.
 using System.ComponentModel.DataAnnotations;
 
 namespace Nhom2_BTL.Models;
@@ -22,6 +23,7 @@ public sealed class ChuyenDe
     [StringLength(250, ErrorMessage = "Mô tả không quá 250 ký tự.")]
     public string MoTa { get; set; } = "";
 
+    // Tạo bản sao phục vụ chỉnh sửa độc lập với dữ liệu gốc.
     public ChuyenDe TaoBanSao() => (ChuyenDe)MemberwiseClone();
 }
 
@@ -51,6 +53,7 @@ public sealed class Phong
 
     public bool DangBaoTri { get; set; }
 
+    // Tạo bản sao phục vụ chỉnh sửa độc lập với dữ liệu gốc.
     public Phong TaoBanSao() => (Phong)MemberwiseClone();
 }
 
@@ -68,6 +71,7 @@ public sealed class BuoiHoc
     [StringLength(200)] public string GhiChu { get; set; } = "";
 
     public int TietKetThuc => TietBatDau + SoTiet - 1;
+    // Tạo bản sao phục vụ chỉnh sửa độc lập với dữ liệu gốc.
     public BuoiHoc TaoBanSao() => (BuoiHoc)MemberwiseClone();
 }
 

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Tiêu đề, mô tả và vùng thao tác đầu trang. *@
 @inject TuyChonGiaoDien TuyChon
 @inject NavigationManager DieuHuong
 @* Đầu trang dùng chung: biểu tượng + màu nhấn theo phân hệ, tiêu đề, mô tả ngắn và vùng nút thao tác (ví dụ "Thêm khoa") ở bên phải.
@@ -17,6 +18,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     [Parameter, EditorRequired] public string TieuDe { get; set; } = string.Empty;

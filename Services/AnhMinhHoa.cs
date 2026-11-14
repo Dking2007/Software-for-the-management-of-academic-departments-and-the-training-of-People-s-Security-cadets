@@ -1,3 +1,4 @@
+// Vai trò tệp: Ảnh minh hoạ vẽ bằng SVG (không dùng ảnh bên ngoài): banner cho văn bản, thông báo mẫu.
 using System.Net;
 using System.Text;
 

@@ -1,3 +1,4 @@
+/* Vai trò tệp: Bản tin Học viện: bố cục kiểu báo điện tử (đầu báo, thanh chuyên mục, tin mới chạy chữ, tiêu điểm, khối chuyên mục, cột phải). */
 /* Bản tin Học viện: bố cục kiểu báo điện tử (đầu báo, thanh chuyên mục, tin mới chạy chữ, tiêu điểm, khối chuyên mục, cột phải). */
 .bt-trang { --bt-do: #b3261e; --bt-do-dam: #8c1d17; display: flex; flex-direction: column; gap: 1rem; }
 .bt-dau-bao { border-radius: 12px; overflow: hidden; border: 1px solid var(--vien-the); background: var(--nen-the); }

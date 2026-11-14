@@ -1,3 +1,4 @@
+@* Vai trò tệp: Định nghĩa trường dữ liệu mở rộng theo loại đối tượng. *@
 @page "/quan-tri/truong-du-lieu"
 @attribute [Authorize(Roles = "Admin,Manager")]
 @inject DichVuTruongTuyChinh TruongTuyChinh
@@ -89,6 +90,7 @@
     }
 </div>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     private List<DichVuTruongTuyChinh.LoaiDoiTuong> cacLoai = [];
     private Dictionary<string, int> soTruong = [];
@@ -96,6 +98,7 @@
     private DichVuTruongTuyChinh.BangMoRong bang = DichVuTruongTuyChinh.BangMoRong.Rong;
     private TruongTuyChinh? banNhap;
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         foreach (var l in DichVuTruongTuyChinh.CacLoai) if (await TruongTuyChinh.DuocQuanTriAsync(l.Ma)) cacLoai.Add(l);

@@ -1,3 +1,4 @@
+@* Vai trò tệp: Chọn cán bộ đủ điều kiện giảng dạy chuyên đề. *@
 @inject DialogService HoiThoai
 @inject DichVuDaoTao DaoTao
 @inject DichVuQuanLyDuLieuDemo DuLieu
@@ -33,6 +34,7 @@ else
     </div>
 }
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public ChuyenDe ChuyenDe { get; set; } = new();
     [Parameter] public bool DuocSua { get; set; }
@@ -46,6 +48,7 @@ else
         .Where(c => !chiKhoaPhuTrach || c.MaKhoa == ChuyenDe.MaKhoa || daChon.Contains(c.MaTraCuuNoiBo)), tim, c => [c.HoTen, c.TenKhoa, c.TenTo, c.ChuyenMon])
         .OrderByDescending(c => daChon.Contains(c.MaTraCuuNoiBo)).ThenBy(c => tim.Trim() == "" ? c.KhoaSapXepTen : "", StringComparer.Ordinal);
 
+    // Khởi tạo và tải dữ liệu ban đầu theo luồng bất đồng bộ.
     protected override async Task OnInitializedAsync()
     {
         cacCanBo = DuLieu.LayDanhSachCanBo().ToList();

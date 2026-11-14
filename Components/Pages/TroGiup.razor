@@ -1,3 +1,4 @@
+@* Vai trò tệp: Hướng dẫn sử dụng; các khối thông tin quản trị chỉ dành cho Admin. *@
 @page "/tro-giup"
 @attribute [Authorize]
 @inject TuyChonGiaoDien TuyChon
@@ -28,7 +29,7 @@
                 <li><strong>Xét tư cách thi & lịch thi</strong><p>Quản lý học viên gửi đề xuất → Khoa xác nhận → Phòng đào tạo duyệt (mỗi bước có thể trả lại kèm lý do) → Phòng đào tạo xếp lịch thi (kiểm tra phòng đủ chỗ, không trùng lịch học/lịch thi). Đủ tư cách khi vắng không quá 20% số buổi đã điểm danh.</p></li>
                 <li><strong>Chuyên cần, lớp đi học/nghỉ, điểm danh đi làm</strong><p>Trang lớp có tab Chuyên cần (buổi học, buổi nghỉ từng học viên). Lịch đào tạo cho biết hôm nay lớp nào đi học, lớp nào nghỉ. Giảng viên điểm danh đi làm ở trang Giảng dạy của tôi; Quản lý khoa theo dõi ở Quản lý khoa → Điểm danh đi làm.</p></li>
                 <li><strong>Trực ban khoa</strong><p>Quản lý khoa lập lịch trực ở Quản lý khoa → Trực ban (chọn người từng ngày hoặc Xếp tự động, luân phiên đều). Đúng ngày trực, cán bộ được phân công thấy lối vào ở Giảng dạy của tôi: điểm danh đi làm cho cán bộ toàn khoa, xem quân số học viên học chuyên đề của khoa (chỉ số liệu), ghi sổ trực ban và chốt báo cáo. Hết ngày hoặc chốt báo cáo thì quyền tự hết.</p></li>
-                <li><strong>Sơ đồ tổ chức</strong><p>Quản lý khoa → Sơ đồ tổ chức. Hai sơ đồ: Tổ chức – Cán bộ và Đào tạo. "Dạng cột" duyệt từng cấp, bấm tổ hoặc lớp để hiện cột thành viên, rê chuột vào một người để xem thông tin khái quát, mỗi cột có nút « để thu gọn; "Sơ đồ" kéo để di chuyển, cuộn hoặc +/− để phóng, 0 để vừa khung, bấm đúp thẻ để mở nhánh. Nút "cần rà soát" chỉ ra khoa/tổ chưa có lãnh đạo, lớp thiếu chủ nhiệm.</p></li>
+                <li><strong>Sơ đồ tổ chức</strong><p>Thông tin → Sơ đồ tổ chức. Hai sơ đồ: Tổ chức – Cán bộ và Đào tạo. "Dạng cột" duyệt từng cấp, bấm tổ hoặc lớp để hiện cột thành viên, rê chuột vào một người để xem thông tin khái quát, mỗi cột có nút « để thu gọn; "Sơ đồ" kéo để di chuyển, cuộn hoặc +/− để phóng, 0 để vừa khung, bấm đúp thẻ để mở nhánh. Nút "cần rà soát" chỉ ra khoa/tổ chưa có lãnh đạo, lớp thiếu chủ nhiệm.</p></li>
                 <li><strong>Văn bản, thông báo</strong><p>Bấm chuông (số đỏ là văn bản chưa đọc). Văn bản có loại, số/ký hiệu, mức độ (Thường/Quan trọng/Khẩn), hiệu lực và nơi nhận; mở văn bản là được ghi đã đọc. Nút In tạo bản in sạch.</p></li>
                 <li><strong>Excel</strong><p>Nút "Xuất Excel" có ở các danh sách, bảng điểm, điểm danh, chuyên cần, sổ đầu bài, phân công, nhật ký; tệp chỉ chứa dữ liệu bạn được xem. Lịch đào tạo, báo cáo điểm danh đi làm, báo cáo giảng dạy và kết quả học tập cho chọn khoảng ngày bất kỳ. "Nhập Excel" có ở học viên, lớp (Quản lý học viên), cán bộ (Quản lý khoa), chuyên đề, phòng học, lịch đào tạo (Quản lý đào tạo) và bảng điểm (giảng viên, Quản lý học viên): tải tệp mẫu có danh sách chọn, điền, chọn tệp, xem trước lỗi từng dòng rồi xác nhận.</p></li>
                 <li><strong>Sổ đầu bài online</strong><p>Trang lớp → tab Sổ đầu bài: mỗi buổi đã học một dòng (nội dung bài, nhận xét, xếp loại tiết A–D, sĩ số có mặt lấy từ điểm danh). Giảng viên ghi buổi mình dạy; ba quản lý xem để phối hợp. Có bốn cách xem: theo tuần như trang sổ giấy, lịch tháng tô màu theo xếp loại, theo chuyên đề và danh sách; bấm các ô số liệu để lọc nhanh.</p></li>
@@ -43,6 +44,7 @@
                 <li><strong>@TuyChon.Dich("Thông báo") / @TuyChon.Dich("Cài đặt")</strong><p>@(TiengAnh ? "Use the bell to open notifications. Use the gear to change appearance and the language of common interface labels." : "Bấm chuông để xem thông báo. Bấm bánh răng để chọn sáng/tối và ngôn ngữ của các nhãn giao diện chung.")</p></li>
             </ol>
         </RadzenCard>
+        <AuthorizeView Roles="Admin">
         <RadzenCard>
             <h2><RadzenIcon Icon="rule" />Ranh giới vai trò và việc phối hợp</h2>
             <p class="ghi-chu-phan-hoi">Mỗi mảng có một chủ sở hữu được thêm, sửa, xoá, nhập Excel. Mảng khác chỉ thấy phần cần để phối hợp; trường cá nhân (CCCD, số điện thoại, email, địa chỉ, điểm từng người) không được xem chéo. Quyền kiểm ở lớp dịch vụ, menu chỉ hiện đúng phần được dùng.</p>
@@ -78,6 +80,7 @@
                 </tbody>
             </table></div>
         </RadzenCard>
+        </AuthorizeView>
     </div>
     <RadzenCard class="phan-hoi-tro-giup">
         <h2><RadzenIcon Icon="feedback" />@TuyChon.Dich("Gửi phản hồi")</h2>
@@ -102,6 +105,7 @@
         }
     </RadzenCard>
 </div>
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [CascadingParameter(Name = "NgonNguGiaoDien")] public string NgonNguGiaoDien { get; set; } = "vi";
     private bool TiengAnh => TuyChon.NgonNgu == "en";

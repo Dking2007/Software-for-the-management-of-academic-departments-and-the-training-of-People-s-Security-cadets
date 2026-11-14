@@ -1,3 +1,4 @@
+// Vai trò tệp: Kiểm thử hồ sơ, chức vụ lãnh đạo, sĩ số và cập nhật dữ liệu đồng thời.
 using System.Text.Json;
 using Nhom2_BTL.Models;
 using Nhom2_BTL.Services;

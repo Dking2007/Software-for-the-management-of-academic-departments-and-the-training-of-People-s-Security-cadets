@@ -1,3 +1,4 @@
+@* Vai trò tệp: Biểu mẫu nhập và chỉnh sửa thông tin bài tin. *@
 @inject DichVuBanTin BanTinDv
 @inject DialogService HoiThoai
 
@@ -22,12 +23,14 @@
     </div>
 </RadzenTemplateForm>
 
+@* Xử lý phía thành phần: tham số, trạng thái và sự kiện phục vụ giao diện bên trên. *@
 @code {
     [Parameter] public TinTuc DuLieuBanDau { get; set; } = new();
     private TinTuc banSao = new();
     private byte[]? anhMoi;
     private string? anhXemTruoc, loi;
     private bool xoaAnh, dangLuu, dangTaiAnh;
+    // Khởi tạo trạng thái khi thành phần được tạo.
     protected override void OnInitialized() { banSao = DuLieuBanDau.TaoBanSao(); anhXemTruoc = banSao.Anh; }
     private async Task ChonAnh(InputFileChangeEventArgs e)
     {

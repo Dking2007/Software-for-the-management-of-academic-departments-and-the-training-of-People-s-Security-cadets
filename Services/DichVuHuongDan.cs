@@ -1,3 +1,4 @@
+// Vai trò tệp: Lưu trạng thái đã xem hướng dẫn theo tài khoản và từng trang.
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;

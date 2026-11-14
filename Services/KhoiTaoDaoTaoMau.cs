@@ -1,3 +1,4 @@
+// Vai trò tệp: Sinh dữ liệu đào tạo mẫu theo công thức cố định: 24 chuyên đề (2 mỗi khoa), phòng học, chuyên môn giảng dạy, lịch 4 tuần cho các lớp khoá D58 và K6, điểm danh các buổi đã qua và một phần điểm kiểm tra.
 using Microsoft.EntityFrameworkCore;
 using Nhom2_BTL.Models;
 
