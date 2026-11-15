@@ -45,6 +45,7 @@ boMayUngDung.Services.AddAuthentication(CookieAuthenticationDefaults.Authenticat
     o.ExpireTimeSpan = TimeSpan.FromHours(8);
     o.SlidingExpiration = false;
     o.LoginPath = "/dang-nhap";
+    o.AccessDeniedPath = "/khong-du-quyen";
     o.Events.OnValidatePrincipal = context =>
     {
         if (!context.HttpContext.RequestServices.GetRequiredService<KhoPhienDemo>().ConHieuLuc(context.Principal!)) context.RejectPrincipal();

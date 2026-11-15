@@ -1,0 +1,23 @@
+@* Vai trò tệp: Hiển thị thông báo khi người dùng cố truy cập đường dẫn vượt quá quyền được cấp. *@
+@page "/khong-du-quyen"
+@page "/Account/AccessDenied"
+@attribute [Authorize]
+
+<PageTitle>Không đủ quyền truy cập | Hệ thống quản lý Khoa/Lớp đào tạo</PageTitle>
+
+<section class="empty-state">
+    <RadzenIcon Icon="lock" class="empty-state-icon" />
+    <h1>Không đủ quyền truy cập</h1>
+    <p>Tài khoản hiện tại không được phép mở trang này. Hãy quay về trang chủ hoặc đăng nhập bằng tài khoản có quyền phù hợp.</p>
+    @if (!string.IsNullOrWhiteSpace(DuongDanBiChan))
+    {
+        <p class="phu-dong">Đường dẫn đã chặn: <code>@DuongDanBiChan</code></p>
+    }
+    <RadzenLink Text="Về trang chủ" Icon="home" Path="/" class="btn btn-primary" />
+</section>
+
+@* Xử lý phía thành phần: đọc tham số ReturnUrl từ chuỗi truy vấn khi bị Cookie middleware chuyển hướng. *@
+@code {
+    [SupplyParameterFromQuery(Name = "ReturnUrl")]
+    public string? DuongDanBiChan { get; set; }
+}
